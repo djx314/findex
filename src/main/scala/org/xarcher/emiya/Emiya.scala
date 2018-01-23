@@ -6,13 +6,13 @@ import scala.util.Try
 import scalafx.Includes._
 import scalafx.application.JFXApp
 import scalafx.scene.Scene
-import scalafx.scene.control.{Alert, Button, CheckBox, Label}
-import scalafx.scene.input.{DragEvent, MouseEvent, TransferMode}
+import scalafx.scene.control.{ Alert, Button, CheckBox, Label }
+import scalafx.scene.input.{ DragEvent, MouseEvent, TransferMode }
 import scalafx.scene.layout._
-import scalafx.stage.{DirectoryChooser, FileChooser}
+import scalafx.stage.{ DirectoryChooser, FileChooser }
 import scala.concurrent.ExecutionContext.Implicits.global
 import scalafx.scene.paint.Color
-import scalafx.scene.text.{Font, Text, TextFlow}
+import scalafx.scene.text.{ Font, Text, TextFlow }
 
 object Emiya extends JFXApp {
 
@@ -27,7 +27,7 @@ object Emiya extends JFXApp {
       def get: T = model
     }
 
-    def empty[T] = new AbsVar[T] { }
+    def empty[T] = new AbsVar[T] {}
 
   }
 
@@ -76,16 +76,14 @@ object Emiya extends JFXApp {
                         new Alert(Alert.AlertType.Information) {
                           contentText = indexFile.map(_ => "索引完成").getOrElse("没有文件")
                         }.showAndWait()
-                      }
-                    ).getOrElse {
+                      }).getOrElse {
                       new Alert(Alert.AlertType.Information) {
                         contentText = indexFile.map(_.toPath.toRealPath().toString).getOrElse("没有文件")
                       }.showAndWait()
                     }
                     ()
                 }
-              }
-            )
+              })
             /*handleEvent(DragEvent.DragOver) {
               event: DragEvent =>
                 event.acceptTransferModes(TransferMode.Move)
@@ -126,28 +124,27 @@ object Emiya extends JFXApp {
                   new Text("我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱") {
                     font = Font.font("微软雅黑", 16)
                     fill = Color.Blue
-                  }
-                )
+                  })
               }
 
             /**
-              * TextFlow textFlow = new TextFlow();
-textFlow.setLayoutX(40);
-textFlow.setLayoutY(40);
-Text text1 = new Text("Hello ");
-text1.setFont(Font.font(family, size));
-text1.setFill(Color.RED);
-
-Text text2 = new Text("Bold");
-text2.setFill(Color.ORANGE);
-text2.setFont(Font.font(family, FontWeight.BOLD, size));
-
-Text text3 = new Text(" World");
-text3.setFill(Color.GREEN);
-text3.setFont(Font.font(family, FontPosture.ITALIC, size));
-
-textFlow.getChildren().addAll(text1, text2, text3);
-              */
+             * TextFlow textFlow = new TextFlow();
+             * textFlow.setLayoutX(40);
+             * textFlow.setLayoutY(40);
+             * Text text1 = new Text("Hello ");
+             * text1.setFont(Font.font(family, size));
+             * text1.setFill(Color.RED);
+             *
+             * Text text2 = new Text("Bold");
+             * text2.setFill(Color.ORANGE);
+             * text2.setFont(Font.font(family, FontWeight.BOLD, size));
+             *
+             * Text text3 = new Text(" World");
+             * text3.setFill(Color.GREEN);
+             * text3.setFont(Font.font(family, FontPosture.ITALIC, size));
+             *
+             * textFlow.getChildren().addAll(text1, text2, text3);
+             */
             )
 
             /*field setTo new scalafx.scene.control.TextField {
@@ -205,8 +202,7 @@ textFlow.getChildren().addAll(text1, text2, text3);
               case e: Exception => e.printStackTrace
             }*/
 
-          }
-        )
+          })
       }
     }
   }
