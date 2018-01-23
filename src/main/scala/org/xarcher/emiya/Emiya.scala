@@ -10,6 +10,7 @@ import scalafx.scene.control.{Alert, Button, CheckBox, Label}
 import scalafx.scene.input.{DragEvent, MouseEvent, TransferMode}
 import scalafx.scene.layout._
 import scalafx.stage.{DirectoryChooser, FileChooser}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object Emiya extends JFXApp {
 
@@ -68,9 +69,17 @@ object Emiya extends JFXApp {
               startIndexButton setTo new Button("开始索引") {
                 handleEvent(MouseEvent.MouseClicked) {
                   event: MouseEvent =>
-                    new Alert(Alert.AlertType.Information) {
-                      contentText = indexFile.map(_.toPath.toRealPath().toString).getOrElse("没有文件")
-                    }.showAndWait()
+                    indexFile.map(file =>
+                      FileIndex.index(file.toPath).map { (_: Int) =>
+                        new Alert(Alert.AlertType.Information) {
+                          contentText = indexFile.map(_ => "索引完成").getOrElse("没有文件")
+                        }.showAndWait()
+                      }
+                    ).getOrElse {
+                      new Alert(Alert.AlertType.Information) {
+                        contentText = indexFile.map(_.toPath.toRealPath().toString).getOrElse("没有文件")
+                      }.showAndWait()
+                    }
                     ()
                 }
               }

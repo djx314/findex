@@ -19,3 +19,4 @@
 bin
 .cache-tests
 .cache-main
+/lucenceTemp
