@@ -1,0 +1,24 @@
+import sbt._
+import sbt.Keys._
+
+val printlnDo = println("""
+|                                                     _   _         _
+|                                                    | | (_)       | |
+|  ___   _ __    _   _   _ __ ___     __ _      ___  | |  _   ___  | |__
+| / _ \ | '_ \  | | | | | '_ ` _ \   / _` |    / _ \ | | | | / __| | '_ \
+||  __/ | | | | | |_| | | | | | | | | (_| |   |  __/ | | | | \__ \ | | | |
+| \___| |_| |_|  \__,_| |_| |_| |_|  \__,_|    \___| |_| |_| |___/ |_| |_|
+""".stripMargin
+)
+
+val gitInit = taskKey[String]("miao")
+
+lazy val xPhoto = (project in file("."))
+
+fork := true
+
+CustomSettings.customSettings
+
+enablePlugins(JDKPackagerPlugin)
+
+enablePlugins(WindowsPlugin)
