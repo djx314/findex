@@ -11,6 +11,8 @@ import scalafx.scene.input.{DragEvent, MouseEvent, TransferMode}
 import scalafx.scene.layout._
 import scalafx.stage.{DirectoryChooser, FileChooser}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scalafx.scene.paint.Color
+import scalafx.scene.text.{Font, Text, TextFlow}
 
 object Emiya extends JFXApp {
 
@@ -107,6 +109,46 @@ object Emiya extends JFXApp {
           },
           inputContent setTo new VBox {
             style = "-fx-background-color: #336699; -fx-alignment: center; -fx-fill-width: false;"
+            children = List(
+              new Label {
+                text = "99<span style=\"color: #ff0000;\">11223344</span>55667788"
+              },
+              new TextFlow {
+                children = List(
+                  new Text("我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱") {
+                    font = Font.font("微软雅黑", 16)
+                    fill = Color.Red
+                  },
+                  new Text("我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱") {
+                    font = Font.font("微软雅黑", 16)
+                    fill = Color.Yellow
+                  },
+                  new Text("我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱") {
+                    font = Font.font("微软雅黑", 16)
+                    fill = Color.Blue
+                  }
+                )
+              }
+
+            /**
+              * TextFlow textFlow = new TextFlow();
+textFlow.setLayoutX(40);
+textFlow.setLayoutY(40);
+Text text1 = new Text("Hello ");
+text1.setFont(Font.font(family, size));
+text1.setFill(Color.RED);
+
+Text text2 = new Text("Bold");
+text2.setFill(Color.ORANGE);
+text2.setFont(Font.font(family, FontWeight.BOLD, size));
+
+Text text3 = new Text(" World");
+text3.setFill(Color.GREEN);
+text3.setFont(Font.font(family, FontPosture.ITALIC, size));
+
+textFlow.getChildren().addAll(text1, text2, text3);
+              */
+            )
 
             /*field setTo new scalafx.scene.control.TextField {
               style = "-fx-alignment: center;"
