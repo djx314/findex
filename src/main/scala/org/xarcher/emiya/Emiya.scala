@@ -1,12 +1,14 @@
 package org.xarcher.xPhoto
 
 import java.io.File
+import java.util.concurrent.{ ExecutorService, Executors, ThreadFactory }
 
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
 import scalafx.Includes._
-import scalafx.application.JFXApp
+import scalafx.application.{ JFXApp, Platform }
 import scalafx.scene.Scene
-import scalafx.scene.control.{ Alert, Button, CheckBox, Label }
+import scalafx.scene.control._
 import scalafx.scene.input.{ DragEvent, MouseEvent, TransferMode }
 import scalafx.scene.layout._
 import scalafx.stage.{ DirectoryChooser, FileChooser }
@@ -37,8 +39,10 @@ object Emiya extends JFXApp {
   val parentBox = VarModel.empty[VBox]
   val pictureContent = VarModel.empty[HBox]
   val inputContent = VarModel.empty[VBox]
-  //val needToFixWidth = VarModel.empty[CheckBox]
-  //val needToWater = VarModel.empty[CheckBox]
+
+  val searchBtn = VarModel.empty[Button]
+  val searchInput = VarModel.empty[TextField]
+  val searchContent = VarModel.empty[ScrollPane]
 
   var fileChooseButton = VarModel.empty[Button]
   var startIndexButton = VarModel.empty[Button]
@@ -84,124 +88,78 @@ object Emiya extends JFXApp {
                     ()
                 }
               })
-            /*handleEvent(DragEvent.DragOver) {
-              event: DragEvent =>
-                event.acceptTransferModes(TransferMode.Move)
-                event.consume()
-            }
-            handleEvent(DragEvent.DragDropped) {
-              event: DragEvent =>
-                val db = event.dragboard
-                var success = false
-                val fileList = db.files
-                if (! fileList.isEmpty) {
-                  success = true
-                  val modelsToAdd = fileList.map(s => CopyPic.convert(s)(needToFixWidth.get.selected.value)(field.get.text.value.toInt)(needToWater.get.selected.value))
-                }
-                event.dropCompleted = success
-                event.consume
-            }
-            children = new Label {
-              text = "拖动一个或多个图片文件到此处自动处理（会自动过滤非图片文件）"
-            }*/
           },
           inputContent setTo new VBox {
             style = "-fx-background-color: #336699; -fx-alignment: center; -fx-fill-width: false;"
-            children = List(
-              new Label {
-                text = "99<span style=\"color: #ff0000;\">11223344</span>55667788"
-              },
-              new TextFlow {
-                children = List(
-                  new Text("我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱") {
-                    font = Font.font("微软雅黑", 16)
-                    fill = Color.Red
-                  },
-                  new Text("我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱") {
-                    font = Font.font("微软雅黑", 16)
-                    fill = Color.Yellow
-                  },
-                  new Text("我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱") {
-                    font = Font.font("微软雅黑", 16)
-                    fill = Color.Blue
-                  })
-              }
 
-            /**
-             * TextFlow textFlow = new TextFlow();
-             * textFlow.setLayoutX(40);
-             * textFlow.setLayoutY(40);
-             * Text text1 = new Text("Hello ");
-             * text1.setFont(Font.font(family, size));
-             * text1.setFill(Color.RED);
-             *
-             * Text text2 = new Text("Bold");
-             * text2.setFill(Color.ORANGE);
-             * text2.setFont(Font.font(family, FontWeight.BOLD, size));
-             *
-             * Text text3 = new Text(" World");
-             * text3.setFill(Color.GREEN);
-             * text3.setFont(Font.font(family, FontPosture.ITALIC, size));
-             *
-             * textFlow.getChildren().addAll(text1, text2, text3);
-             */
-            )
-
-            /*field setTo new scalafx.scene.control.TextField {
-              style = "-fx-alignment: center;"
-              focused.onChange { (_, _, newValue) =>
-                val newInt = Try { text.value.toInt }.toOption
-                if (newInt.isEmpty) {
-                  text = defaultWidth.toString
-                }
-              }
-              text = defaultWidth.toString
-
+            searchContent setTo new ScrollPane {
             }
 
-            needToFixWidth setTo new CheckBox {
-              selected = true
-            }
-
-            needToWater setTo new CheckBox {
-              selected = true
-            }
-
-            style = "-fx-background-color: #336699; -fx-alignment: center; -fx-fill-width: false;"
-            try {
-              children = new GridPane {
-                hgap = 10
-                vgap = 10
-
-
-                add(new Label {
-                  text = "是否改变宽度"
-                }, 0, 0)
-                add(needToFixWidth.get, 1, 0)
-
-                add(new Label {
-                  text = "默认宽度"
-                }, 0, 1)
-                add(new HBox {
+            //val th = Thread.currentThread()
+            try
+              children = List(
+                searchInput setTo new TextField {
+                },
+                searchBtn setTo new Button("搜索") {
+                  handleEvent(MouseEvent.MouseClicked) {
+                    event: MouseEvent =>
+                      /*val ec = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor(new ThreadFactory {
+                        override def newThread(r: Runnable): Thread = th
+                      }))*/
+                      Future {
+                        FileSearch.search(searchInput.get.text.get()).map { info =>
+                          Platform.runLater(new Runnable() {
+                            override def run(): Unit = {
+                              searchContent.get.content = new VBox {
+                                children = info.map { eachInfo =>
+                                  new VBox {
+                                    children = new VBox {
+                                      children = List(
+                                        new HBox {
+                                          children = List(
+                                            eachInfo.fileNameFlow,
+                                            eachInfo.fileBtn,
+                                            eachInfo.dirBtn)
+                                        },
+                                        new HBox {
+                                          children = eachInfo.contentFlow
+                                        })
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          })
+                        }
+                      }
+                      ()
+                  }
+                },
+                searchContent.get
+              /*new Label {
+                  text = "99<span style=\"color: #ff0000;\">11223344</span>55667788"
+                },
+                new TextFlow {
                   children = List(
-                    field.get,
-                    new Label {
-                      text = " px"
-                    }
-                  )
-                }, 1, 1)
-
-
-                add(new Label {
-                  text = "是否打水印"
-                }, 0, 2)
-                add(needToWater.get, 1, 2)
-
-              }
-            } catch {
-              case e: Exception => e.printStackTrace
-            }*/
-
+                    new Text("我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱") {
+                      font = Font.font("微软雅黑", 16)
+                      fill = Color.Red
+                    },
+                    new Text("我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱") {
+                      font = Font.font("微软雅黑", 16)
+                      fill = Color.Yellow
+                    },
+                    new Text("我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱我是喵喵酱") {
+                      font = Font.font("微软雅黑", 16)
+                      fill = Color.Blue
+                    })
+                }*/
+              )
+            catch {
+              case e =>
+                println("11" * 100)
+                e.printStackTrace
+            }
           })
       }
     }

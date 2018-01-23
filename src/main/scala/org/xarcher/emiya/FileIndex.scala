@@ -102,7 +102,7 @@ object FileIndex {
       val addFileNotesAction = db.run(DBIO.seq(addSubDirsAction, updateDirStateAction, addSubFilesAction).transactionally).map(_ => 2)
 
       addFileNotesAction.flatMap((_: Int) => db.run(DirectoryPrepare.filter(_.isFinish === false).take(100).result)).flatMap {
-        case Nil =>
+        case newDirs if newDirs.isEmpty =>
           Future.successful(true)
         case newDirs =>
           fetchFiles(newDirs.toList)
@@ -230,7 +230,7 @@ object FileIndex {
     val fileName = file.getFileName.toString
     indexer.find { case (extName, _) => fileName.endsWith(s".${extName}") }.map(_._2).map(_.apply(file).map { strEither =>
       strEither.right.map { str =>
-        IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.toRealPath().toString, content = str)
+        IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str)
       }.left.map(_ => id)
     }).getOrElse(Future.successful(Left(id)))
     /*(for {
@@ -255,9 +255,3 @@ object FileIndex {
 }
 
 case class IndexInfo(dbId: Int, filePath: String, fileName: String, content: String)
-
-trait FetchIndex {
-
-  def fetch(file: File): IndexInfo
-
-}
