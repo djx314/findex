@@ -4,7 +4,6 @@ libraryDependencies += "commons-io" % "commons-io" % "2.6"
 libraryDependencies ++= Dependencies.lucence
 
 val poiVersion = "3.17"
-
 libraryDependencies ++= Seq(
   //poi
   "org.apache.poi" % "poi",
@@ -17,3 +16,7 @@ Seq(
   "joda-time" % "joda-time" % "2.9.9",
   "org.joda" % "joda-convert" % "1.9.2"
 )
+
+val slickVersion = "3.2.1"
+libraryDependencies += "com.typesafe.slick" %% "slick" % slickVersion
+libraryDependencies += "com.typesafe.slick" %% "slick-hikaricp" % slickVersion exclude("com.zaxxer", "HikariCP-java6")
