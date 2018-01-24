@@ -108,23 +108,21 @@ object Emiya extends JFXApp {
                       }))*/
                       Future {
                         FileSearch.search(searchInput.get.text.get()).map { info =>
-                          Platform.runLater(new Runnable() {
-                            override def run(): Unit = {
-                              searchContent.get.content = new VBox {
-                                children = info.map { eachInfo =>
-                                  new VBox {
-                                    children = new VBox {
-                                      children = List(
-                                        new HBox {
-                                          children = List(
-                                            eachInfo.fileNameFlow,
-                                            eachInfo.fileBtn,
-                                            eachInfo.dirBtn)
-                                        },
-                                        new HBox {
-                                          children = eachInfo.contentFlow
-                                        })
-                                    }
+                          Platform.runLater(() => {
+                            searchContent.get.content = new VBox {
+                              children = info.map { eachInfo =>
+                                new VBox {
+                                  children = new VBox {
+                                    children = List(
+                                      new HBox {
+                                        children = List(
+                                          eachInfo.fileNameFlow,
+                                          eachInfo.fileBtn,
+                                          eachInfo.dirBtn)
+                                      },
+                                      new HBox {
+                                        children = eachInfo.contentFlow
+                                      })
                                   }
                                 }
                               }
@@ -156,8 +154,7 @@ object Emiya extends JFXApp {
                 }*/
               )
             catch {
-              case e =>
-                println("11" * 100)
+              case e: Exception =>
                 e.printStackTrace
             }
           })
@@ -169,7 +166,7 @@ object Emiya extends JFXApp {
   parentBox.get.prefHeight <== sceneS.get.height
   parentBox.get.prefWidth <== sceneS.get.width
   inputContent.get.prefHeight <== parentBox.get.height * 0.8
-
-  //field.get.disable <== (! needToFixWidth.get.selected)
+  searchContent.get.prefHeight <== inputContent.get.height - 60
+  searchContent.get.prefWidth <== inputContent.get.width
 
 }

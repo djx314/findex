@@ -11,6 +11,7 @@ import org.apache.lucene.index.{ IndexWriter, IndexWriterConfig }
 import org.apache.lucene.store.FSDirectory
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.jsoup.Jsoup
 import org.xarcher.cpoi.{ CPoi, PoiOperations }
 
 import scala.annotation.tailrec
@@ -43,6 +44,14 @@ object FileIndex {
           CPoi.load(wk).sheets.map(_.rows.map(_.cells.map(_.tryValue[String]).collect { case Some(s) => s }.mkString("\t")).mkString("\n")).mkString("\n")
         }.toEither
       }
+    }
+  }
+
+  val htmlGen: Path => Future[Either[Throwable, String]] = { path =>
+    Future {
+      Try {
+        Jsoup.parse(path.toFile, "utf-8").text()
+      }.toEither
     }
   }
 
@@ -84,7 +93,8 @@ object FileIndex {
     "et" -> poiGen,
     "doc" -> docPoiGen,
     "docx" -> docPoiGen,
-    "wps" -> docPoiGen)
+    "wps" -> docPoiGen,
+    "html" -> htmlGen)
 
   import FileTables._
   import FileTables.profile.api._
@@ -127,6 +137,10 @@ object FileIndex {
       //val subFiles = eachDir.listFiles().toList
       val subDirs = subFiles.filter(_._1.isDirectory)
       val simpleFiles = subFiles.filterNot(_._1.isDirectory)
+      val filesToIndex = simpleFiles.filter {
+        s =>
+          s._1.length < (10024 * 1024 * 2)
+      }
 
       val addSubDirsAction = DirectoryPrepare ++= subDirs.map { dir =>
         DirectoryPrepareRow(
@@ -137,7 +151,7 @@ object FileIndex {
 
       val updateDirStateAction = DirectoryPrepare.filter(_.id inSet dirs.map(_.id)).map(_.isFinish).update(true)
 
-      val addSubFilesAction = FilePrepare ++= simpleFiles.map { file =>
+      val addSubFilesAction = FilePrepare ++= filesToIndex.map { file =>
         FilePrepareRow(
           id = -1,
           parentDirId = file._2,
@@ -157,7 +171,7 @@ object FileIndex {
 
     def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
       val isIndexing = !isFetchFileFinished()
-      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(100).result)
+      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(30).result)
 
       (for {
         fileList <- fileListF
@@ -212,19 +226,20 @@ object FileIndex {
         val promise = Promise[Future[Int]]
 
         lazy val indexingSizeF = db.run(FilePrepare.filter(_.isFinish === false).size.result)
-          .map { size =>
+        /*.map { size =>
             println(s"还有${size}个文件正在索引列表中")
             size
-          }
+          }*/
         lazy val fetchingSizeF = db.run(DirectoryPrepare.filter(_.isFinish === false).size.result)
-          .map { size =>
+        /*.map { size =>
             println(s"还有${size}个文件夹正在正在查找子文件操作队列中")
             size
-          }
+          }*/
 
         val sizeAction = indexingSizeF.zip(fetchingSizeF).map {
           case (indexingSize, fetchingSize) =>
-            if (!finished) {
+            val nowisIndexFinished = isIndexFinished()
+            if (!nowisIndexFinished) {
               println(s"还有${indexingSize}个文件正在索引列表中")
               println(s"还有${fetchingSize}个文件夹正在正在查找子文件操作队列中")
             }
@@ -247,23 +262,23 @@ object FileIndex {
         case e => e.printStackTrace
       }
       val indexFilesF = tranFiles(0, () => fetchFilesF.isCompleted)
-        .map { count =>
-          println(s"索引:${file.toRealPath()}完成，一共索引了:${count}个文件")
-          1
-        }.recover {
-          case e =>
-            e.printStackTrace
-            2
-        }.andThen {
-          case _ =>
-            if (null != writer) {
-              Try {
-                writer.close()
-              }.fold(
-                e => e.printStackTrace(),
-                _ => ())
-            }
-        }
+      indexFilesF.map { count =>
+        println(s"索引:${file.toRealPath()}完成，一共索引了:${count}个文件")
+        1
+      }.recover {
+        case e =>
+          e.printStackTrace
+          2
+      }.andThen {
+        case _ =>
+          if (null != writer) {
+            Try {
+              writer.close()
+            }.fold(
+              e => e.printStackTrace(),
+              _ => ())
+          }
+      }
 
       showInfo(() => indexFilesF.isCompleted)
     } else {

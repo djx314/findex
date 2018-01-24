@@ -21,3 +21,5 @@ Seq(
 val slickVersion = "3.2.1"
 libraryDependencies += "com.typesafe.slick" %% "slick" % slickVersion
 libraryDependencies += "com.typesafe.slick" %% "slick-hikaricp" % slickVersion exclude("com.zaxxer", "HikariCP-java6")
+
+libraryDependencies ++= Dependencies.openhtmltopdf
