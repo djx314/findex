@@ -139,7 +139,7 @@ object FileIndex {
       val simpleFiles = subFiles.filterNot(_._1.isDirectory)
       val filesToIndex = simpleFiles.filter {
         s =>
-          s._1.length < (10024 * 1024 * 3 / 2)
+          s._1.length < (1024 * 1024 * 1)
       }
 
       val addSubDirsAction = DirectoryPrepare ++= subDirs.map { dir =>
@@ -214,7 +214,10 @@ object FileIndex {
           timer.schedule(task, 500)
           promise.future.flatten
         }
-      }).flatten
+      }).flatten.andThen {
+        case Failure(e) =>
+          e.printStackTrace
+      }
     }
 
     def showInfo(isIndexFinished: () => Boolean): Future[Int] = {
