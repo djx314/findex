@@ -73,7 +73,10 @@ object FileIndex {
           val text2007 = extractor.getText
           text2007
         }
-      }.toEither
+      }.toEither.left.map { e =>
+        e.printStackTrace
+        e
+      }
     }
 
   val indexer: Map[String, Path => Future[Either[Throwable, String]]] = Map(
@@ -85,16 +88,15 @@ object FileIndex {
     "css" -> txtGen,
     "conf" -> txtGen,
     "bat" -> txtGen,
-    "htm" -> txtGen,
-    "html" -> txtGen,
+    "htm" -> htmlGen,
+    "html" -> htmlGen,
     "properties" -> txtGen,
     "xls" -> poiGen,
     "xlsx" -> poiGen,
     "et" -> poiGen,
     "doc" -> docPoiGen,
     "docx" -> docPoiGen,
-    "wps" -> docPoiGen,
-    "html" -> htmlGen).filterKeys(s => (s == "html") || (s == "htm") || (s == "js"))
+    "wps" -> docPoiGen)
 
   import FileTables._
   import FileTables.profile.api._
@@ -139,7 +141,7 @@ object FileIndex {
       val simpleFiles = subFiles.filterNot(_._1.isDirectory)
       val filesToIndex = simpleFiles.filter {
         s =>
-          s._1.length < (1024 * 1024 * 1)
+          s._1.length < (1024 * 1024 * 6)
       }
 
       val addSubDirsAction = DirectoryPrepare ++= subDirs.map { dir =>

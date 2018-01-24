@@ -19,6 +19,6 @@
 bin
 .cache-tests
 .cache-main
-/lucenceTemp
+/lucenceTemp*
 /file_db.db3
 /file_db.db3-journal
