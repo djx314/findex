@@ -94,7 +94,7 @@ object FileIndex {
     "doc" -> docPoiGen,
     "docx" -> docPoiGen,
     "wps" -> docPoiGen,
-    "html" -> htmlGen)
+    "html" -> htmlGen).filterKeys(s => (s == "html") || (s == "htm") || (s == "js"))
 
   import FileTables._
   import FileTables.profile.api._
@@ -139,7 +139,7 @@ object FileIndex {
       val simpleFiles = subFiles.filterNot(_._1.isDirectory)
       val filesToIndex = simpleFiles.filter {
         s =>
-          s._1.length < (10024 * 1024 * 2)
+          s._1.length < (10024 * 1024 * 3 / 2)
       }
 
       val addSubDirsAction = DirectoryPrepare ++= subDirs.map { dir =>
@@ -171,7 +171,7 @@ object FileIndex {
 
     def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
       val isIndexing = !isFetchFileFinished()
-      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(30).result)
+      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(20).result)
 
       (for {
         fileList <- fileListF
