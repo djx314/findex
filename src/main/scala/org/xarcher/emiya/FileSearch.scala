@@ -13,13 +13,15 @@ import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.highlight.{ Highlighter, QueryScorer, SimpleFragmenter, SimpleHTMLFormatter }
 import org.apache.lucene.store.FSDirectory
-import scalafx.Includes._
+import org.fxmisc.richtext.InlineCssTextArea
 
+import scalafx.Includes._
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.{ Future, Promise }
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{ Failure, Success, Try }
+import scalafx.scene.Node
 import scalafx.scene.control.Button
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.paint.Color
@@ -73,10 +75,10 @@ object FileSearch {
 
 case class OutputInfo(filePath: String, fileName: String, content: String) {
 
-  def fileNameFlow: TextFlow = {
+  def fileNameFlow: InlineCssTextArea = {
     val strs = fileName.split("\\|\\|\\|").toList
     //val strs1 = if (strs.startsWith("|||")) strs else "" :: strs
-    val str2 = strs.zipWithIndex.map {
+    val str2 = strs /*.zipWithIndex.map {
       case (item, index) =>
         if (index % 2 == 1) {
           new Text(item) {
@@ -89,17 +91,28 @@ case class OutputInfo(filePath: String, fileName: String, content: String) {
             fill = Color.Black
           }
         }
-    }
+    }*/
 
-    new TextFlow {
-      children = str2
+    val textArea = new InlineCssTextArea(str2.mkString(""))
+    textArea.setWrapText(true)
+    textArea.setEditable(false)
+    str2.map(_.length).zipWithIndex.foldLeft(0) {
+      case (start, (len, index)) =>
+        if (index % 2 == 1) {
+          textArea.setStyle(start, start + len, "-fx-fill: red;")
+        }
+        start + len
     }
+    textArea
+    /*new TextFlow {
+      children = textArea: Node
+    }*/
   }
 
-  def contentFlow: TextFlow = {
+  def contentFlow: InlineCssTextArea = {
     val strs = content.split("\\|\\|\\|").toList
     //val strs1 = if (strs.startsWith("|||")) strs else "" :: strs
-    val str2 = strs.zipWithIndex.map {
+    val str2 = strs /*.zipWithIndex.map {
       case (item, index) =>
         if (index % 2 == 1) {
           new Text(item) {
@@ -111,12 +124,21 @@ case class OutputInfo(filePath: String, fileName: String, content: String) {
             font = Font.font("微软雅黑", 16)
             fill = Color.Black
           }
+        }*/
+    val textArea = new InlineCssTextArea(str2.mkString(""))
+    //textArea.setWrapText(true)
+    textArea.setEditable(false)
+    str2.map(_.length).zipWithIndex.foldLeft(0) {
+      case (start, (len, index)) =>
+        if (index % 2 == 1) {
+          textArea.setStyle(start, start + len, "-fx-fill: red;")
         }
+        start + len
     }
-
-    new TextFlow {
-      children = str2
-    }
+    textArea
+    /*new TextFlow {
+      children = textArea: Node
+    }*/
   }
 
   def fileBtn: Button = new Button("打开文件") {
@@ -130,7 +152,7 @@ case class OutputInfo(filePath: String, fileName: String, content: String) {
   def dirBtn: Button = new Button("打开文件夹") {
     handleEvent(MouseEvent.MouseClicked) {
       event: MouseEvent =>
-        (Desktop.getDesktop: java.awt.Desktop).open(new File(filePath).getParentFile)
+        (Desktop.getDesktop: java.awt.Desktop).browse(new File(filePath).getParentFile.toURI)
         ()
     }
   }

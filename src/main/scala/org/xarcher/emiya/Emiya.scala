@@ -3,16 +3,19 @@ package org.xarcher.xPhoto
 import java.io.File
 import java.util.concurrent.{ ExecutorService, Executors, ThreadFactory }
 
+import org.fxmisc.richtext.InlineCssTextArea
+
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
 import scalafx.Includes._
 import scalafx.application.{ JFXApp, Platform }
-import scalafx.scene.Scene
+import scalafx.scene.{ Node, Scene }
 import scalafx.scene.control._
 import scalafx.scene.input.{ DragEvent, MouseEvent, TransferMode }
 import scalafx.scene.layout._
 import scalafx.stage.{ DirectoryChooser, FileChooser }
 import scala.concurrent.ExecutionContext.Implicits.global
+import scalafx.beans.property.DoubleProperty
 import scalafx.scene.paint.Color
 import scalafx.scene.text.{ Font, Text, TextFlow }
 
@@ -93,19 +96,27 @@ object Emiya extends JFXApp {
             style = "-fx-background-color: #336699; -fx-alignment: center; -fx-fill-width: false;"
 
             searchContent setTo new ScrollPane {
+              fitToWidth = true
             }
 
             //val th = Thread.currentThread()
             try
               children = List(
+                /*{
+                  val textArea = new InlineCssTextArea("asfasfsafweatertrytruytutyfuiytfuftuftyutyu")
+                  textArea.setStyle(4, 8, "-fx-fill: red;")
+                  textArea.prefWidth(120)
+                  textArea.setWrapText(true)
+                  textArea.setEditable(false)
+                  textArea: Node
+                },*/
                 searchInput setTo new TextField {
+                  prefHeight = 30
                 },
                 searchBtn setTo new Button("搜索") {
+                  prefHeight = 30
                   handleEvent(MouseEvent.MouseClicked) {
                     event: MouseEvent =>
-                      /*val ec = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor(new ThreadFactory {
-                        override def newThread(r: Runnable): Thread = th
-                      }))*/
                       Future {
                         FileSearch.search(searchInput.get.text.get()).map { info =>
                           Platform.runLater(() => {
@@ -113,15 +124,23 @@ object Emiya extends JFXApp {
                               children = info.map { eachInfo =>
                                 new VBox {
                                   children = new VBox {
+
+                                    val fileName = eachInfo.fileNameFlow
+                                    (fileName: Region).prefWidth <== searchContent.get.width - 200
+                                    (fileName: Region).prefHeight = 23
+
+                                    val content = eachInfo.contentFlow
+                                    (content: Region).prefWidth <== searchContent.get.width
+
                                     children = List(
                                       new HBox {
                                         children = List(
-                                          eachInfo.fileNameFlow,
-                                          eachInfo.fileBtn,
+                                          fileName: Node,
+                                          eachInfo.fileBtn: Node,
                                           eachInfo.dirBtn)
                                       },
                                       new HBox {
-                                        children = eachInfo.contentFlow
+                                        children = content: Node
                                       })
                                   }
                                 }

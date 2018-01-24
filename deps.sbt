@@ -23,3 +23,5 @@ libraryDependencies += "com.typesafe.slick" %% "slick" % slickVersion
 libraryDependencies += "com.typesafe.slick" %% "slick-hikaricp" % slickVersion exclude("com.zaxxer", "HikariCP-java6")
 
 libraryDependencies ++= Dependencies.openhtmltopdf
+
+libraryDependencies += "org.fxmisc.richtext" % "richtextfx" % "0.8.1"
