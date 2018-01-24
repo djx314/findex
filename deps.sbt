@@ -8,7 +8,8 @@ libraryDependencies ++= Seq(
   //poi
   "org.apache.poi" % "poi",
   "org.apache.poi" % "poi-ooxml",
-  "org.apache.poi" % "poi-ooxml-schemas"
+  "org.apache.poi" % "poi-ooxml-schemas",
+  "org.apache.poi" % "poi-scratchpad"
 )
 .map(_ % poiVersion exclude("stax", "stax-api")) ++:
 Seq(

@@ -1,6 +1,6 @@
 package org.xarcher.xPhoto
 
-import java.io.{ File, IOException }
+import java.io.{ File, FileInputStream, IOException }
 import java.nio.file.{ Files, Path, Paths }
 import java.util.{ Date, Timer, TimerTask }
 
@@ -9,6 +9,9 @@ import org.apache.lucene.analysis.cjk.CJKAnalyzer
 import org.apache.lucene.document._
 import org.apache.lucene.index.{ IndexWriter, IndexWriterConfig }
 import org.apache.lucene.store.FSDirectory
+import org.apache.poi.hssf.usermodel.HSSFWorkbook
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.xarcher.cpoi.{ CPoi, PoiOperations }
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -26,6 +29,44 @@ object FileIndex {
     }
   }
 
+  val poiGen: Path => Future[Either[Throwable, String]] = { path =>
+    Future {
+      val workbook = Try {
+        Try {
+          new HSSFWorkbook(new FileInputStream(path.toFile))
+        }.getOrElse(new XSSFWorkbook(new FileInputStream(path.toFile)))
+      }.toEither
+      workbook.right.flatMap { wk =>
+        object PoiOperations extends PoiOperations
+        import PoiOperations._
+        Try {
+          CPoi.load(wk).sheets.flatMap(_.rows.flatMap(_.cells.map(_.tryValue[String]))).mkString(" ")
+        }.toEither
+      }
+    }
+  }
+
+  val docPoiGen: Path => Future[Either[Throwable, String]] = path =>
+    Future {
+      Try {
+        Try {
+          import org.apache.poi.hwpf.extractor.WordExtractor
+          import java.io.InputStream
+          val is: InputStream = new FileInputStream(path.toFile)
+          val ex: WordExtractor = new WordExtractor(is)
+          val text2003 = ex.getText
+          text2003
+        }.getOrElse {
+          import org.apache.poi.POIXMLDocument
+          import org.apache.poi.xwpf.extractor.XWPFWordExtractor
+          val opcPackage = POIXMLDocument.openPackage(path.toFile.getCanonicalPath)
+          val extractor = new XWPFWordExtractor(opcPackage)
+          val text2007 = extractor.getText
+          text2007
+        }
+      }.toEither
+    }
+
   val indexer: Map[String, Path => Future[Either[Throwable, String]]] = Map(
     "txt" -> txtGen,
     "js" -> txtGen,
@@ -37,7 +78,13 @@ object FileIndex {
     "bat" -> txtGen,
     "htm" -> txtGen,
     "html" -> txtGen,
-    "properties" -> txtGen)
+    "properties" -> txtGen,
+    "xls" -> poiGen,
+    "xlsx" -> poiGen,
+    "et" -> poiGen,
+    "doc" -> docPoiGen,
+    "docx" -> docPoiGen,
+    "wps" -> docPoiGen)
 
   import FileTables._
   import FileTables.profile.api._
