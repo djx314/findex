@@ -40,7 +40,7 @@ object FileIndex {
         object PoiOperations extends PoiOperations
         import PoiOperations._
         Try {
-          CPoi.load(wk).sheets.flatMap(_.rows.flatMap(_.cells.map(_.tryValue[String]))).mkString(" ")
+          CPoi.load(wk).sheets.map(_.rows.map(_.cells.map(_.tryValue[String]).collect { case Some(s) => s }.mkString("\t")).mkString("\n")).mkString("\n")
         }.toEither
       }
     }
@@ -94,8 +94,7 @@ object FileIndex {
 
     //val fileQueue = mutable.Queue.empty[File]
     //val dirQueue = mutable.Queue.empty[File]
-
-    var isIndexing = true
+    //var isIndexing = true
 
     def startFetchFiles(rootDir: File): Future[Boolean] = {
       val f = if (!rootDir.isDirectory) {
@@ -116,10 +115,10 @@ object FileIndex {
                 isFinish = false)
           }.flatMap(dir => fetchFiles(List(dir))))
       }
-      f.map { _ =>
+      f /*.map { _ =>
         isIndexing = false
         true
-      }
+      }*/
     }
 
     def fetchFiles(dirs: List[DirectoryPrepareRow]): Future[Boolean] = {
@@ -156,8 +155,8 @@ object FileIndex {
       }
     }
 
-    def tranFiles(sum: Int): Future[Int] = {
-      //val dirOptF = db.run(DirectoryPrepare.filter(_.isFinish === false).result.headOption)
+    def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
+      val isIndexing = !isFetchFileFinished()
       val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(100).result)
 
       (for {
@@ -187,7 +186,7 @@ object FileIndex {
             }: Seq[(Int, Int)]
             db.run(
               FilePrepare.filter(_.id inSetBind ids.map(_._1)).map(_.isFinish).update(true).transactionally)
-              .map(_ => sum + ids.map(_._2).sum).flatMap(newSum => tranFiles(newSum))
+              .map(_ => sum + ids.map(_._2).sum).flatMap(newSum => tranFiles(newSum, isFetchFileFinished))
           }: Future[Int]
         } else {
           //println("33333333333333333333333333333333333")
@@ -195,7 +194,7 @@ object FileIndex {
           val timer = new Timer()
           val task = new TimerTask {
             override def run(): Unit = {
-              promise.success(tranFiles(sum))
+              promise.success(tranFiles(sum, isFetchFileFinished))
             }
           }
           timer.schedule(task, 500)
@@ -204,36 +203,50 @@ object FileIndex {
       }).flatten
     }
 
-    def showInfo: Future[Int] = {
-      val promise = Promise[Future[Int]]
+    def showInfo(isIndexFinished: () => Boolean): Future[Int] = {
+      val finished = isIndexFinished()
 
-      lazy val fetchSumAction1 = db.run(FilePrepare.filter(_.isFinish === false).size.result)
-        .map { size =>
-          println(s"还有${size}个文件正在索引列表中")
-          size
-        }
-      lazy val fetchSumAction2 = db.run(DirectoryPrepare.filter(_.isFinish === false).size.result)
-        .map { size =>
-          println(s"还有${size}个文件夹正在正在查找子文件操作队列中")
-          size
+      if (finished) {
+        Future.successful(1)
+      } else {
+        val promise = Promise[Future[Int]]
+
+        lazy val indexingSizeF = db.run(FilePrepare.filter(_.isFinish === false).size.result)
+          .map { size =>
+            println(s"还有${size}个文件正在索引列表中")
+            size
+          }
+        lazy val fetchingSizeF = db.run(DirectoryPrepare.filter(_.isFinish === false).size.result)
+          .map { size =>
+            println(s"还有${size}个文件夹正在正在查找子文件操作队列中")
+            size
+          }
+
+        val sizeAction = indexingSizeF.zip(fetchingSizeF).map {
+          case (indexingSize, fetchingSize) =>
+            if (!finished) {
+              println(s"还有${indexingSize}个文件正在索引列表中")
+              println(s"还有${fetchingSize}个文件夹正在正在查找子文件操作队列中")
+            }
+            2
         }
 
-      val timer = new Timer()
-      val task = new TimerTask {
-        override def run(): Unit = {
-          promise.success(fetchSumAction1.flatMap((_: Int) => fetchSumAction2: Future[Int]).flatMap((_: Int) => showInfo))
+        val timer = new Timer()
+        val task = new TimerTask {
+          override def run(): Unit = {
+            promise.success(sizeAction.flatMap((_: Int) => showInfo(isIndexFinished)))
+          }
         }
+        timer.schedule(task, 3000)
+        promise.future.flatten
       }
-      timer.schedule(task, 3000)
-      promise.future.flatten
     }
 
     if (Files.isDirectory(file)) {
-      startFetchFiles(file.toFile).recover {
+      val fetchFilesF = startFetchFiles(file.toFile).recover {
         case e => e.printStackTrace
       }
-      showInfo
-      tranFiles(0)
+      val indexFilesF = tranFiles(0, () => fetchFilesF.isCompleted)
         .map { count =>
           println(s"索引:${file.toRealPath()}完成，一共索引了:${count}个文件")
           1
@@ -251,6 +264,8 @@ object FileIndex {
                 _ => ())
             }
         }
+
+      showInfo(() => indexFilesF.isCompleted)
     } else {
       Future.successful(3)
     }

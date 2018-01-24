@@ -130,7 +130,7 @@ case class OutputInfo(filePath: String, fileName: String, content: String) {
   def dirBtn: Button = new Button("打开文件夹") {
     handleEvent(MouseEvent.MouseClicked) {
       event: MouseEvent =>
-        Desktop.getDesktop.open(new File(filePath).getParentFile)
+        (Desktop.getDesktop: java.awt.Desktop).browse(new File(filePath).getParentFile.toURI)
         ()
     }
   }
