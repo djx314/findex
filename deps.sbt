@@ -25,3 +25,12 @@ libraryDependencies += "com.typesafe.slick" %% "slick-hikaricp" % slickVersion e
 libraryDependencies ++= Dependencies.openhtmltopdf
 
 libraryDependencies += "org.fxmisc.richtext" % "richtextfx" % "0.8.1"
+
+val macwire = Seq(
+  "com.softwaremill.macwire" %% "macros" % "2.3.0" % "provided",
+  "com.softwaremill.macwire" %% "macrosakka" % "2.3.0" % "provided",
+  "com.softwaremill.macwire" %% "util" % "2.3.0",
+  "com.softwaremill.macwire" %% "proxy" % "2.3.0"
+)
+
+libraryDependencies ++= macwire
