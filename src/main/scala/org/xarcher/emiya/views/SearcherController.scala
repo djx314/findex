@@ -1,33 +1,62 @@
 package org.xarcher.emiya.views
 
+import javafx.beans.value.{ ChangeListener, ObservableValue }
+
 import org.xarcher.xPhoto.FileSearch
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 import scalafx.Includes._
 import scalafx.application.Platform
 import scalafx.scene.Node
 import scalafx.scene.control._
-import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout._
-import scala.concurrent.ExecutionContext.Implicits.global
 
-class SearchController(searchInput: SearchInput, searcherButton: SearcherButton, searchContent: SearchContent) extends VBox {
-  style = "-fx-background-color: #66ccff; -fx-alignment: center; -fx-fill-width: false;"
+class SearchController(searcherPane: SearcherPane, searchContent: SearchContent) extends VBox {
+  style = "-fx-background-color: #66ccff; -fx-alignment: center; -fx-fill-width: true;"
+  fillWidth = true
   children = List(
-    searchInput,
-    searcherButton,
+    //searchInput,
+    searcherPane,
     searchContent)
 
-  searchContent.prefHeight <== height - 60
-  searchContent.prefWidth <== width
+  searcherPane.prefWidth <== prefWidth
+  searchContent.prefHeight <== (height - searcherPane.prefHeight)
+  searchContent.prefWidth <== prefWidth
 }
 
-class SearcherButton(searchContent: SearchContent, searchInput: SearchInput) extends Button("搜索") {
+class SearcherPane(searchInput: SearchInput) extends HBox {
+  prefHeight = 60
+  fillHeight = false
+  style = "-fx-background-color: #66ccff; -fx-alignment: center;"
+
+  val label = new Label("搜索关键词") {
+    prefWidth = 90
+    style = "-fx-alignment: center;"
+  }
+
+  val inputContent = new HBox {
+    style = "-fx-alignment: center-left;"
+    children = searchInput
+  }
+
+  children = List(
+    label,
+    inputContent)
+
+  inputContent.prefWidth <== (prefWidth - label.prefWidth)
+  searchInput.prefWidth <== inputContent.prefWidth * 0.90
+
+}
+
+class SearchInput(searchContent: SearchContent)(implicit ec: ExecutionContext) extends TextField {
+  self =>
+
   prefHeight = 30
-  handleEvent(MouseEvent.MouseClicked) {
-    event: MouseEvent =>
+
+  text.addListener(new ChangeListener[String] {
+    override def changed(observable: ObservableValue[_ <: String], oldValue: String, newValue: String): Unit = {
       Future {
-        FileSearch.search(searchInput.text.get()).map { info =>
+        FileSearch.search(self.text.get()).map { info =>
           Platform.runLater(() => {
             searchContent.content = new VBox {
               children = info.map { eachInfo =>
@@ -36,18 +65,22 @@ class SearcherButton(searchContent: SearchContent, searchInput: SearchInput) ext
 
                     val fileName = eachInfo.fileNameFlow
                     (fileName: Region).prefWidth <== searchContent.width - 200
-                    (fileName: Region).prefHeight = 23
 
                     val content = eachInfo.contentFlow
                     (content: Region).prefWidth <== searchContent.width
 
+                    val titleContent = new HBox {
+                      prefHeight <== ((fileName: Region).prefHeight + 10)
+                      style = "-fx-background-color: #eeeeee; -fx-alignment: center-left; -fx-padding: 8px 0px 6px 0px;"
+                      fillHeight = false
+                      children = List(
+                        fileName: Node,
+                        eachInfo.fileBtn: Node,
+                        eachInfo.dirBtn)
+                    }
+
                     children = List(
-                      new HBox {
-                        children = List(
-                          fileName: Node,
-                          eachInfo.fileBtn: Node,
-                          eachInfo.dirBtn)
-                      },
+                      titleContent,
                       new HBox {
                         children = content: Node
                       })
@@ -58,13 +91,9 @@ class SearcherButton(searchContent: SearchContent, searchInput: SearchInput) ext
           })
         }
       }
-      ()
-  }
+    }
+  })
 
-}
-
-class SearchInput() extends TextField {
-  prefHeight = 30
 }
 
 class SearchContent() extends ScrollPane {

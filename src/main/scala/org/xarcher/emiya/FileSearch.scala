@@ -1,37 +1,29 @@
 package org.xarcher.xPhoto
 
 import java.awt.Desktop
-import java.io.{ File, IOException }
-import java.nio.file.{ Files, Path, Paths }
-import java.util.{ Date, Timer, TimerTask }
+import java.io.File
+import java.nio.file.Paths
 
-import org.apache.commons.io.IOUtils
 import org.apache.lucene.analysis.cjk.CJKAnalyzer
-import org.apache.lucene.document._
-import org.apache.lucene.index.{ DirectoryReader, IndexWriter, IndexWriterConfig }
+import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.highlight.{ Highlighter, QueryScorer, SimpleFragmenter, SimpleHTMLFormatter }
 import org.apache.lucene.store.FSDirectory
-import org.fxmisc.richtext.InlineCssTextArea
+import org.fxmisc.richtext.{ InlineCssTextArea, StyledTextArea }
 
 import scalafx.Includes._
-import scala.annotation.tailrec
-import scala.collection.mutable
-import scala.concurrent.{ Future, Promise }
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{ Failure, Success, Try }
-import scalafx.scene.Node
+import scala.concurrent.{ ExecutionContext, Future }
 import scalafx.scene.control.Button
 import scalafx.scene.input.MouseEvent
-import scalafx.scene.paint.Color
-import scalafx.scene.text.{ Font, Text, TextFlow }
+import scalafx.scene.layout.Region
+import scalafx.scene.text.TextAlignment
 
 object FileSearch {
 
   val path = "./lucenceTemp"
 
-  def search(keyWord: String): Future[List[OutputInfo]] = {
+  def search(keyWord: String)(implicit ec: ExecutionContext): Future[List[OutputInfo]] = {
     var indexSearcher: IndexSearcher = null
     val f = Future {
       val directory = FSDirectory.open(Paths.get(path))
@@ -93,13 +85,19 @@ case class OutputInfo(filePath: String, fileName: String, content: String) {
         }
     }*/
 
-    val textArea = new InlineCssTextArea(str2.mkString(""))
+    val height = 16
+    val str = str2.mkString("")
+    val textArea = new InlineCssTextArea(str)
+    //val text1 = StyledTextArea.createStyledTextNode[String](str2.mkString(""), "-fx-alignment: center;", (s, t) => { s.textAlignment = TextAlignment.Center })
     textArea.setWrapText(true)
     textArea.setEditable(false)
+    textArea.setStyle(0, str.length, s"-fx-font-size: ${height}px;")
+    (textArea: Region).prefHeight = height + 10
+    textArea.style = "-fx-background-color: #eeeeee;"
     str2.map(_.length).zipWithIndex.foldLeft(0) {
       case (start, (len, index)) =>
         if (index % 2 == 1) {
-          textArea.setStyle(start, start + len, "-fx-fill: red;")
+          textArea.setStyle(start, start + len, s"-fx-fill: red; -fx-font-size: ${height}px;")
         }
         start + len
     }

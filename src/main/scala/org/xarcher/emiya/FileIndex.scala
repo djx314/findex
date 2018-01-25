@@ -16,13 +16,12 @@ import org.xarcher.cpoi.{ CPoi, PoiOperations }
 
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.concurrent.{ Future, Promise }
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
 object FileIndex {
 
-  val txtGen: Path => Future[Either[Throwable, String]] = { path =>
+  def txtGen(implicit ec: ExecutionContext): Path => Future[Either[Throwable, String]] = { path =>
     Future {
       Try {
         IOUtils.toString(path.toUri.toURL, "utf-8")
@@ -30,7 +29,7 @@ object FileIndex {
     }
   }
 
-  val poiGen: Path => Future[Either[Throwable, String]] = { path =>
+  def poiGen(implicit ec: ExecutionContext): Path => Future[Either[Throwable, String]] = { path =>
     Future {
       val workbook = Try {
         Try {
@@ -47,7 +46,7 @@ object FileIndex {
     }
   }
 
-  val htmlGen: Path => Future[Either[Throwable, String]] = { path =>
+  def htmlGen(implicit ec: ExecutionContext): Path => Future[Either[Throwable, String]] = { path =>
     Future {
       Try {
         Jsoup.parse(path.toFile, "utf-8").text()
@@ -55,7 +54,7 @@ object FileIndex {
     }
   }
 
-  val docPoiGen: Path => Future[Either[Throwable, String]] = path =>
+  def docPoiGen(implicit ec: ExecutionContext): Path => Future[Either[Throwable, String]] = path =>
     Future {
       Try {
         Try {
@@ -79,8 +78,9 @@ object FileIndex {
       }
     }
 
-  val indexer: Map[String, Path => Future[Either[Throwable, String]]] = Map(
+  def indexer(implicit ec: ExecutionContext): Map[String, Path => Future[Either[Throwable, String]]] = Map(
     "txt" -> txtGen,
+    "log" -> txtGen,
     "js" -> txtGen,
     "scala" -> txtGen,
     "java" -> txtGen,
@@ -101,7 +101,7 @@ object FileIndex {
   import FileTables._
   import FileTables.profile.api._
 
-  def index(file: Path): Future[Int] = {
+  def index(file: Path)(implicit ec: ExecutionContext): Future[Int] = {
     val writer = writerGen
 
     //val fileQueue = mutable.Queue.empty[File]
@@ -308,7 +308,7 @@ object FileIndex {
 
   val path = "./lucenceTemp"
 
-  def indexFile(file: Path, id: Int): Future[Either[Int, IndexInfo]] = {
+  def indexFile(file: Path, id: Int)(implicit ec: ExecutionContext): Future[Either[Int, IndexInfo]] = {
     val fileName = file.getFileName.toString
     indexer.find { case (extName, _) => fileName.endsWith(s".${extName}") }.map(_._2).map(_.apply(file).map { strEither =>
       strEither.right.map { str =>
