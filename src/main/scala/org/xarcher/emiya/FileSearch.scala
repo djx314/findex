@@ -126,7 +126,7 @@ case class OutputInfo(filePath: String, fileName: String, content: String) {
           }
         }*/
     val textArea = new InlineCssTextArea(str2.mkString(""))
-    //textArea.setWrapText(true)
+    textArea.setWrapText(true)
     textArea.setEditable(false)
     str2.map(_.length).zipWithIndex.foldLeft(0) {
       case (start, (len, index)) =>
