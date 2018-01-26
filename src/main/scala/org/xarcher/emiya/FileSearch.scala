@@ -14,9 +14,11 @@ import org.fxmisc.richtext.{ InlineCssTextArea, StyledTextArea }
 
 import scalafx.Includes._
 import scala.concurrent.{ ExecutionContext, Future }
+import scalafx.geometry.Insets
 import scalafx.scene.control.Button
 import scalafx.scene.input.MouseEvent
-import scalafx.scene.layout.Region
+import scalafx.scene.layout.{ Background, BackgroundFill, CornerRadii, Region }
+import scalafx.scene.paint.Paint
 import scalafx.scene.text.TextAlignment
 
 object FileSearch {
@@ -69,31 +71,16 @@ case class OutputInfo(filePath: String, fileName: String, content: String) {
 
   def fileNameFlow: InlineCssTextArea = {
     val strs = fileName.split("\\|\\|\\|").toList
-    //val strs1 = if (strs.startsWith("|||")) strs else "" :: strs
-    val str2 = strs /*.zipWithIndex.map {
-      case (item, index) =>
-        if (index % 2 == 1) {
-          new Text(item) {
-            font = Font.font("微软雅黑", 16)
-            fill = Color.Red
-          }
-        } else {
-          new Text(item) {
-            font = Font.font("微软雅黑", 16)
-            fill = Color.Black
-          }
-        }
-    }*/
+    val str2 = strs
 
     val height = 16
     val str = str2.mkString("")
     val textArea = new InlineCssTextArea(str)
-    //val text1 = StyledTextArea.createStyledTextNode[String](str2.mkString(""), "-fx-alignment: center;", (s, t) => { s.textAlignment = TextAlignment.Center })
     textArea.setWrapText(true)
     textArea.setEditable(false)
     textArea.setStyle(0, str.length, s"-fx-font-size: ${height}px;")
     (textArea: Region).prefHeight = height + 10
-    textArea.style = "-fx-background-color: #eeeeee;"
+    textArea.background = new Background(Array(new BackgroundFill(Paint.valueOf("#eeeeee"), CornerRadii.Empty, Insets.Empty)))
     str2.map(_.length).zipWithIndex.foldLeft(0) {
       case (start, (len, index)) =>
         if (index % 2 == 1) {
@@ -109,20 +96,7 @@ case class OutputInfo(filePath: String, fileName: String, content: String) {
 
   def contentFlow: InlineCssTextArea = {
     val strs = content.split("\\|\\|\\|").toList
-    //val strs1 = if (strs.startsWith("|||")) strs else "" :: strs
-    val str2 = strs /*.zipWithIndex.map {
-      case (item, index) =>
-        if (index % 2 == 1) {
-          new Text(item) {
-            font = Font.font("微软雅黑", 16)
-            fill = Color.Red
-          }
-        } else {
-          new Text(item) {
-            font = Font.font("微软雅黑", 16)
-            fill = Color.Black
-          }
-        }*/
+    val str2 = strs
     val textArea = new InlineCssTextArea(str2.mkString(""))
     textArea.setWrapText(true)
     textArea.setEditable(false)

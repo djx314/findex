@@ -1,4 +1,4 @@
-package org.xarcher.emiya.views
+package org.xarcher.emiya.views.index
 
 import java.io.File
 
@@ -75,14 +75,7 @@ class FileList() extends ListView[ListDirModel] {
       println(a.toString)
       println(b.toString)
   }
-  /*type LEditEvent[T] = javafx.scene.control.ListView.EditEvent[T]
 
-  handleEvent(javafx.scene.control.ListView.editAnyEvent[ListDirModel]: EventType[LEditEvent[ListDirModel]]) {
-    { e: ListView.EditEvent[ListDirModel] =>
-      println("1111")
-      ()
-    }
-  }*/
   cellFactory = { _ => new Aa() }
 
   class Aa extends javafx.scene.control.ListCell[ListDirModel] {
