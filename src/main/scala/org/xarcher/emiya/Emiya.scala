@@ -12,7 +12,9 @@ object Emiya extends JFXApp {
   private lazy val fileSelectButton = wire[FileSelectButton]
   private lazy val startIndexButton = wire[StartIndexButton]
   private lazy val indexController: IndexController = wire[IndexController]
-  private lazy val searchInput = wire[SearchInput]
+  private lazy val FuzzySearchInput = wire[FuzzySearchInput]
+  private lazy val ExactSearchInput = wire[ExactSearchInput]
+  private lazy val DoSearch = wire[DoSearch]
   private lazy val searchContent = wire[SearchContent]
   private lazy val SearcherPane = wire[SearcherPane]
   private lazy val searchController: SearchController = wire[SearchController]
@@ -26,7 +28,7 @@ object Emiya extends JFXApp {
   stage = new JFXApp.PrimaryStage {
     title.value = "喵喵酱的文件搜索"
     height = 600
-    width = 600
+    width = 800
     scene = cusScene
   }
 
