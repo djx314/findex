@@ -17,6 +17,7 @@ object Emiya extends JFXApp {
   private lazy val SearcherPane = wire[SearcherPane]
   private lazy val searchController: SearchController = wire[SearchController]
   private lazy val parentBox: ParentBox = wire[ParentBox]
+  private lazy val fileList = wire[FileList]
 
   private lazy val cusScene = new Scene {
     content = parentBox
