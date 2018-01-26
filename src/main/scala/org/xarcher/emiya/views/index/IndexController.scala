@@ -7,30 +7,34 @@ import org.xarcher.xPhoto.FileIndex
 import scala.concurrent.ExecutionContext
 import scalafx.Includes._
 import scalafx.collections.ObservableBuffer
-import scalafx.event.{ ActionEvent, Event, EventIncludes, EventType }
+import scalafx.event.ActionEvent
 import scalafx.scene.Node
 import scalafx.scene.control._
+import scalafx.scene.image.ImageView
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout._
-import scalafx.scene.text.Text
+import scalafx.scene.text.{ Font, Text }
 import scalafx.stage.{ DirectoryChooser, Stage }
 
-class IndexController(fileSelectButton: FileSelectButton, startIndexButton: StartIndexButton, fileList: FileList)(implicit ec: ExecutionContext) extends VBox {
-  style = "-fx-alignment: center;"
-  children = List(
-    fileSelectButton,
-    startIndexButton,
-    fileList)
+class IndexController(fileSelectButton: FileSelectButton, startIndexButton: StartIndexButton, fileList: FileList)(implicit ec: ExecutionContext) extends BorderPane {
+  top = new HBox {
+    children = List(fileSelectButton, startIndexButton)
+  }
+  center = fileList
 }
 
 class SelectedFile() {
   var indexDirOpt: Option[File] = Option.empty
 }
 
-class FileSelectButton(stage: Stage, selectedFile: SelectedFile) extends Button("文件选择") {
+class FileSelectButton(stage: Stage, selectedFile: SelectedFile) extends Button("", new ImageView(getClass.getResource("/add.png").toURI.toASCIIString)) {
 
-  handleEvent(MouseEvent.MouseClicked) {
-    event: MouseEvent =>
+  tooltip = new Tooltip("增加索引目录") {
+    font = Font(14)
+  }
+
+  onAction = {
+    event: ActionEvent =>
       val file = new DirectoryChooser {
         selectedFile.indexDirOpt.map(f => initialDirectory = f)
         title = "选择索引文件"
@@ -41,10 +45,14 @@ class FileSelectButton(stage: Stage, selectedFile: SelectedFile) extends Button(
 
 }
 
-class StartIndexButton(selectedFile: SelectedFile)(implicit ec: ExecutionContext) extends Button("开始索引") {
+class StartIndexButton(selectedFile: SelectedFile)(implicit ec: ExecutionContext) extends Button("", new ImageView(getClass.getResource("/arrow_right.png").toURI.toASCIIString)) {
 
-  handleEvent(MouseEvent.MouseClicked) {
-    event: MouseEvent =>
+  tooltip = new Tooltip("开始索引选中目录") {
+    font = Font(14)
+  }
+
+  onAction = {
+    event: ActionEvent =>
       selectedFile.indexDirOpt.map(file =>
         FileIndex.index(file.toPath).map { (_: Int) =>
           new Alert(Alert.AlertType.Information) {

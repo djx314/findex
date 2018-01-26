@@ -81,6 +81,7 @@ object FileIndex {
   def indexer(implicit ec: ExecutionContext): Map[String, Path => Future[Either[Throwable, String]]] = Map(
     "txt" -> txtGen,
     "log" -> txtGen,
+    "json" -> txtGen,
     "js" -> txtGen,
     "scala" -> txtGen,
     "java" -> txtGen,

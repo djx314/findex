@@ -14,7 +14,7 @@ class SearchController(searcherPane: SearcherPane, resultContent: ResultContent)
   top = searcherPane
   center = resultContent
 
-  searcherPane.prefWidth <== prefWidth
+  searcherPane.prefWidth <== width
   /*resultContent.prefHeight <== (height - searcherPane.prefHeight)
   resultContent.prefWidth <== prefWidth*/
 }

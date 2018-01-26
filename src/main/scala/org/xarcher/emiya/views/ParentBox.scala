@@ -5,12 +5,10 @@ import org.xarcher.emiya.views.search.SearchController
 
 import scalafx.scene.layout._
 
-class ParentBox(indexController: IndexController, searchController: SearchController) extends HBox {
-  fillHeight = true
-  children = List(
-    indexController,
-    searchController)
+class ParentBox(indexController: IndexController, searchController: SearchController) extends BorderPane {
+
+  left = indexController
+  center = searchController
 
   indexController.prefWidth <== width * 0.2
-  searchController.prefWidth <== width * 0.8
 }

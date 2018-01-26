@@ -15,6 +15,7 @@ import org.fxmisc.richtext.{ InlineCssTextArea, StyledTextArea }
 import scalafx.Includes._
 import scala.concurrent.{ ExecutionContext, Future }
 import scalafx.geometry.Insets
+import scalafx.scene.Node
 import scalafx.scene.control.Button
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{ Background, BackgroundFill, CornerRadii, Region }
