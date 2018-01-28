@@ -11,9 +11,7 @@ val printlnDo = println("""
 """.stripMargin
 )
 
-val gitInit = taskKey[String]("miao")
-
-lazy val xPhoto = (project in file("."))
+lazy val fIndex = (project in file("."))
 
 fork := true
 

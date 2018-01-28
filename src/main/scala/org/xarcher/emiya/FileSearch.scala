@@ -79,9 +79,10 @@ case class OutputInfo(filePath: String, fileName: String, content: String) {
     val textArea = new InlineCssTextArea(str)
     textArea.setWrapText(true)
     textArea.setEditable(false)
-    textArea.setStyle(0, str.length, s"-fx-font-size: ${height}px;")
     (textArea: Region).prefHeight = height + 10
     textArea.background = new Background(Array(new BackgroundFill(Paint.valueOf("#eeeeee"), CornerRadii.Empty, Insets.Empty)))
+
+    textArea.setStyle(0, str.length, s"-fx-font-size: ${height}px;")
     str2.map(_.length).zipWithIndex.foldLeft(0) {
       case (start, (len, index)) =>
         if (index % 2 == 1) {
@@ -89,29 +90,30 @@ case class OutputInfo(filePath: String, fileName: String, content: String) {
         }
         start + len
     }
+
     textArea
-    /*new TextFlow {
-      children = textArea: Node
-    }*/
   }
 
   def contentFlow: InlineCssTextArea = {
+    val fontSize = 14
     val strs = content.split("\\|\\|\\|").toList
-    val str2 = strs
-    val textArea = new InlineCssTextArea(str2.mkString(""))
+    val textArea = new InlineCssTextArea(strs.mkString(""))
+    (textArea: Region).prefHeight = fontSize * 9
     textArea.setWrapText(true)
     textArea.setEditable(false)
-    str2.map(_.length).zipWithIndex.foldLeft(0) {
+    val strsLength = strs.map(_.length)
+    val toatalLength = strsLength.sum
+
+    textArea.setStyle(0, toatalLength, s"-fx-font-size: ${fontSize}px;")
+    strsLength.zipWithIndex.foldLeft(0) {
       case (start, (len, index)) =>
         if (index % 2 == 1) {
-          textArea.setStyle(start, start + len, "-fx-fill: red;")
+          textArea.setStyle(start, start + len, s"-fx-fill: red; -fx-font-size: ${fontSize}px;")
         }
         start + len
     }
+
     textArea
-    /*new TextFlow {
-      children = textArea: Node
-    }*/
   }
 
   def fileBtn: Button = new Button("打开文件") {

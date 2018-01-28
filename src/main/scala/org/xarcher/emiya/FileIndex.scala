@@ -113,13 +113,14 @@ object FileIndex {
       val f = if (!rootDir.isDirectory) {
         Future.successful(true)
       } else {
-        db.run {
-          DirectoryPrepare.delete
+        writeDB.run {
+          schema.create >>
+            DirectoryPrepare.delete
         }.flatMap((_: Int) =>
-          db.run {
+          writeDB.run {
             FilePrepare.delete
           }).flatMap((_: Int) =>
-          db.run {
+          writeDB.run {
             DirectoryPrepare
               .returning(DirectoryPrepare.map(_.id))
               .into((dir, id) => dir.copy(id = id)) += DirectoryPrepareRow(
@@ -162,9 +163,9 @@ object FileIndex {
           isFinish = false)
       }
 
-      val addFileNotesAction = db.run(DBIO.seq(addSubDirsAction, updateDirStateAction, addSubFilesAction).transactionally).map(_ => 2)
+      val addFileNotesAction = writeDB.run((addSubDirsAction >> updateDirStateAction >> addSubFilesAction).transactionally).map((_: Option[Int]) => 2)
 
-      addFileNotesAction.flatMap((_: Int) => db.run(DirectoryPrepare.filter(_.isFinish === false).take(100).result)).flatMap {
+      addFileNotesAction.flatMap((_: Int) => db.run(DirectoryPrepare.filter(_.isFinish === false).take(6).result)).flatMap {
         case newDirs if newDirs.isEmpty =>
           Future.successful(true)
         case newDirs =>
@@ -174,7 +175,7 @@ object FileIndex {
 
     def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
       val isIndexing = !isFetchFileFinished()
-      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(20).result)
+      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(6).result)
 
       (for {
         fileList <- fileListF
@@ -201,7 +202,7 @@ object FileIndex {
               case Left(id) =>
                 id -> 0
             }: Seq[(Int, Int)]
-            db.run(
+            writeDB.run(
               FilePrepare.filter(_.id inSetBind ids.map(_._1)).map(_.isFinish).update(true).transactionally)
               .map(_ => sum + ids.map(_._2).sum).flatMap(newSum => tranFiles(newSum, isFetchFileFinished))
           }: Future[Int]

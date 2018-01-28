@@ -1,13 +1,50 @@
 package org.xarcher.xPhoto
 
-import slick.jdbc.{ JdbcProfile, SQLiteProfile }
+import org.xarcher.emiya.utils.FutureLimited
+import slick.jdbc.{ H2Profile, JdbcProfile, SQLiteProfile }
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.Failure
 
 object FileTables extends FileTables {
-  override val profile: SQLiteProfile = SQLiteProfile
+  override val profile: H2Profile = H2Profile
+
+  val fLimited = FutureLimited.create(0)
 
   import profile.api._
 
-  val db = Database.forURL(driver = "org.sqlite.JDBC", url = "jdbc:sqlite:./file_db.db3")
+  trait ExtDB {
+    @volatile var count = 0
+
+    protected val db: Database
+    final def run[R](a: DBIOAction[R, NoStream, Nothing]): Future[R] = {
+      val c = count
+      println(s"开始$c")
+      fLimited.limit(() => db.run(a)).map {
+        result =>
+          println(s"完成$c")
+          count += 1
+          result
+      }
+    }
+  }
+
+  val db = try {
+    Database.forURL(driver = "org.h2.Driver", url = "jdbc:h2:./file_db.h2")
+  } catch {
+    case e: Exception =>
+      e.printStackTrace
+      throw e
+  }
+
+  val writeDB: ExtDB = {
+    val db1 = db
+    new ExtDB {
+      override protected val db = db1
+    }
+  }
+
 }
 
 trait FileTables {
@@ -15,6 +52,8 @@ trait FileTables {
   val profile: JdbcProfile
 
   import profile.api._
+
+  val schema = FilePrepare.schema ++ DirectoryPrepare.schema
 
   case class FilePrepareRow(
     id: Int,
