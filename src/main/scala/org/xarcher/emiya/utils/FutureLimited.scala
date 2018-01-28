@@ -186,7 +186,7 @@ class FutureLimited(val exceptWeight: Int, val name: String, limitedActor: Actor
       timer.schedule(new TimerTask() {
         override def run(): Unit = {
           if (!aa.isCompleted) {
-            println("12" * 50 + s"${name}-${key}-未完成")
+            println(s"actor 限流逻辑执行异常-${name}-${key}-未完成")
           } else {
             //println(s"${name}-${key}-已完成")
             timer.cancel()
