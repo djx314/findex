@@ -10,33 +10,28 @@ import scala.util.Failure
 object FileTables extends FileTables {
   override val profile: H2Profile = H2Profile
 
-  val fLimited = FutureLimited.create(0)
+  val fLimited = FutureLimited.create(20, "dbPool")
 
   import profile.api._
 
   trait ExtDB {
-    @volatile var count = 0
+    //@volatile var count = 0
 
     protected val db: Database
     final def run[R](a: DBIOAction[R, NoStream, Nothing]): Future[R] = {
-      val c = count
+      /*val c = count
+      count += 1
       println(s"开始$c")
       fLimited.limit(() => db.run(a)).map {
         result =>
           println(s"完成$c")
-          count += 1
           result
-      }
+      }*/
+      fLimited.limit(() => db.run(a))
     }
   }
 
-  lazy val db = try {
-    Database.forURL(driver = "org.h2.Driver", url = "jdbc:h2:./file_db.h2")
-  } catch {
-    case e: Exception =>
-      e.printStackTrace
-      throw e
-  }
+  lazy val db = Database.forURL(driver = "org.h2.Driver", url = "jdbc:h2:./file_db.h2")
 
   lazy val writeDB: ExtDB = {
     val db1 = db

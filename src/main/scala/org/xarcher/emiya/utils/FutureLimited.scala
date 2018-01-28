@@ -1,5 +1,6 @@
 package org.xarcher.emiya.utils
 
+import java.util.Timer
 import java.util.concurrent.Executors
 
 import scala.collection.mutable
@@ -13,10 +14,10 @@ trait FutureWrapper {
 
 }
 
-class FutureLimited(exceptWeight: Int)(implicit ec: ExecutionContext) {
+class FutureLimited(val exceptWeight: Int, val name: String)(implicit ec: ExecutionContext) {
 
-  protected val futureQueue = mutable.Queue[FutureWrapper]()
-  protected val executeQueue = mutable.Queue[FutureWrapper]()
+  protected val futureQueue = mutable.Queue.empty[FutureWrapper]
+  protected val executeQueue = mutable.Queue.empty[FutureWrapper]
 
   @volatile protected var execAction: Future[Boolean] = Future.successful(true)
 
@@ -27,8 +28,28 @@ class FutureLimited(exceptWeight: Int)(implicit ec: ExecutionContext) {
     false
   }
 
+  {
+    import java.util.TimerTask
+    val timer = new Timer()
+    timer.schedule(new TimerTask() {
+      override def run(): Unit = {
+        println(s"${name}-futureQueue:${futureQueue.size}")
+        println(s"${name}-executeQueue:${executeQueue.size}")
+        println(s"${name}-executeQueueIsSuccess:${executeQueue.map(_.runFuture.isCompleted).toList}")
+        def needRun = executeQueue.map(_.weight).sum > exceptWeight
+        println(s"bb-${name}-${executeQueue.map(_.weight).sum}-${exceptWeight}-${needRun}")
+      }
+    }, 1000, 1000)
+  }
+
   protected def loop(): Future[Boolean] = {
     def needRun = executeQueue.map(_.weight).sum > exceptWeight
+    if (!name.startsWith("db")) {
+      (name).toString
+      (executeQueue.map(_.weight).sum).toString
+      (needRun).toString
+      //println(s"aa-${name}-${executeQueue.map(_.weight).sum}-${exceptWeight}-${needRun}")
+    }
     if (needRun) {
       val queue = executeQueue.dequeueAll(_ => true)
       Future.sequence(queue.map(_.runFuture)).flatMap((_: Seq[Boolean]) => loop())
@@ -38,6 +59,8 @@ class FutureLimited(exceptWeight: Int)(implicit ec: ExecutionContext) {
       }
       firstF match {
         case Success(first) =>
+          //println(name + "22" * 100)
+          //println(first.toString)
           executeQueue += first
           loop()
         case Failure(_) =>
@@ -49,8 +72,27 @@ class FutureLimited(exceptWeight: Int)(implicit ec: ExecutionContext) {
             }
           }
           Future.successful(true)*/
+          //println("33" * 100)
           val queue = executeQueue.dequeueAll(_ => true)
-          Future.sequence(queue.map(_.runFuture)).map((_: Seq[Boolean]) => true)
+          val result = Future.sequence(queue.map(_.runFuture))
+          result.map { s =>
+            if (!name.startsWith("db")) {
+              println("bb" * 8 + s"-${name}-${s.toList}")
+            }
+          }.recover {
+            case e: Exception =>
+              e.printStackTrace
+          }
+          result.flatMap((_: Seq[Boolean]) =>
+            if (futureQueue.isEmpty) {
+              Future.successful(true)
+            } else {
+              loop()
+            })
+        case s =>
+          //println("11" * 100)
+          //println(s.toString)
+          Future.successful(true)
       }
     }
   }
@@ -64,7 +106,7 @@ class FutureLimited(exceptWeight: Int)(implicit ec: ExecutionContext) {
     val promise = Promise[T]
 
     val wrapper: FutureWrapper = new FutureWrapper {
-      override def runFuture: Future[Boolean] = {
+      override lazy val runFuture: Future[Boolean] = {
         val endPromise = Promise[Boolean]
         futureFunc().onComplete {
           case Success(r) =>
@@ -90,8 +132,8 @@ class FutureLimited(exceptWeight: Int)(implicit ec: ExecutionContext) {
 }
 
 object FutureLimited {
-  def create(exceptWeight: Int): FutureLimited = {
+  def create(exceptWeight: Int, name: String): FutureLimited = {
     val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(8))
-    new FutureLimited(exceptWeight)(ec)
+    new FutureLimited(exceptWeight, name)(ec)
   }
 }

@@ -2,6 +2,7 @@ package org.xarcher.xPhoto
 
 import java.io.{ File, FileInputStream, IOException }
 import java.nio.file.{ Files, Path, Paths }
+import java.util.concurrent.Executors
 import java.util.{ Date, Timer, TimerTask }
 
 import org.apache.commons.io.IOUtils
@@ -13,6 +14,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.jsoup.Jsoup
 import org.xarcher.cpoi.{ CPoi, PoiOperations }
+import org.xarcher.emiya.utils.FutureLimited
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -20,6 +22,9 @@ import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
 object FileIndex {
+
+  val indexLimited = FutureLimited.create(20, "fileIndexPool")
+  val indexEc = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(2333))
 
   def txtGen(implicit ec: ExecutionContext): Path => Future[Either[Throwable, String]] = { path =>
     Future {
@@ -102,6 +107,45 @@ object FileIndex {
   import FileTables._
   import FileTables.profile.api._
 
+  def fetchFiles(dirs: List[DirectoryPrepareRow]): Future[Boolean] = {
+    implicit val ec = indexEc
+    Future {
+      val subFiles = dirs.flatMap(eachDir => new File(eachDir.dirPath).listFiles().toList.map(s => s -> eachDir.id))
+      val subDirs = subFiles.filter(_._1.isDirectory)
+      val simpleFiles = subFiles.filterNot(_._1.isDirectory)
+      val filesToIndex = simpleFiles.filter {
+        s =>
+          s._1.length < (1024 * 1024 * 6)
+      }
+
+      val addSubDirsAction = DirectoryPrepare ++= subDirs.map { dir =>
+        DirectoryPrepareRow(
+          id = -1,
+          dirPath = dir._1.toPath.toRealPath().toString,
+          isFinish = false)
+      }
+
+      val updateDirStateAction = DirectoryPrepare.filter(_.id inSet dirs.map(_.id)).map(_.isFinish).update(true)
+
+      val addSubFilesAction = FilePrepare ++= filesToIndex.map { file =>
+        FilePrepareRow(
+          id = -1,
+          parentDirId = file._2,
+          filePath = file._1.toPath.toRealPath().toString,
+          isFinish = false)
+      }
+
+      val addFileNotesAction = writeDB.run((addSubDirsAction >> updateDirStateAction >> addSubFilesAction).transactionally).map((_: Option[Int]) => 2)
+
+      addFileNotesAction.flatMap((_: Int) => db.run(DirectoryPrepare.filter(_.isFinish === false).take(4).result)).flatMap {
+        case newDirs if newDirs.isEmpty =>
+          Future.successful(true)
+        case newDirs =>
+          fetchFiles(newDirs.toList)
+      }
+    }.flatten
+  }
+
   def index(file: Path)(implicit ec: ExecutionContext): Future[Int] = {
     val writer = writerGen
 
@@ -135,48 +179,10 @@ object FileIndex {
       }*/
     }
 
-    def fetchFiles(dirs: List[DirectoryPrepareRow]): Future[Boolean] = {
-      //println("1111" + eachDir.getCanonicalFile.toString)
-      val subFiles = dirs.flatMap(eachDir => new File(eachDir.dirPath).listFiles().toList.map(s => s -> eachDir.id))
-      //val subFiles = eachDir.listFiles().toList
-      val subDirs = subFiles.filter(_._1.isDirectory)
-      val simpleFiles = subFiles.filterNot(_._1.isDirectory)
-      val filesToIndex = simpleFiles.filter {
-        s =>
-          s._1.length < (1024 * 1024 * 6)
-      }
-
-      val addSubDirsAction = DirectoryPrepare ++= subDirs.map { dir =>
-        DirectoryPrepareRow(
-          id = -1,
-          dirPath = dir._1.toPath.toRealPath().toString,
-          isFinish = false)
-      }
-
-      val updateDirStateAction = DirectoryPrepare.filter(_.id inSet dirs.map(_.id)).map(_.isFinish).update(true)
-
-      val addSubFilesAction = FilePrepare ++= filesToIndex.map { file =>
-        FilePrepareRow(
-          id = -1,
-          parentDirId = file._2,
-          filePath = file._1.toPath.toRealPath().toString,
-          isFinish = false)
-      }
-
-      val addFileNotesAction = writeDB.run((addSubDirsAction >> updateDirStateAction >> addSubFilesAction).transactionally).map((_: Option[Int]) => 2)
-
-      addFileNotesAction.flatMap((_: Int) => db.run(DirectoryPrepare.filter(_.isFinish === false).take(6).result)).flatMap {
-        case newDirs if newDirs.isEmpty =>
-          Future.successful(true)
-        case newDirs =>
-          fetchFiles(newDirs.toList)
-      }
-    }
-
     def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
       val isIndexing = !isFetchFileFinished()
-      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(6).result)
-
+      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(200).result)
+      println(s"是否已查找文件完毕：${isIndexing}")
       (for {
         fileList <- fileListF
       } yield {
@@ -187,11 +193,29 @@ object FileIndex {
         } else if (!fileList.isEmpty) {
           //println("22222222222222222222222222222222222222222")
           val listF = Future.sequence(fileList.map { f =>
-            val file = new File(f.filePath)
-            indexFile(file.toPath, f.id)
+
+            indexLimited.limit(() => {
+              val file = new File(f.filePath)
+              //println(s"${new Date().toString}，正在索引：${f.filePath}")
+              indexFile(file.toPath, f.id).flatMap {
+                case Right(info) =>
+                  Future {
+                    val document = new Document()
+                    document.add(new TextField("fileName", info.fileName, Field.Store.YES))
+                    document.add(new TextField("content", info.content, Field.Store.YES))
+                    document.add(new TextField("filePath", info.filePath, Field.Store.YES))
+                    writer.addDocument(document)
+                    //println(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
+                    info.dbId -> 1
+                  }(indexEc)
+                case Left(id) =>
+                  //println(s"${new Date().toString}，索引：${f.filePath}失败")
+                  Future.successful(id -> 0)
+              }: Future[(Int, Int)]
+            })
           })
-          listF.flatMap { list =>
-            val ids = list.collect {
+          listF.flatMap { ids =>
+            /*val ids = list.collect {
               case Right(info) =>
                 val document = new Document()
                 document.add(new TextField("fileName", info.fileName, Field.Store.YES))
@@ -201,7 +225,7 @@ object FileIndex {
                 info.dbId -> 1
               case Left(id) =>
                 id -> 0
-            }: Seq[(Int, Int)]
+            }: Seq[(Int, Int)]*/
             writeDB.run(
               FilePrepare.filter(_.id inSetBind ids.map(_._1)).map(_.isFinish).update(true).transactionally)
               .map(_ => sum + ids.map(_._2).sum).flatMap(newSum => tranFiles(newSum, isFetchFileFinished))
@@ -224,7 +248,7 @@ object FileIndex {
       }
     }
 
-    def showInfo(isIndexFinished: () => Boolean): Future[Int] = {
+    /*def showInfo(isIndexFinished: () => Boolean): Future[Int] = {
       val finished = isIndexFinished()
 
       if (finished) {
@@ -262,6 +286,28 @@ object FileIndex {
         timer.schedule(task, 3000)
         promise.future.flatten
       }
+    }*/
+
+    def showInfo(isIndexFinished: () => Boolean): Future[Int] = {
+      val timer = new Timer()
+      val task = new TimerTask {
+        override def run(): Unit = {
+          lazy val indexingSizeF = db.run(FilePrepare.filter(_.isFinish === false).size.result)
+          lazy val fetchingSizeF = db.run(DirectoryPrepare.filter(_.isFinish === false).size.result)
+          indexingSizeF.zip(fetchingSizeF).map {
+            case (indexingSize, fetchingSize) =>
+              val nowisIndexFinished = isIndexFinished()
+              if (!nowisIndexFinished) {
+                println(s"还有${indexingSize}个文件正在索引列表中")
+                println(s"还有${fetchingSize}个文件夹正在正在查找子文件操作队列中")
+                println(s"是否已完成索引：${isIndexFinished()}")
+              }
+              2
+          }
+        }
+      }
+      timer.schedule(task, 3000, 3000)
+      Future.successful(1)
     }
 
     if (Files.isDirectory(file)) {
@@ -310,13 +356,13 @@ object FileIndex {
 
   val path = "./lucenceTemp"
 
-  def indexFile(file: Path, id: Int)(implicit ec: ExecutionContext): Future[Either[Int, IndexInfo]] = {
+  def indexFile(file: Path, id: Int): Future[Either[Int, IndexInfo]] = {
     val fileName = file.getFileName.toString
-    indexer.find { case (extName, _) => fileName.endsWith(s".${extName}") }.map(_._2).map(_.apply(file).map { strEither =>
+    indexer(indexEc).find { case (extName, _) => fileName.endsWith(s".${extName}") }.map(_._2).map(_.apply(file).map { strEither =>
       strEither.right.map { str =>
         IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str)
       }.left.map(_ => id)
-    }).getOrElse(Future.successful(Left(id)))
+    }(indexEc)).getOrElse(Future.successful(Left(id)))
     /*(for {
       strOpt <- strOptF
     } yield (for {

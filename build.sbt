@@ -11,7 +11,7 @@ val printlnDo = println("""
 """.stripMargin
 )
 
-lazy val fIndex = (project in file("."))
+lazy val findex = (project in file("."))
 
 fork := true
 
