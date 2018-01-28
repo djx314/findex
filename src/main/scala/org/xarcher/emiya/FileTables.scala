@@ -30,7 +30,7 @@ object FileTables extends FileTables {
     }
   }
 
-  val db = try {
+  lazy val db = try {
     Database.forURL(driver = "org.h2.Driver", url = "jdbc:h2:./file_db.h2")
   } catch {
     case e: Exception =>
@@ -38,7 +38,7 @@ object FileTables extends FileTables {
       throw e
   }
 
-  val writeDB: ExtDB = {
+  lazy val writeDB: ExtDB = {
     val db1 = db
     new ExtDB {
       override protected val db = db1
@@ -53,7 +53,7 @@ trait FileTables {
 
   import profile.api._
 
-  val schema = FilePrepare.schema ++ DirectoryPrepare.schema
+  lazy val schema = FilePrepare.schema ++ DirectoryPrepare.schema
 
   case class FilePrepareRow(
     id: Int,

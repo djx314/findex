@@ -22,3 +22,5 @@ bin
 /lucenceTemp*
 /file_db.db3
 /file_db.db3-journal
+/file_db.h2.mv.db
+/file_db.h2.trace.db

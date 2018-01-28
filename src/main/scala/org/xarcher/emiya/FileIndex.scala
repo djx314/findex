@@ -114,8 +114,8 @@ object FileIndex {
         Future.successful(true)
       } else {
         writeDB.run {
-          schema.create >>
-            DirectoryPrepare.delete
+          //schema.create >>
+          DirectoryPrepare.delete
         }.flatMap((_: Int) =>
           writeDB.run {
             FilePrepare.delete
