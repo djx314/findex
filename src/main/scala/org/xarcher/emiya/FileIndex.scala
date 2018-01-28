@@ -5,6 +5,8 @@ import java.nio.file.{ Files, Path, Paths }
 import java.util.concurrent.Executors
 import java.util.{ Date, Timer, TimerTask }
 
+import akka.actor.ActorRef
+import com.softwaremill.tagging.@@
 import org.apache.commons.io.IOUtils
 import org.apache.lucene.analysis.cjk.CJKAnalyzer
 import org.apache.lucene.document._
@@ -14,17 +16,17 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.jsoup.Jsoup
 import org.xarcher.cpoi.{ CPoi, PoiOperations }
-import org.xarcher.emiya.utils.FutureLimited
+import org.xarcher.emiya.utils.{ FutureLimited, LimitedActor }
 
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
-object FileIndex {
+class FileIndex(actor: ActorRef @@ LimitedActor, FileTables: FileTables) {
 
-  val indexLimited = FutureLimited.create(20, "fileIndexPool")
-  val indexEc = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(2333))
+  val indexLimited = FutureLimited.create(20, "fileIndexPool", actor)
+  val indexEc = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(6200))
 
   def txtGen(implicit ec: ExecutionContext): Path => Future[Either[Throwable, String]] = { path =>
     Future {
@@ -78,7 +80,7 @@ object FileIndex {
           text2007
         }
       }.toEither.left.map { e =>
-        e.printStackTrace
+        //e.printStackTrace
         e
       }
     }
@@ -87,6 +89,7 @@ object FileIndex {
     "txt" -> txtGen,
     "log" -> txtGen,
     "json" -> txtGen,
+    "md" -> txtGen,
     "js" -> txtGen,
     "scala" -> txtGen,
     "java" -> txtGen,
@@ -137,7 +140,7 @@ object FileIndex {
 
       val addFileNotesAction = writeDB.run((addSubDirsAction >> updateDirStateAction >> addSubFilesAction).transactionally).map((_: Option[Int]) => 2)
 
-      addFileNotesAction.flatMap((_: Int) => db.run(DirectoryPrepare.filter(_.isFinish === false).take(4).result)).flatMap {
+      addFileNotesAction.flatMap((_: Int) => db.run(DirectoryPrepare.filter(_.isFinish === false).take(200).result)).flatMap {
         case newDirs if newDirs.isEmpty =>
           Future.successful(true)
         case newDirs =>
@@ -173,16 +176,16 @@ object FileIndex {
                 isFinish = false)
           }.flatMap(dir => fetchFiles(List(dir))))
       }
-      f /*.map { _ =>
-        isIndexing = false
-        true
-      }*/
+      f.andThen {
+        case _ =>
+          println("查找文件完毕" * 100)
+      }
     }
 
     def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
       val isIndexing = !isFetchFileFinished()
-      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(200).result)
-      println(s"是否已查找文件完毕：${isIndexing}")
+      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(600).result)
+      //(s"是否已查找文件完毕：${!isIndexing}")
       (for {
         fileList <- fileListF
       } yield {
@@ -211,8 +214,11 @@ object FileIndex {
                 case Left(id) =>
                   //println(s"${new Date().toString}，索引：${f.filePath}失败")
                   Future.successful(id -> 0)
+              }(indexEc).andThen {
+                case Failure(e) =>
+                  e.printStackTrace
               }: Future[(Int, Int)]
-            })
+            }, s"索引文件（${f.filePath}）")
           })
           listF.flatMap { ids =>
             /*val ids = list.collect {
@@ -306,7 +312,7 @@ object FileIndex {
           }
         }
       }
-      timer.schedule(task, 3000, 3000)
+      timer.schedule(task, 4000, 4000)
       Future.successful(1)
     }
 
@@ -357,12 +363,38 @@ object FileIndex {
   val path = "./lucenceTemp"
 
   def indexFile(file: Path, id: Int): Future[Either[Int, IndexInfo]] = {
-    val fileName = file.getFileName.toString
-    indexer(indexEc).find { case (extName, _) => fileName.endsWith(s".${extName}") }.map(_._2).map(_.apply(file).map { strEither =>
-      strEither.right.map { str =>
-        IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str)
-      }.left.map(_ => id)
-    }(indexEc)).getOrElse(Future.successful(Left(id)))
+    Future {
+      val fileName = file.getFileName.toString
+      indexer(indexEc).find { case (extName, _) => fileName.endsWith(s".${extName}") }.map(_._2).map(_.apply(file).map { strEither =>
+        /*strEither.right.map { str =>
+          IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str)
+        }.left.map(_ => id)*/
+        strEither match {
+          case Right(str) =>
+            Right(IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str))
+          case Left(_) =>
+            Left(id)
+        }
+      }(indexEc).recover {
+        case e: Exception =>
+          e.printStackTrace
+          Left(id)
+      }(indexEc)).getOrElse {
+        /*{
+          import java.util.TimerTask
+          val timer = new Timer()
+          timer.schedule(new TimerTask() {
+            override def run(): Unit = {
+              println(s"不能解析的文件:${file.toRealPath().toString}")
+            }
+          }, 4000, 4000)
+        }*/
+        Future.successful(Left(id))
+      }
+    }(indexEc).flatten.andThen {
+      case Failure(e) =>
+        e.printStackTrace
+    }(indexEc)
     /*(for {
       strOpt <- strOptF
     } yield (for {

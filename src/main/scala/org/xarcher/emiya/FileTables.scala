@@ -1,16 +1,18 @@
 package org.xarcher.xPhoto
 
-import org.xarcher.emiya.utils.FutureLimited
+import akka.actor.ActorRef
+import com.softwaremill.tagging.@@
+import org.xarcher.emiya.utils.{ FutureLimited, LimitedActor }
 import slick.jdbc.{ H2Profile, JdbcProfile, SQLiteProfile }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Failure
 
-object FileTables extends FileTables {
+class FileTables(actor: ActorRef @@ LimitedActor) extends FileTables1 {
   override val profile: H2Profile = H2Profile
 
-  val fLimited = FutureLimited.create(20, "dbPool")
+  val fLimited = FutureLimited.create(20, "dbPool", actor)
 
   import profile.api._
 
@@ -27,7 +29,7 @@ object FileTables extends FileTables {
           println(s"完成$c")
           result
       }*/
-      fLimited.limit(() => db.run(a))
+      fLimited.limit(() => db.run(a), "")
     }
   }
 
@@ -42,7 +44,7 @@ object FileTables extends FileTables {
 
 }
 
-trait FileTables {
+trait FileTables1 {
 
   val profile: JdbcProfile
 

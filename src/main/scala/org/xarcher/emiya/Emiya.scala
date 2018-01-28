@@ -1,5 +1,7 @@
 package org.xarcher.xPhoto
 
+import akka.actor.{ ActorRef, ActorSystem }
+
 import scalafx.application.JFXApp
 import scalafx.scene.Scene
 import com.softwaremill.macwire._
@@ -9,9 +11,27 @@ import org.xarcher.emiya.views.search._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scalafx.scene.image.Image
+import com.softwaremill.macwire.akkasupport._
+import com.softwaremill.tagging._
+import org.xarcher.emiya.utils.LimitedActor
+
+import scala.concurrent.ExecutionContext
 
 object Emiya extends JFXApp {
 
+  private lazy val system = ActorSystem("miao-system")
+  private lazy val fileTables = wire[FileTables]
+  private lazy val FileIndex = wire[FileIndex]
+  private lazy val userFinder: ActorRef @@ LimitedActor = {
+    try {
+      //val ec1: ExecutionContext = implicitly[ExecutionContext]
+      wireAnonymousActor[LimitedActor].taggedWith[LimitedActor]
+    } catch {
+      case e: Exception =>
+        e.printStackTrace
+        throw e
+    }
+  }
   private lazy val selectedFile = wire[SelectedFile]
   private lazy val fileSelectButton = wire[FileSelectButton]
   private lazy val startIndexButton = wire[StartIndexButton]

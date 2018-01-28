@@ -45,7 +45,7 @@ class FileSelectButton(stage: Stage, selectedFile: SelectedFile) extends Button(
 
 }
 
-class StartIndexButton(selectedFile: SelectedFile)(implicit ec: ExecutionContext) extends Button("", new ImageView(getClass.getResource("/arrow_right.png").toURI.toASCIIString)) {
+class StartIndexButton(selectedFile: SelectedFile, fileIndex: FileIndex)(implicit ec: ExecutionContext) extends Button("", new ImageView(getClass.getResource("/arrow_right.png").toURI.toASCIIString)) {
 
   tooltip = new Tooltip("开始索引选中目录") {
     font = Font(14)
@@ -54,7 +54,7 @@ class StartIndexButton(selectedFile: SelectedFile)(implicit ec: ExecutionContext
   onAction = {
     event: ActionEvent =>
       selectedFile.indexDirOpt.map(file =>
-        FileIndex.index(file.toPath).map { (_: Int) =>
+        fileIndex.index(file.toPath).map { (_: Int) =>
           new Alert(Alert.AlertType.Information) {
             contentText = selectedFile.indexDirOpt.map(_ => "索引完成").getOrElse("没有文件")
           }.showAndWait()

@@ -3,6 +3,9 @@ package org.xarcher.emiya.utils
 import java.util.Timer
 import java.util.concurrent.Executors
 
+import akka.actor.ActorRef
+import com.softwaremill.tagging.@@
+
 import scala.collection.mutable
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
@@ -14,18 +17,28 @@ trait FutureWrapper {
 
 }
 
-class FutureLimited(val exceptWeight: Int, val name: String)(implicit ec: ExecutionContext) {
+class FutureLimited(val exceptWeight: Int, val name: String, limitedActor: ActorRef)(implicit ec: ExecutionContext) {
+  /*@volatile protected var futureQueue = mutable.Queue.empty[FutureWrapper]
+  @volatile protected var executeQueue = mutable.Queue.empty[FutureWrapper]
 
-  protected val futureQueue = mutable.Queue.empty[FutureWrapper]
-  protected val executeQueue = mutable.Queue.empty[FutureWrapper]
+  def addFutureWrapper(wrapper: FutureWrapper) = {
+    futureQueue += wrapper
+  }
+  def addExecWrapper(wrapper: FutureWrapper) = {
+    executeQueue += wrapper
+  }
 
   @volatile protected var execAction: Future[Boolean] = Future.successful(true)
 
-  protected def runLoop: Boolean = if (execAction.isCompleted) {
-    execAction = loop()
-    true
-  } else {
-    false
+  protected def runLoop: Boolean = this.synchronized {
+    if (execAction.isCompleted) {
+      if (execAction.isCompleted) {
+        execAction = execAction.flatMap(_ => loop())
+      }
+      true
+    } else {
+      false
+    }
   }
 
   {
@@ -36,13 +49,14 @@ class FutureLimited(val exceptWeight: Int, val name: String)(implicit ec: Execut
         println(s"${name}-futureQueue:${futureQueue.size}")
         println(s"${name}-executeQueue:${executeQueue.size}")
         println(s"${name}-executeQueueIsSuccess:${executeQueue.map(_.runFuture.isCompleted).toList}")
+        println(s"${name}-是否已完成:${execAction.isCompleted}")
         def needRun = executeQueue.map(_.weight).sum > exceptWeight
         println(s"bb-${name}-${executeQueue.map(_.weight).sum}-${exceptWeight}-${needRun}")
       }
-    }, 1000, 1000)
+    }, 4000, 4000)
   }
 
-  protected def loop(): Future[Boolean] = {
+  protected def loop(): Future[Boolean] = this.synchronized {
     def needRun = executeQueue.map(_.weight).sum > exceptWeight
     if (!name.startsWith("db")) {
       (name).toString
@@ -51,33 +65,20 @@ class FutureLimited(val exceptWeight: Int, val name: String)(implicit ec: Execut
       //println(s"aa-${name}-${executeQueue.map(_.weight).sum}-${exceptWeight}-${needRun}")
     }
     if (needRun) {
-      val queue = executeQueue.dequeueAll(_ => true)
+      val queue = { executeQueue.dequeueAll(_ => true) }
       Future.sequence(queue.map(_.runFuture)).flatMap((_: Seq[Boolean]) => loop())
     } else {
-      val firstF = Try {
-        futureQueue.dequeue()
-      }
-      firstF match {
-        case Success(first) =>
-          //println(name + "22" * 100)
-          //println(first.toString)
-          executeQueue += first
+      { futureQueue.dequeueFirst(_ => true) } match {
+        case Some(first) =>
+          //executeQueue += first
+          addExecWrapper(first)
           loop()
-        case Failure(_) =>
-          //当队列已经没有元素的时候，应当尽快结束函数以便后续元素添加
-          /*Future {
-            if (!executeQueue.isEmpty) {
-              val queue = executeQueue.dequeueAll(_ => true)
-              queue.map(_.runFuture): Seq[Future[Boolean]]
-            }
-          }
-          Future.successful(true)*/
-          //println("33" * 100)
-          val queue = executeQueue.dequeueAll(_ => true)
+        case None =>
+          val queue = { executeQueue.dequeueAll(_ => true) }
           val result = Future.sequence(queue.map(_.runFuture))
           result.map { s =>
             if (!name.startsWith("db")) {
-              println("bb" * 8 + s"-${name}-${s.toList}")
+              //println("bb" * 8 + s"-${name}-${s.toList}")
             }
           }.recover {
             case e: Exception =>
@@ -89,51 +90,123 @@ class FutureLimited(val exceptWeight: Int, val name: String)(implicit ec: Execut
             } else {
               loop()
             })
-        case s =>
-          //println("11" * 100)
-          //println(s.toString)
-          Future.successful(true)
+        //Future.successful(true)
+        //case s =>
+        //println("11" * 100)
+        //println(s.toString)
+        //Future.successful(true)
       }
     }
   }
 
-  def limit[T](futureFunc: () => Future[T]): Future[T] = {
-    limit(futureFunc, 1)
-  }
-
-  def limit[T](futureFunc: () => Future[T], weight: Int): Future[T] = {
+  def limit1111[T](futureFunc: () => Future[T], weight: Int, key: String): Future[T] = this.synchronized {
     val weight1 = weight
     val promise = Promise[T]
 
     val wrapper: FutureWrapper = new FutureWrapper {
       override lazy val runFuture: Future[Boolean] = {
         val endPromise = Promise[Boolean]
-        futureFunc().onComplete {
+        futureFunc().andThen {
           case Success(r) =>
-            promise.trySuccess(r)
+            promise.success(r)
             endPromise.trySuccess(true)
           case Failure(e) =>
-            promise.tryFailure(e)
-            endPromise.trySuccess(false)
+            e.printStackTrace
+            promise.failure(e)
+            endPromise.trySuccess(true)
         }
         endPromise.future
       }
 
       override val weight = weight1
     }
-    futureQueue += wrapper
+    //futureQueue += wrapper
+    addFutureWrapper(wrapper)
 
     //消费队列里面的 future
     runLoop
 
-    promise.future
+    val aa = promise.future
+
+    if (!key.isEmpty) {
+      {
+        import java.util.TimerTask
+        val timer = new Timer()
+        timer.schedule(new TimerTask() {
+          override def run(): Unit = {
+            if (!aa.isCompleted) {
+              println("12" * 50 + s"${name}-${key}-未完成")
+            } else {
+              //println(s"${name}-${key}-已完成")
+              timer.cancel()
+            }
+          }
+        }, 3000, 3000)
+      }
+    }
+
+    aa.andThen {
+      case Failure(e) =>
+        e.printStackTrace
+    }
+  }*/
+  def limit[T](futureFunc: () => Future[T], key: String): Future[T] = {
+    limit(futureFunc, 1, key)
+  }
+
+  def limit[T](futureFunc: () => Future[T], weight: Int, key: String): Future[T] = this.synchronized {
+    val weight1 = weight
+    val promise = Promise[T]
+
+    val wrapper: FutureWrapper = new FutureWrapper {
+      override lazy val runFuture: Future[Boolean] = {
+        val endPromise = Promise[Boolean]
+        futureFunc().andThen {
+          case Success(r) =>
+            promise.success(r)
+            endPromise.trySuccess(true)
+          case Failure(e) =>
+            e.printStackTrace
+            promise.failure(e)
+            endPromise.trySuccess(true)
+        }
+        endPromise.future
+      }
+
+      override val weight = weight1
+    }
+
+    limitedActor ! LimitedActor.AddWrapperModel(wrapper)
+
+    val aa = promise.future
+
+    {
+      import java.util.TimerTask
+      val timer = new Timer()
+      timer.schedule(new TimerTask() {
+        override def run(): Unit = {
+          if (!aa.isCompleted) {
+            println("12" * 50 + s"${name}-${key}-未完成")
+          } else {
+            //println(s"${name}-${key}-已完成")
+            timer.cancel()
+          }
+        }
+      }, 3000, 3000)
+    }
+
+    aa.andThen {
+      case Failure(e) =>
+        e.printStackTrace
+    }
   }
 
 }
 
 object FutureLimited {
-  def create(exceptWeight: Int, name: String): FutureLimited = {
-    val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(8))
-    new FutureLimited(exceptWeight, name)(ec)
+  def create(exceptWeight: Int, name: String, limitedActor: ActorRef): FutureLimited = {
+    val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(120))
+    limitedActor ! LimitedActor.Start(exceptWeight)
+    new FutureLimited(exceptWeight, name, limitedActor)(ec)
   }
 }
