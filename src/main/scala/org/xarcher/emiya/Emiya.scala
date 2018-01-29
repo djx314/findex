@@ -1,6 +1,6 @@
 package org.xarcher.xPhoto
 
-import akka.actor.{ ActorRef, ActorSystem }
+import akka.actor.{ ActorRef, ActorSystem, Terminated }
 
 import scalafx.application.JFXApp
 import scalafx.scene.Scene
@@ -16,32 +16,24 @@ import com.softwaremill.tagging._
 import org.xarcher.emiya.utils._
 
 import scala.concurrent.ExecutionContext
+import scalafx.stage.WindowEvent
+import scalafx.Includes._
 
 object Emiya extends JFXApp {
 
   private lazy val system = ActorSystem("miao-system")
   private lazy val fileTables = wire[FileTables]
   private lazy val fileIndex = wire[FileIndex]
-  private def limitedActor: ActorRef @@ LimitedActor = {
-    try {
-      //val ec1: ExecutionContext = implicitly[ExecutionContext]
-      wireAnonymousActor[LimitedActor].taggedWith[LimitedActor]
-    } catch {
-      case e: Exception =>
-        e.printStackTrace
-        throw e
-    }
-  }
-  private def timeLimitedActor: ActorRef @@ TimeLimitedActor = {
-    try {
-      //val ec1: ExecutionContext = implicitly[ExecutionContext]
-      wireAnonymousActor[TimeLimitedActor].taggedWith[TimeLimitedActor]
-    } catch {
-      case e: Exception =>
-        e.printStackTrace
-        throw e
-    }
-  }
+  private lazy val shutdownHook = wire[ShutdownHook]
+
+  shutdownHook.addHook(() => system.terminate().map((_: Terminated) => ()))
+
+  private def limitedActor: ActorRef @@ LimitedActor =
+    wireAnonymousActor[LimitedActor].taggedWith[LimitedActor]
+
+  private def timeLimitedActor: ActorRef @@ TimeLimitedActor =
+    wireAnonymousActor[TimeLimitedActor].taggedWith[TimeLimitedActor]
+
   private def futureLimitedGen = wire[FutureLimitedGen]
   private def futureTimeLimitedGen = wire[FutureTimeLimitedGen]
   private lazy val selectedFile = wire[SelectedFile]
@@ -69,6 +61,12 @@ object Emiya extends JFXApp {
   }
 
   stage.getIcons.add(new Image(this.getClass.getResourceAsStream("/icon.png")))
+
+  stage.onCloseRequest = {
+    e: WindowEvent =>
+      shutdownHook.exec()
+      ()
+  }
 
   parentBox.prefHeight <== cusScene.height
   parentBox.prefWidth <== cusScene.width

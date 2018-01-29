@@ -17,18 +17,19 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.jsoup.Jsoup
 import org.slf4j.{ Logger, LoggerFactory }
 import org.xarcher.cpoi.{ CPoi, PoiOperations }
-import org.xarcher.emiya.utils.{ FutureLimited, FutureLimitedGen, FutureTimeLimitedGen, LimitedActor }
+import org.xarcher.emiya.utils._
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
-class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futureTimeLimitedGen: FutureTimeLimitedGen) {
+class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futureTimeLimitedGen: FutureTimeLimitedGen, shutdownHook: ShutdownHook) {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  val indexLimited = futureLimitedGen.create(2 * 1024 * 1024, "fileIndexPool")
-  val timeLimited = futureTimeLimitedGen.create(4, "fileSearchPool", 1000)
+  val indexLimited = futureLimitedGen.create(8 * 1024 * 1024, "fileIndexPool")
+  val timeLimited = futureTimeLimitedGen.create(10, "fileSearchPool", 1000)
   val indexEc = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(36))
+  shutdownHook.addHook(() => Future.successful(Try { indexEc.shutdown() }))
 
   val ignoreDir: File => Boolean = { file =>
     val fileName = file.getName
@@ -129,7 +130,7 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
   def fetchFiles: Future[Boolean] = {
     implicit val ec = indexEc
     timeLimited.limit(() => fetchFilesGen, "索引文件").flatMap { s =>
-      println("索引文件")
+      //println("索引文件")
       if (s) {
         Future.successful(s)
       } else {
@@ -220,12 +221,9 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
       (for {
         fileList <- fileListF
       } yield {
-        //println(fileList)
         if (fileList.isEmpty && (!isIndexing)) {
-          //println("11111111111111111111111111111111111")
           Future.successful(sum)
         } else if (!fileList.isEmpty) {
-          //println("22222222222222222222222222222222222222222")
           val listF = Future.sequence(fileList.map { f =>
             val file = new File(f.filePath)
             indexLimited.limit(() => {
@@ -241,7 +239,10 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
                     logger.debug(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
                     logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.content}")
                     info.dbId -> 1
-                  }(indexEc)
+                  }(indexEc).andThen {
+                    case Failure(e) =>
+                      e.printStackTrace
+                  }
                 case Left(id) =>
                   //println(s"${new Date().toString}，索引：${f.filePath}失败")
                   Future.successful(id -> 0)
@@ -252,25 +253,14 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
             }, file.length, s"索引文件（${f.filePath}）")
           })
           listF.flatMap { ids =>
-            /*val ids = list.collect {
-              case Right(info) =>
-                val document = new Document()
-                document.add(new TextField("fileName", info.fileName, Field.Store.YES))
-                document.add(new TextField("content", info.content, Field.Store.YES))
-                document.add(new TextField("filePath", info.filePath, Field.Store.YES))
-                writer.addDocument(document)
-                info.dbId -> 1
-              case Left(id) =>
-                id -> 0
-            }: Seq[(Int, Int)]*/
             writeDB.run(
               FilePrepare.filter(_.id inSetBind ids.map(_._1)).map(_.isFinish).update(true).transactionally)
               .map(_ => sum + ids.map(_._2).sum).flatMap(newSum => tranFiles(newSum, isFetchFileFinished))
           }: Future[Int]
         } else {
-          //println("33333333333333333333333333333333333")
           val promise = Promise[Future[Int]]
           val timer = new Timer()
+          shutdownHook.addHook(() => Future.successful(Try { timer.cancel() }))
           val task = new TimerTask {
             override def run(): Unit = {
               promise.success(tranFiles(sum, isFetchFileFinished))
@@ -287,6 +277,7 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
 
     def showInfo(isIndexFinished: () => Boolean): Future[Int] = {
       val timer = new Timer()
+      shutdownHook.addHook(() => Future.successful(Try { timer.cancel() }))
       val task = new TimerTask {
         override def run(): Unit = {
           lazy val indexingSizeF = db.run(FilePrepare.filter(_.isFinish === false).size.result)
@@ -295,9 +286,11 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
             case (indexingSize, fetchingSize) =>
               val nowisIndexFinished = isIndexFinished()
               if (!nowisIndexFinished) {
-                println(s"还有${indexingSize}个文件正在索引列表中")
-                println(s"还有${fetchingSize}个文件夹正在正在查找子文件操作队列中")
-                println(s"是否已完成索引：${isIndexFinished()}")
+                logger.info(
+                  s"""还有${indexingSize}个文件正在索引列表中
+                     |还有${fetchingSize}个文件夹正在正在查找子文件操作队列中
+                     |是否已完成索引：${isIndexFinished()}
+                   """.stripMargin)
               }
               2
           }

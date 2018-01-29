@@ -14,6 +14,7 @@ import org.fxmisc.richtext.{ InlineCssTextArea, StyledTextArea }
 
 import scalafx.Includes._
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.{ Failure, Success }
 import scalafx.geometry.Insets
 import scalafx.scene.Node
 import scalafx.scene.control.Button
@@ -28,42 +29,50 @@ object FileSearch {
 
   def search(keyWord: String)(implicit ec: ExecutionContext): Future[List[OutputInfo]] = {
     var indexSearcher: IndexSearcher = null
-    val f = Future {
-      val directory = FSDirectory.open(Paths.get(path))
-      val analyzer = new CJKAnalyzer()
-      indexSearcher = new IndexSearcher(DirectoryReader.open(directory))
+    val f = if (keyWord.isEmpty)
+      Future.successful(List.empty)
+    else
+      Future {
+        val directory = FSDirectory.open(Paths.get(path))
+        val analyzer = new CJKAnalyzer()
+        indexSearcher = new IndexSearcher(DirectoryReader.open(directory))
 
-      val fields = Array("fileName", "content")
-      val mparser = new MultiFieldQueryParser(fields, analyzer)
-      val mQuery = mparser.parse(keyWord)
+        val fields = Array("fileName", "content")
+        val mparser = new MultiFieldQueryParser(fields, analyzer)
+        val mQuery = mparser.parse(keyWord)
 
-      val docs = indexSearcher.search(mQuery, 20).scoreDocs
+        val docs = indexSearcher.search(mQuery, 20).scoreDocs
 
-      docs.map { doc =>
-        val hitDoc = indexSearcher.doc(doc.doc)
-        val model = OutputInfo(
-          fileName = Option(hitDoc.get("fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
-          content = Option(hitDoc.get("content")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
-          filePath = Option(hitDoc.get("filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
+        docs.map { doc =>
+          val hitDoc = indexSearcher.doc(doc.doc)
+          val model = OutputInfo(
+            fileName = Option(hitDoc.get("fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            content = Option(hitDoc.get("content")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            filePath = Option(hitDoc.get("filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
 
-        // 生成高亮器
-        val textSize = 300
+          // 生成高亮器
+          val textSize = 300
 
-        val formatter = new SimpleHTMLFormatter("|||", "|||")
-        val scorer = new QueryScorer(mQuery)
-        val highlighter = new Highlighter(formatter, scorer)
-        highlighter.setTextFragmenter(new SimpleFragmenter(textSize))
-        // 使用高亮器：对content属性值进行摘要并高亮
-        val newContent = highlighter.getBestFragment(analyzer.tokenStream("", model.content), model.content)
+          val formatter = new SimpleHTMLFormatter("|||", "|||")
+          val scorer = new QueryScorer(mQuery)
+          val highlighter = new Highlighter(formatter, scorer)
+          highlighter.setTextFragmenter(new SimpleFragmenter(textSize))
+          // 使用高亮器：对content属性值进行摘要并高亮
+          val newContent = highlighter.getBestFragment(analyzer.tokenStream("", model.content), model.content)
 
-        val titleSize = 80
-        val titleHighlighter = new Highlighter(formatter, scorer)
-        titleHighlighter.setTextFragmenter(new SimpleFragmenter(titleSize))
-        val newTitle = titleHighlighter.getBestFragment(analyzer.tokenStream("", model.fileName), model.fileName)
-        model.copy(content = Option(newContent).getOrElse(model.content.take(textSize)), fileName = Option(newTitle).getOrElse(model.fileName.take(titleSize)))
-      }.toList
+          val titleSize = 80
+          val titleHighlighter = new Highlighter(formatter, scorer)
+          titleHighlighter.setTextFragmenter(new SimpleFragmenter(titleSize))
+          val newTitle = titleHighlighter.getBestFragment(analyzer.tokenStream("", model.fileName), model.fileName)
+          model.copy(content = Option(newContent).getOrElse(model.content.take(textSize)), fileName = Option(newTitle).getOrElse(model.fileName.take(titleSize)))
+        }.toList
+      }
+    f.andThen {
+      case Success(list) =>
+        println(list)
+      case Failure(e) =>
+        e.printStackTrace
     }
-    f
   }
 
 }
