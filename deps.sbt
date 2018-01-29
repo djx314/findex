@@ -8,11 +8,12 @@ libraryDependencies ++= Seq(
   //poi
   "org.apache.poi" % "poi",
   "org.apache.poi" % "poi-ooxml",
-  "org.apache.poi" % "poi-ooxml-schemas",
-  "org.apache.poi" % "poi-scratchpad",
+  //"org.apache.poi" % "poi-ooxml-schemas",
+  "org.apache.poi" % "poi-scratchpad"
 )
-.map(_ % poiVersion exclude("stax", "stax-api")) ++:
-Seq(
+.map(_ % poiVersion exclude("stax", "stax-api") exclude("org.apache.poi", "poi-ooxml-schemas"))
+
+libraryDependencies ++= Seq(
   //joda-time
   "joda-time" % "joda-time" % "2.9.9",
   "org.joda" % "joda-convert" % "1.9.2",
