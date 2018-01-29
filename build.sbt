@@ -20,3 +20,5 @@ CustomSettings.customSettings
 enablePlugins(JDKPackagerPlugin)
 
 enablePlugins(WindowsPlugin)
+
+javaOptions in run += "-Xmx300M"

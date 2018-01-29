@@ -24,7 +24,7 @@ import scalafx.scene.text.TextAlignment
 
 object FileSearch {
 
-  val path = "./lucenceTemp"
+  val path = "./lucenceTemp_不索引"
 
   def search(keyWord: String)(implicit ec: ExecutionContext): Future[List[OutputInfo]] = {
     var indexSearcher: IndexSearcher = null

@@ -8,18 +8,18 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object LimitedActor {
 
   case class AddWrapperModel(wrapper: FutureWrapper)
-  case class Start(maxWeightSum: Int)
+  case class Start(maxWeightSum: Long)
   case object Consume
-  case class Plus(weight: Int)
-  case class Minus(weight: Int)
+  case class Plus(weight: Long)
+  case class Minus(weight: Long)
 
 }
 
 class LimitedActor() extends Actor {
 
   @volatile protected var futureQueue = mutable.Queue.empty[FutureWrapper]
-  @volatile protected var weightSum: Int = 0
-  @volatile protected var maxWeightSum: Int = -1
+  @volatile protected var weightSum: Long = 0
+  @volatile protected var maxWeightSum: Long = -1
 
   override lazy val receive = {
     case LimitedActor.Start(maxWeightSum1) =>

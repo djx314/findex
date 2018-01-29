@@ -13,7 +13,7 @@ import scala.util.{ Failure, Success, Try }
 trait FutureWrapper {
 
   def runFuture: Future[Boolean]
-  val weight: Int
+  val weight: Long
 
 }
 
@@ -154,7 +154,7 @@ class FutureLimited(val exceptWeight: Int, val name: String, limitedActor: Actor
     limit(futureFunc, 1, key)
   }
 
-  def limit[T](futureFunc: () => Future[T], weight: Int, key: String): Future[T] = this.synchronized {
+  def limit[T](futureFunc: () => Future[T], weight: Long, key: String): Future[T] = this.synchronized {
     val weight1 = weight
     val promise = Promise[T]
 
@@ -205,7 +205,7 @@ class FutureLimited(val exceptWeight: Int, val name: String, limitedActor: Actor
 
 class FutureLimitedGen(limitedActor: ActorRef @@ LimitedActor) {
   def create(exceptWeight: Int, name: String): FutureLimited = {
-    val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(120))
+    val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(8))
     limitedActor ! LimitedActor.Start(exceptWeight)
     new FutureLimited(exceptWeight, name, limitedActor)(ec)
   }

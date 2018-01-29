@@ -17,19 +17,18 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.jsoup.Jsoup
 import org.slf4j.{ Logger, LoggerFactory }
 import org.xarcher.cpoi.{ CPoi, PoiOperations }
-import org.xarcher.emiya.utils.{ FutureLimited, FutureLimitedGen, LimitedActor }
+import org.xarcher.emiya.utils.{ FutureLimited, FutureLimitedGen, FutureTimeLimitedGen, LimitedActor }
 
-import scala.annotation.tailrec
-import scala.collection.mutable
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
-class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen) {
+class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futureTimeLimitedGen: FutureTimeLimitedGen) {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  val indexLimited = futureLimitedGen.create(6, "fileIndexPool")
-  val indexEc = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(120))
+  val indexLimited = futureLimitedGen.create(2 * 1024 * 1024, "fileIndexPool")
+  val timeLimited = futureTimeLimitedGen.create(4, "fileSearchPool", 1000)
+  val indexEc = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(36))
 
   val ignoreDir: File => Boolean = { file =>
     val fileName = file.getName
@@ -55,14 +54,18 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen) {
         Try {
           new HSSFWorkbook(new FileInputStream(path.toFile))
         }.getOrElse(new XSSFWorkbook(new FileInputStream(path.toFile)))
-      }.toEither
-      workbook.right.flatMap { wk =>
+      }
+      workbook.map { wk =>
         object PoiOperations extends PoiOperations
         import PoiOperations._
-        Try {
-          CPoi.load(wk).sheets.map(_.rows.map(_.cells.map(_.tryValue[String]).collect { case Some(s) => s }.mkString("\t")).mkString("\n")).mkString("\n")
-        }.toEither
-      }
+        try {
+          Right(CPoi.load(wk).sheets.map(_.rows.map(_.cells.map(_.tryValue[String]).collect { case Some(s) => s }.mkString("\t")).mkString("\n")).mkString("\n"))
+        } catch {
+          case e: Throwable =>
+            logger.error(s"索引 Excel 文件失败，文件路径：${path.toRealPath().toString}", e)
+            Left(e)
+        }
+      }.toEither.flatMap(identity)
     }
   }
 
@@ -123,43 +126,57 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen) {
   import FileTables._
   import FileTables.profile.api._
 
-  def fetchFiles(dirs: List[DirectoryPrepareRow]): Future[Boolean] = {
+  def fetchFiles: Future[Boolean] = {
     implicit val ec = indexEc
-    Future {
-      val subFiles = dirs.flatMap(eachDir => new File(eachDir.dirPath).listFiles().toList.map(s => s -> eachDir.id))
-      val subDirs = subFiles.filter(s => s._1.isDirectory && !ignoreDir(s._1))
-      val simpleFiles = subFiles.filterNot(_._1.isDirectory)
-      val filesToIndex = simpleFiles.filter {
-        s =>
-          /*(s._1.length < (1024 * 1024 * 6)) &&*/ !ignoreFile(s._1)
+    timeLimited.limit(() => fetchFilesGen, "索引文件").flatMap { s =>
+      println("索引文件")
+      if (s) {
+        Future.successful(s)
+      } else {
+        fetchFiles
       }
+    }
+  }
 
-      val addSubDirsAction = DirectoryPrepare ++= subDirs.map { dir =>
-        DirectoryPrepareRow(
-          id = -1,
-          dirPath = dir._1.toPath.toRealPath().toString,
-          isFinish = false)
-      }
+  def fetchFilesGen: Future[Boolean] = {
+    implicit val ec = indexEc
 
-      val updateDirStateAction = DirectoryPrepare.filter(_.id inSet dirs.map(_.id)).map(_.isFinish).update(true)
+    val filesF = db.run(DirectoryPrepare.filter(_.isFinish === false).take(4).result).map(_.toList)
 
-      val addSubFilesAction = FilePrepare ++= filesToIndex.map { file =>
-        FilePrepareRow(
-          id = -1,
-          parentDirId = file._2,
-          filePath = file._1.toPath.toRealPath().toString,
-          isFinish = false)
-      }
+    filesF.flatMap {
+      case dirs if dirs.isEmpty =>
+        Future.successful(true)
+      case dirs =>
+        Future {
+          val subFiles = dirs.flatMap(eachDir => new File(eachDir.dirPath).listFiles().toList.map(s => s -> eachDir.id))
+          val subDirs = subFiles.filter(s => s._1.isDirectory && !ignoreDir(s._1))
+          val simpleFiles = subFiles.filterNot(_._1.isDirectory)
+          val filesToIndex = simpleFiles.filter {
+            s =>
+              (s._1.length < (1024 * 1024 * 2)) && !ignoreFile(s._1)
+          }
 
-      val addFileNotesAction = writeDB.run((addSubDirsAction >> updateDirStateAction >> addSubFilesAction).transactionally).map((_: Option[Int]) => 2)
+          val addSubDirsAction = DirectoryPrepare ++= subDirs.map { dir =>
+            DirectoryPrepareRow(
+              id = -1,
+              dirPath = dir._1.toPath.toRealPath().toString,
+              isFinish = false)
+          }
 
-      addFileNotesAction.flatMap((_: Int) => db.run(DirectoryPrepare.filter(_.isFinish === false).take(200).result)).flatMap {
-        case newDirs if newDirs.isEmpty =>
-          Future.successful(true)
-        case newDirs =>
-          fetchFiles(newDirs.toList)
-      }
-    }.flatten
+          val updateDirStateAction = DirectoryPrepare.filter(_.id inSet dirs.map(_.id)).map(_.isFinish).update(true)
+
+          val addSubFilesAction = FilePrepare ++= filesToIndex.map { file =>
+            FilePrepareRow(
+              id = -1,
+              parentDirId = file._2,
+              filePath = file._1.toPath.toRealPath().toString,
+              isFinish = false)
+          }
+
+          val addFileNotesAction = writeDB.run((addSubDirsAction >> updateDirStateAction >> addSubFilesAction).transactionally)
+          addFileNotesAction
+        }.flatten.map((_: Option[Int]) => false)
+    }
   }
 
   def index(file: Path)(implicit ec: ExecutionContext): Future[Int] = {
@@ -187,17 +204,18 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen) {
                 id = -1,
                 dirPath = rootDir.toPath.toRealPath().toString,
                 isFinish = false)
-          }.flatMap(dir => fetchFiles(List(dir))))
+          }.flatMap(dir => fetchFiles))
       }
       f.andThen {
         case _ =>
           println("查找文件完毕" * 100)
       }
+      //Future.successful(true)
     }
 
     def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
       val isIndexing = !isFetchFileFinished()
-      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(600).result)
+      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(2).result)
       //(s"是否已查找文件完毕：${!isIndexing}")
       (for {
         fileList <- fileListF
@@ -209,10 +227,9 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen) {
         } else if (!fileList.isEmpty) {
           //println("22222222222222222222222222222222222222222")
           val listF = Future.sequence(fileList.map { f =>
-
+            val file = new File(f.filePath)
             indexLimited.limit(() => {
-              val file = new File(f.filePath)
-              //println(s"${new Date().toString}，正在索引：${f.filePath}")
+              logger.debug(s"${new Date().toString}，正在索引：${f.filePath}")
               indexFile(file.toPath, f.id).flatMap {
                 case Right(info) =>
                   Future {
@@ -221,7 +238,8 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen) {
                     document.add(new TextField("content", info.content, Field.Store.YES))
                     document.add(new TextField("filePath", info.filePath, Field.Store.YES))
                     writer.addDocument(document)
-                    //println(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
+                    logger.debug(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
+                    logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.content}")
                     info.dbId -> 1
                   }(indexEc)
                 case Left(id) =>
@@ -231,7 +249,7 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen) {
                 case Failure(e) =>
                   e.printStackTrace
               }: Future[(Int, Int)]
-            }, s"索引文件（${f.filePath}）")
+            }, file.length, s"索引文件（${f.filePath}）")
           })
           listF.flatMap { ids =>
             /*val ids = list.collect {
@@ -266,46 +284,6 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen) {
           e.printStackTrace
       }
     }
-
-    /*def showInfo(isIndexFinished: () => Boolean): Future[Int] = {
-      val finished = isIndexFinished()
-
-      if (finished) {
-        Future.successful(1)
-      } else {
-        val promise = Promise[Future[Int]]
-
-        lazy val indexingSizeF = db.run(FilePrepare.filter(_.isFinish === false).size.result)
-        /*.map { size =>
-            println(s"还有${size}个文件正在索引列表中")
-            size
-          }*/
-        lazy val fetchingSizeF = db.run(DirectoryPrepare.filter(_.isFinish === false).size.result)
-        /*.map { size =>
-            println(s"还有${size}个文件夹正在正在查找子文件操作队列中")
-            size
-          }*/
-
-        val sizeAction = indexingSizeF.zip(fetchingSizeF).map {
-          case (indexingSize, fetchingSize) =>
-            val nowisIndexFinished = isIndexFinished()
-            if (!nowisIndexFinished) {
-              println(s"还有${indexingSize}个文件正在索引列表中")
-              println(s"还有${fetchingSize}个文件夹正在正在查找子文件操作队列中")
-            }
-            2
-        }
-
-        val timer = new Timer()
-        val task = new TimerTask {
-          override def run(): Unit = {
-            promise.success(sizeAction.flatMap((_: Int) => showInfo(isIndexFinished)))
-          }
-        }
-        timer.schedule(task, 3000)
-        promise.future.flatten
-      }
-    }*/
 
     def showInfo(isIndexFinished: () => Boolean): Future[Int] = {
       val timer = new Timer()
@@ -361,10 +339,10 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen) {
   def writerGen: IndexWriter = {
     val f = {
       //1、创建Derictory
-      //        Directory directory = new RAMDirectory();//这个方法是建立在内存中的索引
+      //Directory directory = new RAMDirectory();//这个方法是建立在内存中的索引
       val directory = FSDirectory.open(Paths.get(path))
       //这个方法是建立在磁盘上面的索引
-      //        2、创建IndexWriter，用完后要关闭
+      //2、创建IndexWriter，用完后要关闭
       val analyzer = new CJKAnalyzer()
       val indexWriterConfig = new IndexWriterConfig(analyzer)
       indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE)
@@ -378,54 +356,32 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen) {
   def indexFile(file: Path, id: Int): Future[Either[Int, IndexInfo]] = {
     Future {
       val fileName = file.getFileName.toString
-      indexer(indexEc).find { case (extName, _) => fileName.endsWith(s".${extName}") }.map(_._2).map(_.apply(file).map { strEither =>
-        /*strEither.right.map { str =>
-          IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str)
-        }.left.map(_ => id)*/
-        strEither match {
-          case Right(str) =>
-            Right(IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str))
-          case Left(e) =>
-            logger.error(s"索引文件发生错误，路径：${file.toRealPath().toString}", e)
+      if (Files.size(file) < (2 * 1024 * 1024)) {
+        indexer(indexEc).find { case (extName, _) => fileName.endsWith(s".${extName}") }.map(_._2).map(_.apply(file).map { strEither =>
+          /*strEither.right.map { str =>
+            IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str)
+          }.left.map(_ => id)*/
+          strEither match {
+            case Right(str) =>
+              Right(IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str))
+            case Left(e) =>
+              logger.error(s"索引文件发生错误，路径：${file.toRealPath().toString}")
+              Left(id)
+          }
+        }(indexEc).recover {
+          case e: Exception =>
+            e.printStackTrace
             Left(id)
+        }(indexEc)).getOrElse {
+          Future.successful(Left(id))
         }
-      }(indexEc).recover {
-        case e: Exception =>
-          e.printStackTrace
-          Left(id)
-      }(indexEc)).getOrElse {
-        /*{
-          import java.util.TimerTask
-          val timer = new Timer()
-          timer.schedule(new TimerTask() {
-            override def run(): Unit = {
-              println(s"不能解析的文件:${file.toRealPath().toString}")
-            }
-          }, 4000, 4000)
-        }*/
+      } else {
         Future.successful(Left(id))
       }
     }(indexEc).flatten.andThen {
       case Failure(e) =>
         e.printStackTrace
     }(indexEc)
-    /*(for {
-      strOpt <- strOptF
-    } yield (for {
-      str <- strOpt
-    } yield {*/
-    /*val document = new Document()
-      document.add(new TextField("fileName", file.toRealPath().toString, Field.Store.YES))
-      document.add(new TextField("content", str, Field.Store.YES))
-      document.add(new TextField("filePath", file.toRealPath().toString, Field.Store.YES))
-      writer.addDocument(document)*/
-    /*}).getOrElse {
-      th
-    }).recover {
-      case e: IOException =>
-        e.printStackTrace()
-        throw e
-    }*/
   }
 
 }
