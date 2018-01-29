@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scalafx.scene.image.Image
 import com.softwaremill.macwire.akkasupport._
 import com.softwaremill.tagging._
-import org.xarcher.emiya.utils.LimitedActor
+import org.xarcher.emiya.utils.{ FutureLimitedGen, LimitedActor }
 
 import scala.concurrent.ExecutionContext
 
@@ -21,8 +21,8 @@ object Emiya extends JFXApp {
 
   private lazy val system = ActorSystem("miao-system")
   private lazy val fileTables = wire[FileTables]
-  private lazy val FileIndex = wire[FileIndex]
-  private lazy val userFinder: ActorRef @@ LimitedActor = {
+  private lazy val fileIndex = wire[FileIndex]
+  private def userFinder: ActorRef @@ LimitedActor = {
     try {
       //val ec1: ExecutionContext = implicitly[ExecutionContext]
       wireAnonymousActor[LimitedActor].taggedWith[LimitedActor]
@@ -32,6 +32,7 @@ object Emiya extends JFXApp {
         throw e
     }
   }
+  private def futureLimitedGen = wire[FutureLimitedGen]
   private lazy val selectedFile = wire[SelectedFile]
   private lazy val fileSelectButton = wire[FileSelectButton]
   private lazy val startIndexButton = wire[StartIndexButton]

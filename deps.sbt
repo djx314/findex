@@ -9,13 +9,14 @@ libraryDependencies ++= Seq(
   "org.apache.poi" % "poi",
   "org.apache.poi" % "poi-ooxml",
   "org.apache.poi" % "poi-ooxml-schemas",
-  "org.apache.poi" % "poi-scratchpad"
+  "org.apache.poi" % "poi-scratchpad",
 )
 .map(_ % poiVersion exclude("stax", "stax-api")) ++:
 Seq(
   //joda-time
   "joda-time" % "joda-time" % "2.9.9",
-  "org.joda" % "joda-convert" % "1.9.2"
+  "org.joda" % "joda-convert" % "1.9.2",
+  "org.apache.poi" % "ooxml-schemas" % "1.3"
 )
 
 val slickVersion = "3.2.1"

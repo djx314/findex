@@ -2,17 +2,17 @@ package org.xarcher.xPhoto
 
 import akka.actor.ActorRef
 import com.softwaremill.tagging.@@
-import org.xarcher.emiya.utils.{ FutureLimited, LimitedActor }
+import org.xarcher.emiya.utils.{ FutureLimited, FutureLimitedGen, LimitedActor }
 import slick.jdbc.{ H2Profile, JdbcProfile, SQLiteProfile }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Failure
 
-class FileTables(actor: ActorRef @@ LimitedActor) extends FileTables1 {
+class FileTables(futureLimitedGen: FutureLimitedGen) extends FileTables1 {
   override val profile: H2Profile = H2Profile
 
-  val fLimited = FutureLimited.create(20, "dbPool", actor)
+  val fLimited = futureLimitedGen.create(4, "dbPool")
 
   import profile.api._
 
@@ -33,7 +33,7 @@ class FileTables(actor: ActorRef @@ LimitedActor) extends FileTables1 {
     }
   }
 
-  lazy val db = Database.forURL(driver = "org.h2.Driver", url = "jdbc:h2:./file_db.h2")
+  lazy val db = Database.forURL(driver = "org.h2.Driver", url = "jdbc:h2:./file_db_不索引.h2")
 
   lazy val writeDB: ExtDB = {
     val db1 = db

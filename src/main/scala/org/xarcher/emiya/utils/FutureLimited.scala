@@ -192,7 +192,7 @@ class FutureLimited(val exceptWeight: Int, val name: String, limitedActor: Actor
             timer.cancel()
           }
         }
-      }, 3000, 3000)
+      }, 12000, 12000)
     }
 
     aa.andThen {
@@ -203,8 +203,8 @@ class FutureLimited(val exceptWeight: Int, val name: String, limitedActor: Actor
 
 }
 
-object FutureLimited {
-  def create(exceptWeight: Int, name: String, limitedActor: ActorRef): FutureLimited = {
+class FutureLimitedGen(limitedActor: ActorRef @@ LimitedActor) {
+  def create(exceptWeight: Int, name: String): FutureLimited = {
     val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(120))
     limitedActor ! LimitedActor.Start(exceptWeight)
     new FutureLimited(exceptWeight, name, limitedActor)(ec)

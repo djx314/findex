@@ -21,7 +21,7 @@ class LimitedActor() extends Actor {
   @volatile protected var weightSum: Int = 0
   @volatile protected var maxWeightSum: Int = -1
 
-  override def receive = {
+  override lazy val receive = {
     case LimitedActor.Start(maxWeightSum1) =>
       maxWeightSum = maxWeightSum1
     case LimitedActor.Consume =>

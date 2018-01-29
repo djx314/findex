@@ -15,18 +15,31 @@ import org.apache.lucene.store.FSDirectory
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.jsoup.Jsoup
+import org.slf4j.{ Logger, LoggerFactory }
 import org.xarcher.cpoi.{ CPoi, PoiOperations }
-import org.xarcher.emiya.utils.{ FutureLimited, LimitedActor }
+import org.xarcher.emiya.utils.{ FutureLimited, FutureLimitedGen, LimitedActor }
 
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
-class FileIndex(actor: ActorRef @@ LimitedActor, FileTables: FileTables) {
+class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen) {
 
-  val indexLimited = FutureLimited.create(20, "fileIndexPool", actor)
-  val indexEc = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(6200))
+  val logger = LoggerFactory.getLogger(getClass)
+
+  val indexLimited = futureLimitedGen.create(6, "fileIndexPool")
+  val indexEc = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(120))
+
+  val ignoreDir: File => Boolean = { file =>
+    val fileName = file.getName
+    fileName.endsWith("_不索引") || (fileName == "target")
+  }
+
+  val ignoreFile: File => Boolean = { file =>
+    val fileName = file.getName
+    fileName.takeWhile(_ != '.').endsWith("_不索引")
+  }
 
   def txtGen(implicit ec: ExecutionContext): Path => Future[Either[Throwable, String]] = { path =>
     Future {
@@ -114,11 +127,11 @@ class FileIndex(actor: ActorRef @@ LimitedActor, FileTables: FileTables) {
     implicit val ec = indexEc
     Future {
       val subFiles = dirs.flatMap(eachDir => new File(eachDir.dirPath).listFiles().toList.map(s => s -> eachDir.id))
-      val subDirs = subFiles.filter(_._1.isDirectory)
+      val subDirs = subFiles.filter(s => s._1.isDirectory && !ignoreDir(s._1))
       val simpleFiles = subFiles.filterNot(_._1.isDirectory)
       val filesToIndex = simpleFiles.filter {
         s =>
-          s._1.length < (1024 * 1024 * 6)
+          /*(s._1.length < (1024 * 1024 * 6)) &&*/ !ignoreFile(s._1)
       }
 
       val addSubDirsAction = DirectoryPrepare ++= subDirs.map { dir =>
@@ -312,7 +325,7 @@ class FileIndex(actor: ActorRef @@ LimitedActor, FileTables: FileTables) {
           }
         }
       }
-      timer.schedule(task, 4000, 4000)
+      timer.schedule(task, 8000, 8000)
       Future.successful(1)
     }
 
@@ -360,7 +373,7 @@ class FileIndex(actor: ActorRef @@ LimitedActor, FileTables: FileTables) {
     f
   }
 
-  val path = "./lucenceTemp"
+  val path = "./lucenceTemp_不索引"
 
   def indexFile(file: Path, id: Int): Future[Either[Int, IndexInfo]] = {
     Future {
@@ -372,7 +385,8 @@ class FileIndex(actor: ActorRef @@ LimitedActor, FileTables: FileTables) {
         strEither match {
           case Right(str) =>
             Right(IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str))
-          case Left(_) =>
+          case Left(e) =>
+            logger.error(s"索引文件发生错误，路径：${file.toRealPath().toString}", e)
             Left(id)
         }
       }(indexEc).recover {
