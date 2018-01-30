@@ -22,14 +22,13 @@ import org.xarcher.emiya.utils._
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
-class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futureTimeLimitedGen: FutureTimeLimitedGen, shutdownHook: ShutdownHook) {
+class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futureTimeLimitedGen: FutureTimeLimitedGen, shutdownHook: ShutdownHook, indexExecutionContext: IndexExecutionContext) {
 
   val logger = LoggerFactory.getLogger(getClass)
 
   val indexLimited = futureLimitedGen.create(8 * 1024 * 1024, "fileIndexPool")
   val timeLimited = futureTimeLimitedGen.create(10, "fileSearchPool", 1000)
-  val indexEc = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(36))
-  shutdownHook.addHook(() => Future.successful(Try { indexEc.shutdown() }))
+  val indexEc = indexExecutionContext.indexEc
 
   val ignoreDir: File => Boolean = { file =>
     val fileName = file.getName
@@ -207,10 +206,11 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
                 isFinish = false)
           }.flatMap(dir => fetchFiles))
       }
-      f.andThen {
+      f
+      /*.andThen {
         case _ =>
           println("查找文件完毕" * 100)
-      }
+      }*/
       //Future.successful(true)
     }
 

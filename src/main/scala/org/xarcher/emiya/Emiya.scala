@@ -36,6 +36,8 @@ object Emiya extends JFXApp {
 
   private def futureLimitedGen = wire[FutureLimitedGen]
   private def futureTimeLimitedGen = wire[FutureTimeLimitedGen]
+
+  private lazy val IndexExecutionContext = wire[IndexExecutionContext]
   private lazy val selectedFile = wire[SelectedFile]
   private lazy val fileSelectButton = wire[FileSelectButton]
   private lazy val startIndexButton = wire[StartIndexButton]
