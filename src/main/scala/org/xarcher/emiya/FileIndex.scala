@@ -26,8 +26,8 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  val indexLimited = futureLimitedGen.create(8 * 1024 * 1024, "fileIndexPool")
-  val timeLimited = futureTimeLimitedGen.create(10, "fileSearchPool", 1000)
+  val indexLimited = futureLimitedGen.create(3 * 1024 * 1024, "fileIndexPool")
+  val timeLimited = futureTimeLimitedGen.create(6, "fileSearchPool", 1000)
   val indexEc = indexExecutionContext.indexEc
 
   val ignoreDir: File => Boolean = { file =>

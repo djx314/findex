@@ -12,7 +12,7 @@ import scala.util.Failure
 class FileTables(futureLimitedGen: FutureLimitedGen, shutdownHook: ShutdownHook) extends FileTables1 {
   override val profile: H2Profile = H2Profile
 
-  val fLimited = futureLimitedGen.create(6, "dbPool")
+  val fLimited = futureLimitedGen.create(4, "dbPool")
 
   import profile.api._
 
