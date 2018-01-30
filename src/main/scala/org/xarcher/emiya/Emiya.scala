@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scalafx.scene.image.Image
 import com.softwaremill.macwire.akkasupport._
 import com.softwaremill.tagging._
-import org.xarcher.emiya.service.FileIgnoreService
+import org.xarcher.emiya.service.{ ContentService, FileIgnoreService }
 import org.xarcher.emiya.utils._
 
 import scala.concurrent.ExecutionContext
@@ -40,10 +40,13 @@ object Emiya extends JFXApp {
 
   private lazy val fileExtraction = wire[FileExtraction]
   private lazy val fileIgnoreService = wire[FileIgnoreService]
+  private lazy val contentService = wire[ContentService]
+
   private lazy val IndexExecutionContext = wire[IndexExecutionContext]
   private lazy val selectedFile = wire[SelectedFile]
   private lazy val fileSelectButton = wire[FileSelectButton]
   private lazy val startIndexButton = wire[StartIndexButton]
+  private lazy val removeIndexButton = wire[RemoveIndexButton]
   private lazy val indexController: IndexController = wire[IndexController]
   private lazy val FuzzySearchInput = wire[FuzzySearchInput]
   private lazy val ExactSearchInput = wire[ExactSearchInput]
@@ -52,7 +55,7 @@ object Emiya extends JFXApp {
   private lazy val SearcherPane = wire[SearcherPane]
   private lazy val searchController: SearchController = wire[SearchController]
   private lazy val parentBox: ParentBox = wire[ParentBox]
-  private lazy val fileList = wire[FileList]
+  private lazy val fileListWrapper = wire[FileListWrapper]
 
   private lazy val cusScene = new Scene {
     content = parentBox

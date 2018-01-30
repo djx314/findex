@@ -25,7 +25,9 @@ class FileTables(futureLimitedGen: FutureLimitedGen, shutdownHook: ShutdownHook)
 
   lazy val db = Database.forURL(driver = "org.h2.Driver", url = "jdbc:h2:./ext_persistence_不索引/db/file_db.h2")
 
-  shutdownHook.addHook(() => Future.successful(db.close()))
+  shutdownHook.addHook { () =>
+    Future.successful(db.close())
+  }
 
   lazy val writeDB: ExtDB = {
     val db1 = db
@@ -42,7 +44,7 @@ trait FileTables1 {
 
   import profile.api._
 
-  lazy val schema = FilePrepare.schema ++ DirectoryPrepare.schema
+  lazy val schema = FilePrepare.schema ++ DirectoryPrepare.schema ++ IndexContent.schema ++ IndexPath.schema
 
   case class FilePrepareRow(
     id: Int,
@@ -77,13 +79,17 @@ trait FileTables1 {
   case class IndexContentRow(
     id: Int,
     rootUri: String,
+    order: Int,
+    createTime: Date,
     isFinish: Boolean)
 
   class IndexContent(tag: Tag) extends Table[IndexContentRow](tag, "index_content") {
     val id = column[Int]("id", O.AutoInc)
     val rootUri = column[String]("root_uri")
+    val order = column[Int]("order")
+    val createTime = column[Date]("create_time")
     val isFinish = column[Boolean]("is_finish")
-    override val * = (id, rootUri, isFinish).mapTo[IndexContentRow]
+    override val * = (id, rootUri, order, createTime, isFinish).mapTo[IndexContentRow]
   }
 
   val IndexContent = TableQuery[IndexContent]
@@ -91,17 +97,19 @@ trait FileTables1 {
   case class IndexPathRow(
     id: Int,
     uri: String,
-    isDirectory: Boolean,
-    lastModified: Date,
+    //isDirectory: Boolean,
+    //lastModified: Date,
     isFinish: Boolean)
 
   class IndexPath(tag: Tag) extends Table[IndexPathRow](tag, "index_path") {
     val id = column[Int]("id", O.AutoInc)
     val uri = column[String]("uri")
-    val isDirectory = column[Boolean]("is_directory")
-    val lastModified = column[Date]("last_modified")
+    //val isDirectory = column[Boolean]("is_directory")
+    //val lastModified = column[Date]("last_modified")
     val isFinish = column[Boolean]("is_finish")
-    override val * = (id, uri, isDirectory, lastModified, isFinish).mapTo[IndexPathRow]
+    override val * = (id, uri, isFinish).mapTo[IndexPathRow]
   }
+
+  val IndexPath = TableQuery[IndexPath]
 
 }
