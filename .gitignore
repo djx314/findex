@@ -19,8 +19,4 @@
 bin
 .cache-tests
 .cache-main
-/lucenceTemp*
-/file_db.db3
-/file_db.db3-journal
-/file_db.h2.*
-/file_db_不索引.h2.*
+/ext_persistence_不索引

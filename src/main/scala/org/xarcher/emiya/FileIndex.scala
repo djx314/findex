@@ -17,111 +17,26 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.jsoup.Jsoup
 import org.slf4j.{ Logger, LoggerFactory }
 import org.xarcher.cpoi.{ CPoi, PoiOperations }
+import org.xarcher.emiya.service.FileIgnoreService
 import org.xarcher.emiya.utils._
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
-class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futureTimeLimitedGen: FutureTimeLimitedGen, shutdownHook: ShutdownHook, indexExecutionContext: IndexExecutionContext) {
+class FileIndex(
+  FileTables: FileTables,
+  futureLimitedGen: FutureLimitedGen,
+  futureTimeLimitedGen: FutureTimeLimitedGen,
+  fileExtraction: FileExtraction,
+  fileIgnoreService: FileIgnoreService,
+  shutdownHook: ShutdownHook,
+  indexExecutionContext: IndexExecutionContext) {
 
   val logger = LoggerFactory.getLogger(getClass)
 
   val indexLimited = futureLimitedGen.create(3 * 1024 * 1024, "fileIndexPool")
   val timeLimited = futureTimeLimitedGen.create(6, "fileSearchPool", 1000)
   val indexEc = indexExecutionContext.indexEc
-
-  val ignoreDir: File => Boolean = { file =>
-    val fileName = file.getName
-    fileName.endsWith("_不索引") || (fileName == "target")
-  }
-
-  val ignoreFile: File => Boolean = { file =>
-    val fileName = file.getName
-    fileName.takeWhile(_ != '.').endsWith("_不索引")
-  }
-
-  def txtGen(implicit ec: ExecutionContext): Path => Future[Either[Throwable, String]] = { path =>
-    Future {
-      Try {
-        IOUtils.toString(path.toUri.toURL, "utf-8")
-      }.toEither
-    }
-  }
-
-  def poiGen(implicit ec: ExecutionContext): Path => Future[Either[Throwable, String]] = { path =>
-    Future {
-      val workbook = Try {
-        Try {
-          new HSSFWorkbook(new FileInputStream(path.toFile))
-        }.getOrElse(new XSSFWorkbook(new FileInputStream(path.toFile)))
-      }
-      workbook.map { wk =>
-        object PoiOperations extends PoiOperations
-        import PoiOperations._
-        try {
-          Right(CPoi.load(wk).sheets.map(_.rows.map(_.cells.map(_.tryValue[String]).collect { case Some(s) => s }.mkString("\t")).mkString("\n")).mkString("\n"))
-        } catch {
-          case e: Throwable =>
-            logger.error(s"索引 Excel 文件失败，文件路径：${path.toRealPath().toString}", e)
-            Left(e)
-        }
-      }.toEither.flatMap(identity)
-    }
-  }
-
-  def htmlGen(implicit ec: ExecutionContext): Path => Future[Either[Throwable, String]] = { path =>
-    Future {
-      Try {
-        Jsoup.parse(path.toFile, "utf-8").text()
-      }.toEither
-    }
-  }
-
-  def docPoiGen(implicit ec: ExecutionContext): Path => Future[Either[Throwable, String]] = path =>
-    Future {
-      Try {
-        Try {
-          import org.apache.poi.hwpf.extractor.WordExtractor
-          import java.io.InputStream
-          val is: InputStream = new FileInputStream(path.toFile)
-          val ex: WordExtractor = new WordExtractor(is)
-          val text2003 = ex.getText
-          text2003
-        }.getOrElse {
-          import org.apache.poi.POIXMLDocument
-          import org.apache.poi.xwpf.extractor.XWPFWordExtractor
-          val opcPackage = POIXMLDocument.openPackage(path.toFile.getCanonicalPath)
-          val extractor = new XWPFWordExtractor(opcPackage)
-          val text2007 = extractor.getText
-          text2007
-        }
-      }.toEither.left.map { e =>
-        //e.printStackTrace
-        e
-      }
-    }
-
-  def indexer(implicit ec: ExecutionContext): Map[String, Path => Future[Either[Throwable, String]]] = Map(
-    "txt" -> txtGen,
-    "log" -> txtGen,
-    "json" -> txtGen,
-    "md" -> txtGen,
-    "js" -> txtGen,
-    "scala" -> txtGen,
-    "java" -> txtGen,
-    "php" -> txtGen,
-    "css" -> txtGen,
-    "conf" -> txtGen,
-    "bat" -> txtGen,
-    "htm" -> htmlGen,
-    "html" -> htmlGen,
-    "properties" -> txtGen,
-    "xls" -> poiGen,
-    "xlsx" -> poiGen,
-    "et" -> poiGen,
-    "doc" -> docPoiGen,
-    "docx" -> docPoiGen,
-    "wps" -> docPoiGen)
 
   import FileTables._
   import FileTables.profile.api._
@@ -148,18 +63,18 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
         Future.successful(true)
       case dirs =>
         Future {
-          val subFiles = dirs.flatMap(eachDir => new File(eachDir.dirPath).listFiles().toList.map(s => s -> eachDir.id))
-          val subDirs = subFiles.filter(s => s._1.isDirectory && !ignoreDir(s._1))
-          val simpleFiles = subFiles.filterNot(_._1.isDirectory)
+          val subFiles = dirs.flatMap(eachDir => new File(eachDir.dirPath).listFiles().toList.map(s => s.toPath -> eachDir.id))
+          val subDirs = subFiles.filter(s => Files.isDirectory(s._1) && !fileIgnoreService.ignoreDir(s._1))
+          val simpleFiles = subFiles.filterNot(s => Files.isDirectory(s._1))
           val filesToIndex = simpleFiles.filter {
             s =>
-              (s._1.length < (1024 * 1024 * 2)) && !ignoreFile(s._1)
+              (Files.size(s._1) < (1024 * 1024 * 2)) && !fileIgnoreService.ignoreFile(s._1)
           }
 
           val addSubDirsAction = DirectoryPrepare ++= subDirs.map { dir =>
             DirectoryPrepareRow(
               id = -1,
-              dirPath = dir._1.toPath.toRealPath().toString,
+              dirPath = dir._1.toRealPath().toString,
               isFinish = false)
           }
 
@@ -169,7 +84,7 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
             FilePrepareRow(
               id = -1,
               parentDirId = file._2,
-              filePath = file._1.toPath.toRealPath().toString,
+              filePath = file._1.toRealPath().toString,
               isFinish = false)
           }
 
@@ -181,10 +96,7 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
 
   def index(file: Path)(implicit ec: ExecutionContext): Future[Int] = {
     val writer = writerGen
-
-    //val fileQueue = mutable.Queue.empty[File]
-    //val dirQueue = mutable.Queue.empty[File]
-    //var isIndexing = true
+    shutdownHook.addHook(() => Future.successful(Try { writer.close() }))
 
     def startFetchFiles(rootDir: File): Future[Boolean] = {
       val f = if (!rootDir.isDirectory) {
@@ -344,13 +256,13 @@ class FileIndex(FileTables: FileTables, futureLimitedGen: FutureLimitedGen, futu
     f
   }
 
-  val path = "./lucenceTemp_不索引"
+  val path = "./ext_persistence_不索引/lucenceTemp"
 
   def indexFile(file: Path, id: Int): Future[Either[Int, IndexInfo]] = {
     Future {
       val fileName = file.getFileName.toString
       if (Files.size(file) < (2 * 1024 * 1024)) {
-        indexer(indexEc).find { case (extName, _) => fileName.endsWith(s".${extName}") }.map(_._2).map(_.apply(file).map { strEither =>
+        fileExtraction.indexer.find { case (extName, _) => fileName.endsWith(s".${extName}") }.map(_._2).map(_.apply(file).map { strEither =>
           /*strEither.right.map { str =>
             IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str)
           }.left.map(_ => id)*/

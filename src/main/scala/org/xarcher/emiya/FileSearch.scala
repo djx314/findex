@@ -10,22 +10,20 @@ import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.highlight.{ Highlighter, QueryScorer, SimpleFragmenter, SimpleHTMLFormatter }
 import org.apache.lucene.store.FSDirectory
-import org.fxmisc.richtext.{ InlineCssTextArea, StyledTextArea }
+import org.fxmisc.richtext.InlineCssTextArea
 
 import scalafx.Includes._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success }
 import scalafx.geometry.Insets
-import scalafx.scene.Node
 import scalafx.scene.control.Button
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{ Background, BackgroundFill, CornerRadii, Region }
 import scalafx.scene.paint.Paint
-import scalafx.scene.text.TextAlignment
 
 object FileSearch {
 
-  val path = "./lucenceTemp_不索引"
+  val path = "./ext_persistence_不索引/lucenceTemp"
 
   def search(keyWord: String)(implicit ec: ExecutionContext): Future[List[OutputInfo]] = {
     var indexSearcher: IndexSearcher = null
@@ -69,7 +67,7 @@ object FileSearch {
       }
     f.andThen {
       case Success(list) =>
-        println(list)
+      //println(list)
       case Failure(e) =>
         e.printStackTrace
     }

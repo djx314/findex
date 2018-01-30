@@ -1,7 +1,7 @@
 package org.xarcher.xPhoto
 
-import akka.actor.ActorRef
-import com.softwaremill.tagging.@@
+import java.sql.Date
+
 import org.xarcher.emiya.utils.{ FutureLimited, FutureLimitedGen, LimitedActor, ShutdownHook }
 import slick.jdbc.{ H2Profile, JdbcProfile, SQLiteProfile }
 
@@ -17,23 +17,13 @@ class FileTables(futureLimitedGen: FutureLimitedGen, shutdownHook: ShutdownHook)
   import profile.api._
 
   trait ExtDB {
-    //@volatile var count = 0
-
     protected val db: Database
     final def run[R](a: DBIOAction[R, NoStream, Nothing]): Future[R] = {
-      /*val c = count
-      count += 1
-      println(s"开始$c")
-      fLimited.limit(() => db.run(a)).map {
-        result =>
-          println(s"完成$c")
-          result
-      }*/
-      fLimited.limit(() => db.run(a), "")
+      fLimited.limit(() => db.run(a), "dbPool")
     }
   }
 
-  lazy val db = Database.forURL(driver = "org.h2.Driver", url = "jdbc:h2:./file_db_不索引.h2")
+  lazy val db = Database.forURL(driver = "org.h2.Driver", url = "jdbc:h2:./ext_persistence_不索引/db/file_db.h2")
 
   shutdownHook.addHook(() => Future.successful(db.close()))
 
@@ -83,5 +73,35 @@ trait FileTables1 {
   }
 
   val DirectoryPrepare = TableQuery[DirectoryPrepare]
+
+  case class IndexContentRow(
+    id: Int,
+    rootUri: String,
+    isFinish: Boolean)
+
+  class IndexContent(tag: Tag) extends Table[IndexContentRow](tag, "index_content") {
+    val id = column[Int]("id", O.AutoInc)
+    val rootUri = column[String]("root_uri")
+    val isFinish = column[Boolean]("is_finish")
+    override val * = (id, rootUri, isFinish).mapTo[IndexContentRow]
+  }
+
+  val IndexContent = TableQuery[IndexContent]
+
+  case class IndexPathRow(
+    id: Int,
+    uri: String,
+    isDirectory: Boolean,
+    lastModified: Date,
+    isFinish: Boolean)
+
+  class IndexPath(tag: Tag) extends Table[IndexPathRow](tag, "index_path") {
+    val id = column[Int]("id", O.AutoInc)
+    val uri = column[String]("uri")
+    val isDirectory = column[Boolean]("is_directory")
+    val lastModified = column[Date]("last_modified")
+    val isFinish = column[Boolean]("is_finish")
+    override val * = (id, uri, isDirectory, lastModified, isFinish).mapTo[IndexPathRow]
+  }
 
 }

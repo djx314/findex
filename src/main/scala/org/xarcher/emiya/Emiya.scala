@@ -13,6 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scalafx.scene.image.Image
 import com.softwaremill.macwire.akkasupport._
 import com.softwaremill.tagging._
+import org.xarcher.emiya.service.FileIgnoreService
 import org.xarcher.emiya.utils._
 
 import scala.concurrent.ExecutionContext
@@ -37,6 +38,8 @@ object Emiya extends JFXApp {
   private def futureLimitedGen = wire[FutureLimitedGen]
   private def futureTimeLimitedGen = wire[FutureTimeLimitedGen]
 
+  private lazy val fileExtraction = wire[FileExtraction]
+  private lazy val fileIgnoreService = wire[FileIgnoreService]
   private lazy val IndexExecutionContext = wire[IndexExecutionContext]
   private lazy val selectedFile = wire[SelectedFile]
   private lazy val fileSelectButton = wire[FileSelectButton]
