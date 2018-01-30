@@ -27,17 +27,21 @@ object CustomSettings {
     import sbtassembly.AssemblyKeys._
     import sbtassembly.{MergeStrategy, PathList}
 
-    sbtassembly.AssemblyPlugin.assemblySettings.++(
       Seq(
-        mainClass in assembly := Some("org.xarcher.xPhoto.Emiya")/*,
-        assemblyMergeStrategy in assembly <<= (assemblyMergeStrategy in assembly) { old => {
-          case "reference.conf" => MergeStrategy.concat
-          case PathList("play", "reference-overrides.conf") => MergeStrategy.concat
-          case PathList("META-INF", "spring.tooling") => MergeStrategy.discard
-          case x => old(x)
-        } }*/
+        mainClass in assembly := Some("org.xarcher.xPhoto.Emiya"),
+        assemblyMergeStrategy in assembly := {
+          val old = (assemblyMergeStrategy in assembly).value
+
+          { path =>
+            path match {
+              case "reference.conf" => MergeStrategy.concat
+              case PathList("play", "reference-overrides.conf") => MergeStrategy.concat
+              case PathList("META-INF", "spring.tooling") => MergeStrategy.discard
+              case x => old(x)
+            }
+          }
+        }
       )
-    )
 
   }
 
