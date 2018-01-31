@@ -5,6 +5,7 @@ import java.net.URI
 import java.nio.file.Paths
 
 import org.xarcher.emiya.service.ContentService
+import org.xarcher.emiya.views.search.DoSearch
 import org.xarcher.xPhoto.{ FileDB, FileIndex, FileTables }
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -103,31 +104,30 @@ class RemoveIndexButton(selectedFile: SelectedFile, fileIndex: FileIndex)(implic
 
 class FileListWrapper(contentService: ContentService, fileDB: FileDB)(implicit ec: ExecutionContext) {
   object FileList extends ListView[FileTables.IndexContentRow] {
-
-    items = ObservableBuffer(List.empty[FileTables.IndexContentRow])
-
-    selectionModel.value.setSelectionMode(SelectionMode.Multiple)
-
+    selectionModel.value.selectionMode = SelectionMode.Multiple
+    //items = ObservableBuffer(List.empty[FileTables.IndexContentRow])
     def currentItems: List[FileTables.IndexContentRow] = selectionModel.value.selectedItems.toList
-
-    selectionModel.value.selectedItems.onChange {
+    /*selectionModel.value.selectedItems.onChange {
       (a, b) =>
-        println(a.toString)
-        println(b.toString)
-    }
+        doSearch.commonSearch
+    }*/
+    cellFactory = { _ => new CellFactory() }
 
-    cellFactory = { _ => new Aa() }
-
-    class Aa extends javafx.scene.control.ListCell[FileTables.IndexContentRow] {
+    class CellFactory extends javafx.scene.control.ListCell[FileTables.IndexContentRow] {
       override protected def updateItem(item: FileTables.IndexContentRow, empty: Boolean): Unit = {
         super.updateItem(item, empty)
+        setItem(item)
         if ((!empty) && (item != null)) {
           val path = Paths.get(URI.create(item.rootUri))
           val name = Option(path.getFileName).map(_.toString).getOrElse(path.toRealPath().toString)
           setGraphic(new Text(name) {
+            /*tooltip = new Tooltip(path.toRealPath().toString) {
+              font = Font(14)
+            }*/
           }: Node)
         } else {
           setGraphic(null)
+          setText(null)
         }
       }
     }
@@ -149,7 +149,12 @@ class FileListWrapper(contentService: ContentService, fileDB: FileDB)(implicit e
     import FileTables._
     import FileTables.profile.api._
     val ids = FileList.currentItems.map(_.id)
-    fileDB.db.run(IndexContent.filter(s => s.id inSet ids).delete).map { contents =>
+    for {
+      (_: Int) <- fileDB.db.run {
+        (IndexPath.filter(_.contentId inSetBind ids).delete >>
+          IndexContent.filter(s => s.id inSetBind ids).delete).transactionally
+      }
+    } yield {
       true
     }
   }

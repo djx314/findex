@@ -4,7 +4,7 @@ import scalafx.Includes._
 import scalafx.geometry.Pos
 import scalafx.scene.layout._
 
-class SearchController(searcherPane: SearcherPane, resultContent: ResultContent) extends BorderPane {
+class SearchController(searcherPane: SearcherPane, resultTabPane: ResultTabPane) extends BorderPane {
   //fillWidth = true
   //alignment = Pos.Center
   /*children = List(
@@ -12,7 +12,7 @@ class SearchController(searcherPane: SearcherPane, resultContent: ResultContent)
     resultContent)*/
 
   top = searcherPane
-  center = resultContent
+  center = resultTabPane
 
   searcherPane.prefWidth <== width
   /*resultContent.prefHeight <== (height - searcherPane.prefHeight)

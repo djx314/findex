@@ -48,9 +48,9 @@ trait FileTables {
 
   import profile.api._
 
-  lazy val schema = FilePrepare.schema ++ DirectoryPrepare.schema ++ IndexContent.schema ++ IndexPath.schema
+  lazy val schema = /*FilePrepare.schema ++ DirectoryPrepare.schema ++*/ IndexContent.schema ++ IndexPath.schema
 
-  case class FilePrepareRow(
+  /*case class FilePrepareRow(
     id: Int,
     parentDirId: Int,
     filePath: String,
@@ -78,7 +78,7 @@ trait FileTables {
     override val * = (id, dirPath, isFinish).mapTo[DirectoryPrepareRow]
   }
 
-  val DirectoryPrepare = TableQuery[DirectoryPrepare]
+  val DirectoryPrepare = TableQuery[DirectoryPrepare]*/
 
   case class IndexContentRow(
     id: Int,
@@ -104,7 +104,8 @@ trait FileTables {
     isDirectory: Boolean,
     lastModified: Date,
     isFinish: Boolean,
-      contentId: Int)
+    parentDirId: Int,
+    contentId: Int)
 
   class IndexPath(tag: Tag) extends Table[IndexPathRow](tag, "index_path") {
     val id = column[Int]("id", O.AutoInc)
@@ -112,8 +113,9 @@ trait FileTables {
     val isDirectory = column[Boolean]("is_directory")
     val lastModified = column[Date]("last_modified")
     val isFinish = column[Boolean]("is_finish")
+    val parentDirId = column[Int]("parent_dir_id")
     val contentId = column[Int]("content_id")
-    override val * = (id, uri, isDirectory, lastModified, isFinish, contentId).mapTo[IndexPathRow]
+    override val * = (id, uri, isDirectory, lastModified, isFinish, parentDirId, contentId).mapTo[IndexPathRow]
   }
 
   val IndexPath = TableQuery[IndexPath]

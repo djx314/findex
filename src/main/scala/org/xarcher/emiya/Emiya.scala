@@ -19,6 +19,7 @@ import org.xarcher.emiya.utils._
 import scala.concurrent.ExecutionContext
 import scalafx.stage.WindowEvent
 import scalafx.Includes._
+import scalafx.scene.input.MouseEvent
 
 object Emiya extends JFXApp {
 
@@ -48,10 +49,11 @@ object Emiya extends JFXApp {
   private lazy val startIndexButton = wire[StartIndexButton]
   private lazy val removeIndexButton = wire[RemoveIndexButton]
   private lazy val indexController: IndexController = wire[IndexController]
-  private lazy val FuzzySearchInput = wire[FuzzySearchInput]
-  private lazy val ExactSearchInput = wire[ExactSearchInput]
-  private lazy val DoSearch = wire[DoSearch]
-  private lazy val resultContent = wire[ResultContent]
+  private lazy val fuzzySearchInput = wire[FuzzySearchInput]
+  private lazy val exactSearchInput = wire[ExactSearchInput]
+  private lazy val doSearch = wire[DoSearch]
+  //private lazy val resultContent = wire[ResultTabPane]
+  private lazy val resultTabPane = wire[ResultTabPane]
   private lazy val SearcherPane = wire[SearcherPane]
   private lazy val searchController: SearchController = wire[SearchController]
   private lazy val parentBox: ParentBox = wire[ParentBox]
@@ -66,6 +68,17 @@ object Emiya extends JFXApp {
     height = 700
     width = 900
     scene = cusScene
+
+    fileListWrapper.FileList.selectionModel.value.selectedItems.onChange {
+      (obsList, changes) =>
+        //必须先声明一下，否则报错
+        obsList.toList
+        doSearch.search(
+          fuzzySearchInput.text.value,
+          exactSearchInput.text.value,
+          obsList.toList)
+        ()
+    }
   }
 
   stage.getIcons.add(new Image(this.getClass.getResourceAsStream("/icon.png")))

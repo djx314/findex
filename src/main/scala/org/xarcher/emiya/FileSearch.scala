@@ -2,7 +2,7 @@ package org.xarcher.xPhoto
 
 import java.awt.Desktop
 import java.io.File
-import java.nio.file.Paths
+import java.nio.file.{ Files, Paths }
 
 import org.apache.lucene.analysis.cjk.CJKAnalyzer
 import org.apache.lucene.index.DirectoryReader
@@ -11,6 +11,7 @@ import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.highlight.{ Highlighter, QueryScorer, SimpleFragmenter, SimpleHTMLFormatter }
 import org.apache.lucene.store.FSDirectory
 import org.fxmisc.richtext.InlineCssTextArea
+import org.xarcher.xPhoto.FileTables.IndexContentRow
 
 import scalafx.Includes._
 import scala.concurrent.{ ExecutionContext, Future }
@@ -24,14 +25,17 @@ import scalafx.scene.paint.Paint
 object FileSearch {
 
   val path = "./ext_persistence_不索引/lucenceTemp"
+  import FileTables.profile._
 
-  def search(keyWord: String)(implicit ec: ExecutionContext): Future[List[OutputInfo]] = {
+  def search(content: IndexContentRow, keyWord: String)(implicit ec: ExecutionContext): Future[List[OutputInfo]] = {
     var indexSearcher: IndexSearcher = null
     val f = if (keyWord.isEmpty)
       Future.successful(List.empty)
     else
       Future {
-        val directory = FSDirectory.open(Paths.get(path))
+        val directory = FSDirectory.open(Paths.get(path).resolve(content.id.toString))
+        //println(Paths.get(path).resolve(content.id.toString))
+        //println(Files.exists(Paths.get(path).resolve(content.id.toString)))
         val analyzer = new CJKAnalyzer()
         indexSearcher = new IndexSearcher(DirectoryReader.open(directory))
 
@@ -86,7 +90,7 @@ case class OutputInfo(filePath: String, fileName: String, content: String) {
     val textArea = new InlineCssTextArea(str)
     textArea.setWrapText(true)
     textArea.setEditable(false)
-    (textArea: Region).prefHeight = height + 10
+    (textArea: Region).prefHeight = height + 4
     textArea.background = new Background(Array(new BackgroundFill(Paint.valueOf("#eeeeee"), CornerRadii.Empty, Insets.Empty)))
 
     textArea.setStyle(0, str.length, s"-fx-font-size: ${height}px;")
