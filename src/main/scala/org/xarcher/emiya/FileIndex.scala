@@ -1,6 +1,7 @@
 package org.xarcher.xPhoto
 
 import java.io.{ File, FileInputStream, IOException }
+import java.net.URI
 import java.nio.file.{ Files, Path, Paths }
 import java.util.concurrent.Executors
 import java.util.{ Date, Timer, TimerTask }
@@ -24,7 +25,7 @@ import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
 class FileIndex(
-  FileTables: FileTables,
+  fileDB: FileDB,
   futureLimitedGen: FutureLimitedGen,
   futureTimeLimitedGen: FutureTimeLimitedGen,
   fileExtraction: FileExtraction,
@@ -41,6 +42,11 @@ class FileIndex(
   import FileTables._
   import FileTables.profile.api._
 
+  /*db.run(schema.create).andThen {
+    case Failure(e) =>
+      e.printStackTrace
+  }(indexEc)*/
+
   def fetchFiles: Future[Boolean] = {
     implicit val ec = indexEc
     timeLimited.limit(() => fetchFilesGen, "索引文件").flatMap { s =>
@@ -56,7 +62,7 @@ class FileIndex(
   def fetchFilesGen: Future[Boolean] = {
     implicit val ec = indexEc
 
-    val filesF = db.run(DirectoryPrepare.filter(_.isFinish === false).take(4).result).map(_.toList)
+    val filesF = fileDB.db.run(DirectoryPrepare.filter(_.isFinish === false).take(4).result).map(_.toList)
 
     filesF.flatMap {
       case dirs if dirs.isEmpty =>
@@ -88,28 +94,31 @@ class FileIndex(
               isFinish = false)
           }
 
-          val addFileNotesAction = writeDB.run((addSubDirsAction >> updateDirStateAction >> addSubFilesAction).transactionally)
+          val addFileNotesAction = fileDB.writeDB.run((addSubDirsAction >> updateDirStateAction >> addSubFilesAction).transactionally)
           addFileNotesAction
         }.flatten.map((_: Option[Int]) => false)
     }
   }
 
-  def index(file: Path)(implicit ec: ExecutionContext): Future[Int] = {
-    val writer = writerGen
+  def index(content: IndexContentRow)(implicit ec: ExecutionContext): Future[Int] = {
+    val rootPath = Paths.get(URI.create(content.rootUri))
+
+    val lucencePath = Paths.get(path).resolve(content.id.toString)
+    val writer = writerGen(lucencePath)
     shutdownHook.addHook(() => Future.successful(Try { writer.close() }))
 
     def startFetchFiles(rootDir: File): Future[Boolean] = {
       val f = if (!rootDir.isDirectory) {
         Future.successful(true)
       } else {
-        writeDB.run {
+        fileDB.writeDB.run {
           //schema.create >>
           DirectoryPrepare.delete
         }.flatMap((_: Int) =>
-          writeDB.run {
+          fileDB.writeDB.run {
             FilePrepare.delete
           }).flatMap((_: Int) =>
-          writeDB.run {
+          fileDB.writeDB.run {
             DirectoryPrepare
               .returning(DirectoryPrepare.map(_.id))
               .into((dir, id) => dir.copy(id = id)) += DirectoryPrepareRow(
@@ -128,7 +137,7 @@ class FileIndex(
 
     def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
       val isIndexing = !isFetchFileFinished()
-      val fileListF = db.run(FilePrepare.filter(_.isFinish === false).take(2).result)
+      val fileListF = fileDB.db.run(FilePrepare.filter(_.isFinish === false).take(2).result)
       //(s"是否已查找文件完毕：${!isIndexing}")
       (for {
         fileList <- fileListF
@@ -165,7 +174,7 @@ class FileIndex(
             }, file.length, s"索引文件（${f.filePath}）")
           })
           listF.flatMap { ids =>
-            writeDB.run(
+            fileDB.writeDB.run(
               FilePrepare.filter(_.id inSetBind ids.map(_._1)).map(_.isFinish).update(true).transactionally)
               .map(_ => sum + ids.map(_._2).sum).flatMap(newSum => tranFiles(newSum, isFetchFileFinished))
           }: Future[Int]
@@ -192,8 +201,8 @@ class FileIndex(
       shutdownHook.addHook(() => Future.successful(Try { timer.cancel() }))
       val task = new TimerTask {
         override def run(): Unit = {
-          lazy val indexingSizeF = db.run(FilePrepare.filter(_.isFinish === false).size.result)
-          lazy val fetchingSizeF = db.run(DirectoryPrepare.filter(_.isFinish === false).size.result)
+          lazy val indexingSizeF = fileDB.db.run(FilePrepare.filter(_.isFinish === false).size.result)
+          lazy val fetchingSizeF = fileDB.db.run(DirectoryPrepare.filter(_.isFinish === false).size.result)
           indexingSizeF.zip(fetchingSizeF).map {
             case (indexingSize, fetchingSize) =>
               val nowisIndexFinished = isIndexFinished()
@@ -212,40 +221,42 @@ class FileIndex(
       Future.successful(1)
     }
 
-    if (Files.isDirectory(file)) {
-      val fetchFilesF = startFetchFiles(file.toFile).recover {
+    val indexAction = if (Files.isDirectory(rootPath)) {
+      val fetchFilesF = startFetchFiles(rootPath.toFile).recover {
         case e => e.printStackTrace
       }
       val indexFilesF = tranFiles(0, () => fetchFilesF.isCompleted)
       indexFilesF.map { count =>
-        println(s"索引:${file.toRealPath()}完成，一共索引了:${count}个文件")
+        println(s"索引:${rootPath.toRealPath()}完成，一共索引了:${count}个文件")
         1
       }.recover {
         case e =>
           e.printStackTrace
           2
-      }.andThen {
-        case _ =>
-          if (null != writer) {
-            Try {
-              writer.close()
-            }.fold(
-              e => e.printStackTrace(),
-              _ => ())
-          }
       }
-
       showInfo(() => indexFilesF.isCompleted)
+      indexFilesF
     } else {
       Future.successful(3)
     }
+    indexAction.andThen {
+      case _ =>
+        if (null != writer) {
+          Try {
+            writer.close()
+          }.fold(
+            e => e.printStackTrace(),
+            _ => ())
+        }
+    }
   }
 
-  def writerGen: IndexWriter = {
+  def writerGen(file: Path): IndexWriter = {
     val f = {
+      Files.createDirectories(file)
       //1、创建Derictory
       //Directory directory = new RAMDirectory();//这个方法是建立在内存中的索引
-      val directory = FSDirectory.open(Paths.get(path))
+      val directory = FSDirectory.open(file)
       //这个方法是建立在磁盘上面的索引
       //2、创建IndexWriter，用完后要关闭
       val analyzer = new CJKAnalyzer()

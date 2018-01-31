@@ -23,7 +23,7 @@ import scalafx.Includes._
 object Emiya extends JFXApp {
 
   private lazy val system = ActorSystem("miao-system")
-  private lazy val fileTables = wire[FileTables]
+  private lazy val fileTables = wire[FileDB]
   private lazy val fileIndex = wire[FileIndex]
   private lazy val shutdownHook = wire[ShutdownHook]
 

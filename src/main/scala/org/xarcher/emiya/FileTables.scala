@@ -9,8 +9,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Failure
 
-class FileTables(futureLimitedGen: FutureLimitedGen, shutdownHook: ShutdownHook) extends FileTables1 {
-  override val profile: H2Profile = H2Profile
+class FileDB(futureLimitedGen: FutureLimitedGen, shutdownHook: ShutdownHook) {
+  val profile = FileTables.profile
 
   val fLimited = futureLimitedGen.create(4, "dbPool")
 
@@ -38,7 +38,11 @@ class FileTables(futureLimitedGen: FutureLimitedGen, shutdownHook: ShutdownHook)
 
 }
 
-trait FileTables1 {
+object FileTables extends FileTables {
+  override val profile = H2Profile
+}
+
+trait FileTables {
 
   val profile: JdbcProfile
 

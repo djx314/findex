@@ -5,7 +5,7 @@ import java.net.URI
 import java.nio.file.Paths
 
 import org.xarcher.emiya.service.ContentService
-import org.xarcher.xPhoto.{ FileIndex, FileTables }
+import org.xarcher.xPhoto.{ FileDB, FileIndex, FileTables }
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Failure
@@ -68,7 +68,7 @@ class IndexController(
           contentText = selectedFile.indexDirOpt.map(_.toPath.toRealPath().toString).getOrElse("没有文件")
         }.showAndWait()
       }*/
-      Future.sequence(fileListWrapper.FileList.currentItems.map(item => fileIndex.index(Paths.get(URI.create(item.rootUri))))): Future[List[Int]]
+      Future.sequence(fileListWrapper.FileList.currentItems.map(item => fileIndex.index(item))): Future[List[Int]]
       ()
   }
 }
@@ -101,14 +101,14 @@ class RemoveIndexButton(selectedFile: SelectedFile, fileIndex: FileIndex)(implic
 
 }
 
-class FileListWrapper(contentService: ContentService, val fileTables: FileTables)(implicit ec: ExecutionContext) {
-  object FileList extends ListView[fileTables.IndexContentRow] {
+class FileListWrapper(contentService: ContentService, fileDB: FileDB)(implicit ec: ExecutionContext) {
+  object FileList extends ListView[FileTables.IndexContentRow] {
 
-    items = ObservableBuffer(List.empty[fileTables.IndexContentRow])
+    items = ObservableBuffer(List.empty[FileTables.IndexContentRow])
 
     selectionModel.value.setSelectionMode(SelectionMode.Multiple)
 
-    def currentItems: List[fileTables.IndexContentRow] = selectionModel.value.selectedItems.toList
+    def currentItems: List[FileTables.IndexContentRow] = selectionModel.value.selectedItems.toList
 
     selectionModel.value.selectedItems.onChange {
       (a, b) =>
@@ -118,8 +118,8 @@ class FileListWrapper(contentService: ContentService, val fileTables: FileTables
 
     cellFactory = { _ => new Aa() }
 
-    class Aa extends javafx.scene.control.ListCell[fileTables.IndexContentRow] {
-      override protected def updateItem(item: fileTables.IndexContentRow, empty: Boolean): Unit = {
+    class Aa extends javafx.scene.control.ListCell[FileTables.IndexContentRow] {
+      override protected def updateItem(item: FileTables.IndexContentRow, empty: Boolean): Unit = {
         super.updateItem(item, empty)
         if ((!empty) && (item != null)) {
           val path = Paths.get(URI.create(item.rootUri))
@@ -135,9 +135,9 @@ class FileListWrapper(contentService: ContentService, val fileTables: FileTables
   }
 
   def refreshAll: Future[Boolean] = {
-    import fileTables._
-    import fileTables.profile.api._
-    db.run(IndexContent.result).map { contents =>
+    import FileTables._
+    import FileTables.profile.api._
+    fileDB.db.run(IndexContent.result).map { contents =>
       Platform.runLater { () =>
         FileList.items = ObservableBuffer(contents.toList)
       }
@@ -146,10 +146,10 @@ class FileListWrapper(contentService: ContentService, val fileTables: FileTables
   }
 
   def removeSelected: Future[Boolean] = {
-    import fileTables._
-    import fileTables.profile.api._
+    import FileTables._
+    import FileTables.profile.api._
     val ids = FileList.currentItems.map(_.id)
-    db.run(IndexContent.filter(s => s.id inSet ids).delete).map { contents =>
+    fileDB.db.run(IndexContent.filter(s => s.id inSet ids).delete).map { contents =>
       true
     }
   }
