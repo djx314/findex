@@ -36,22 +36,26 @@ class DoSearch(
 
   fuzzySearchInput.text.addListener(new ChangeListener[String] {
     override def changed(observable: ObservableValue[_ <: String], oldValue: String, newValue: String): Unit = {
-      search(newValue, exactSearchInput.text.value, fileListWrapper.FileList.currentItems)
+      //search(newValue, exactSearchInput.text.value, fileListWrapper.FileList.currentItems)
     }
   })
   fuzzySearchInput.handleEvent(KeyEvent.KeyReleased) {
     event: KeyEvent =>
-      search(fuzzySearchInput.text.value, exactSearchInput.text.value, fileListWrapper.FileList.currentItems)
+      if (event.code == KeyCode.Enter) {
+        search(fuzzySearchInput.text.value, exactSearchInput.text.value, fileListWrapper.FileList.currentItems)
+      }
   }
 
   exactSearchInput.text.addListener(new ChangeListener[String] {
     override def changed(observable: ObservableValue[_ <: String], oldValue: String, newValue: String): Unit = {
-      search(fuzzySearchInput.text.value, newValue, fileListWrapper.FileList.currentItems)
+      //search(fuzzySearchInput.text.value, newValue, fileListWrapper.FileList.currentItems)
     }
   })
   exactSearchInput.handleEvent(KeyEvent.KeyReleased) {
     event: KeyEvent =>
-      search(fuzzySearchInput.text.value, exactSearchInput.text.value, fileListWrapper.FileList.currentItems)
+      if (event.code == KeyCode.Enter) {
+        search(fuzzySearchInput.text.value, exactSearchInput.text.value, fileListWrapper.FileList.currentItems)
+      }
   }
   /*def commonSearch: Unit = {
     search(fuzzySearchInput.text.value, exactSearchInput.text.value, fileListWrapper.FileList.currentItems)
