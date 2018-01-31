@@ -101,17 +101,19 @@ trait FileTables {
   case class IndexPathRow(
     id: Int,
     uri: String,
-    //isDirectory: Boolean,
-    //lastModified: Date,
-    isFinish: Boolean)
+    isDirectory: Boolean,
+    lastModified: Date,
+    isFinish: Boolean,
+      contentId: Int)
 
   class IndexPath(tag: Tag) extends Table[IndexPathRow](tag, "index_path") {
     val id = column[Int]("id", O.AutoInc)
     val uri = column[String]("uri")
-    //val isDirectory = column[Boolean]("is_directory")
-    //val lastModified = column[Date]("last_modified")
+    val isDirectory = column[Boolean]("is_directory")
+    val lastModified = column[Date]("last_modified")
     val isFinish = column[Boolean]("is_finish")
-    override val * = (id, uri, isFinish).mapTo[IndexPathRow]
+    val contentId = column[Int]("content_id")
+    override val * = (id, uri, isDirectory, lastModified, isFinish, contentId).mapTo[IndexPathRow]
   }
 
   val IndexPath = TableQuery[IndexPath]

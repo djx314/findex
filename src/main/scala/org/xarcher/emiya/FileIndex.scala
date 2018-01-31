@@ -1,28 +1,29 @@
 package org.xarcher.xPhoto
 
-import java.io.{ File, FileInputStream, IOException }
+import java.io.{File, FileInputStream, IOException}
 import java.net.URI
-import java.nio.file.{ Files, Path, Paths }
+import java.nio.file.{Files, Path, Paths}
+import java.sql.Date
 import java.util.concurrent.Executors
-import java.util.{ Date, Timer, TimerTask }
+import java.util.{Date, Timer, TimerTask}
 
 import akka.actor.ActorRef
 import com.softwaremill.tagging.@@
 import org.apache.commons.io.IOUtils
 import org.apache.lucene.analysis.cjk.CJKAnalyzer
 import org.apache.lucene.document._
-import org.apache.lucene.index.{ IndexWriter, IndexWriterConfig }
+import org.apache.lucene.index.{IndexWriter, IndexWriterConfig}
 import org.apache.lucene.store.FSDirectory
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.jsoup.Jsoup
-import org.slf4j.{ Logger, LoggerFactory }
-import org.xarcher.cpoi.{ CPoi, PoiOperations }
+import org.slf4j.{Logger, LoggerFactory}
+import org.xarcher.cpoi.{CPoi, PoiOperations}
 import org.xarcher.emiya.service.FileIgnoreService
 import org.xarcher.emiya.utils._
 
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.util.{ Failure, Success, Try }
+import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.util.{Failure, Success, Try}
 
 class FileIndex(
   fileDB: FileDB,
@@ -47,29 +48,32 @@ class FileIndex(
       e.printStackTrace
   }(indexEc)*/
 
-  def fetchFiles: Future[Boolean] = {
+  def fetchFiles(content: IndexContentRow): Future[Boolean] = {
     implicit val ec = indexEc
-    timeLimited.limit(() => fetchFilesGen, "索引文件").flatMap { s =>
+    timeLimited.limit(() => fetchFilesGen(content), "索引文件").flatMap { s =>
       //println("索引文件")
       if (s) {
         Future.successful(s)
       } else {
-        fetchFiles
+        fetchFiles(content)
       }
     }
   }
 
-  def fetchFilesGen: Future[Boolean] = {
+  def fetchFilesGen(content: IndexContentRow): Future[Boolean] = {
     implicit val ec = indexEc
 
-    val filesF = fileDB.db.run(DirectoryPrepare.filter(_.isFinish === false).take(4).result).map(_.toList)
+    val filesF = fileDB.db.run(IndexPath
+      .filter(s => (s.isFinish === false) && (s.isDirectory === true) && (s.contentId === content.id))
+      .take(4).result
+    ).map(_.toList)
 
     filesF.flatMap {
       case dirs if dirs.isEmpty =>
         Future.successful(true)
       case dirs =>
         Future {
-          val subFiles = dirs.flatMap(eachDir => new File(eachDir.dirPath).listFiles().toList.map(s => s.toPath -> eachDir.id))
+          val subFiles = dirs.flatMap(eachDir => new File(URI.create(eachDir.uri)).listFiles().toList.map(s => s.toPath -> eachDir.id))
           val subDirs = subFiles.filter(s => Files.isDirectory(s._1) && !fileIgnoreService.ignoreDir(s._1))
           val simpleFiles = subFiles.filterNot(s => Files.isDirectory(s._1))
           val filesToIndex = simpleFiles.filter {
@@ -77,21 +81,32 @@ class FileIndex(
               (Files.size(s._1) < (1024 * 1024 * 2)) && !fileIgnoreService.ignoreFile(s._1)
           }
 
-          val addSubDirsAction = DirectoryPrepare ++= subDirs.map { dir =>
-            DirectoryPrepareRow(
+          val addSubDirsAction = IndexPath ++= subDirs.map { dir =>
+            IndexPathRow(
               id = -1,
-              dirPath = dir._1.toRealPath().toString,
-              isFinish = false)
+              uri = dir._1.toUri.toASCIIString,
+              isDirectory = Files.isDirectory(dir._1),
+              lastModified = new java.sql.Date(Files.getLastModifiedTime(dir._1).value),
+              isFinish = false,
+              contentId = content.id)
           }
 
-          val updateDirStateAction = DirectoryPrepare.filter(_.id inSet dirs.map(_.id)).map(_.isFinish).update(true)
+          val updateDirStateAction = IndexPath.filter(_.id inSet dirs.map(_.id)).map(_.isFinish).update(true)
 
-          val addSubFilesAction = FilePrepare ++= filesToIndex.map { file =>
+          val addSubFilesAction = IndexPath ++= filesToIndex.map { file =>
             FilePrepareRow(
               id = -1,
               parentDirId = file._2,
               filePath = file._1.toRealPath().toString,
               isFinish = false)
+            IndexPathRow(
+              id = -1,
+              uri = dir._1.toUri.toASCIIString,
+              parentDirId = file._2,
+              isDirectory = Files.isDirectory(dir._1),
+              lastModified = new java.sql.Date(Files.getLastModifiedTime(dir._1).value),
+              isFinish = false,
+              contentId = content.id)
           }
 
           val addFileNotesAction = fileDB.writeDB.run((addSubDirsAction >> updateDirStateAction >> addSubFilesAction).transactionally)
@@ -125,7 +140,7 @@ class FileIndex(
                 id = -1,
                 dirPath = rootDir.toPath.toRealPath().toString,
                 isFinish = false)
-          }.flatMap(dir => fetchFiles))
+          }.flatMap(dir => fetchFiles(content)))
       }
       f
       /*.andThen {
