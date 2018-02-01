@@ -24,7 +24,7 @@ class CompareGen() {
     val mappedPaths = localPaths.map(s => s.toRealPath().toUri.toASCIIString -> s)
     val sortedLocalPaths = mappedPaths.sortBy(_._1)
     val sortedDBPaths = dbPaths.sortBy(_.uri)
-    compareLoop(Queue(sortedLocalPaths.map(_._2): _*), Queue(sortedDBPaths: _*), EqualsName, parentId, contentId)
+    compareLoop(Queue(sortedLocalPaths.map(_._2): _*), Queue(sortedDBPaths: _*), EqualsName, partentId = parentId, contentId = contentId)
   }
 
   def compareLoop(localPaths: Queue[Path], dbPaths: Queue[IndexPathRow], content: CompareFileContent, partentId: Int, contentId: Int): List[FileCompare] = {
@@ -42,6 +42,7 @@ class CompareGen() {
                 uri = local.toRealPath().toUri.toASCIIString,
                 isDirectory = Files.isDirectory(local),
                 lastModified = new java.sql.Date(Files.getLastModifiedTime(local).toMillis),
+                isFetched = if (Files.isDirectory(local)) false else true,
                 isFinish = false,
                 parentDirId = partentId,
                 contentId = contentId)) :: compareLoop(localPaths, tailDB, DBPath(headDB), partentId, contentId)
@@ -49,28 +50,31 @@ class CompareGen() {
               val localModified = Files.getLastModifiedTime(local).toMillis
               val dbModified = headDB.lastModified.getTime
               if (localModified == dbModified) {
-                compareLoop(localPaths, tailDB, EqualsName, partentId, contentId)
+                Modified(
+                  headDB.copy(isFetched = true)) :: compareLoop(localPaths, tailDB, EqualsName, partentId, contentId)
               } else {
                 Modified(
                   headDB.copy(
                     isDirectory = Files.isDirectory(local),
                     lastModified = new java.sql.Date(Files.getLastModifiedTime(local).toMillis),
+                    isFetched = if (Files.isDirectory(local)) false else true,
                     isFinish = false)) ::
                   compareLoop(localPaths, tailDB, EqualsName, partentId, contentId)
               }
             }
           case None =>
-            localPaths.map { path =>
+            localPaths.toList.map { path =>
               AddToLucence(
                 IndexPathRow(
                   id = -1,
                   uri = path.toRealPath().toUri.toASCIIString,
                   isDirectory = Files.isDirectory(path),
                   lastModified = new java.sql.Date(Files.getLastModifiedTime(path).toMillis),
+                  isFetched = if (Files.isDirectory(local)) false else true,
                   isFinish = false,
                   parentDirId = partentId,
                   contentId = contentId))
-            }.toList
+            }
         }
       case DBPath(dbPath) =>
         localPaths.dequeueOption match {
@@ -83,6 +87,7 @@ class CompareGen() {
                 uri = local.toRealPath().toUri.toASCIIString,
                 isDirectory = Files.isDirectory(local),
                 lastModified = new java.sql.Date(Files.getLastModifiedTime(local).toMillis),
+                isFetched = if (Files.isDirectory(local)) false else true,
                 isFinish = false,
                 parentDirId = partentId,
                 contentId = contentId)) :: compareLoop(localQueue, dbPaths, DBPath(dbPath), partentId, contentId)
@@ -92,12 +97,14 @@ class CompareGen() {
               val localModified = Files.getLastModifiedTime(local).toMillis
               val dbModified = dbPath.lastModified.getTime
               if (localModified == dbModified) {
-                compareLoop(localQueue, dbPaths, EqualsName, partentId, contentId)
+                Modified(
+                  dbPath.copy(isFetched = true)) :: compareLoop(localQueue, dbPaths, EqualsName, partentId, contentId)
               } else {
                 Modified(
                   dbPath.copy(
                     isDirectory = Files.isDirectory(local),
                     lastModified = new java.sql.Date(Files.getLastModifiedTime(local).toMillis),
+                    isFetched = if (Files.isDirectory(local)) false else true,
                     isFinish = false)) ::
                   compareLoop(localQueue, dbPaths, EqualsName, partentId, contentId)
               }

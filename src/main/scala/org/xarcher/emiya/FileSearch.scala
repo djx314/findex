@@ -5,9 +5,10 @@ import java.io.File
 import java.nio.file.{ Files, Paths }
 
 import org.apache.lucene.analysis.cjk.CJKAnalyzer
-import org.apache.lucene.index.DirectoryReader
+import org.apache.lucene.index.{ DirectoryReader, IndexReader, Term }
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
-import org.apache.lucene.search.IndexSearcher
+import org.apache.lucene.search.BooleanClause.Occur
+import org.apache.lucene.search.{ BooleanQuery, IndexSearcher, TermQuery, WildcardQuery }
 import org.apache.lucene.search.highlight.{ Highlighter, QueryScorer, SimpleFragmenter, SimpleHTMLFormatter }
 import org.apache.lucene.store.FSDirectory
 import org.fxmisc.richtext.InlineCssTextArea
@@ -27,26 +28,143 @@ object FileSearch {
   val path = "./ext_persistence_不索引/lucenceTemp"
   import FileTables.profile._
 
-  def search(content: IndexContentRow, keyWord: String)(implicit ec: ExecutionContext): Future[List[OutputInfo]] = {
+  def search(content: IndexContentRow, fuzzyKey: String, exactKey: String)(implicit ec: ExecutionContext): Future[List[OutputInfo]] = {
     var indexSearcher: IndexSearcher = null
-    val f = if (keyWord.isEmpty)
+
+    val analyzer = new CJKAnalyzer()
+    val titleSize = 80
+    val textSize = 300
+
+    lazy val splitFronts = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
+
+    def exactKeyQuery = {
+      val queryList1 = splitFronts.map { split =>
+        val eachTerm = new Term("law_fileName", s"*${split}*")
+        new WildcardQuery(eachTerm)
+      }
+      val queryList2 = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty).map { split =>
+        val eachTerm = new Term("law_filePath", s"*${split}*")
+        new WildcardQuery(eachTerm)
+      }
+      val queryList3 = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty).map { split =>
+        val eachTerm = new Term("law_fileContent", s"*${split}*")
+        new WildcardQuery(eachTerm)
+      }
+      val booleanQueryBuilder = new BooleanQuery.Builder()
+      (queryList1 ::: queryList2 ::: queryList3).map(query =>
+        booleanQueryBuilder.add(query, Occur.SHOULD))
+      booleanQueryBuilder.build()
+    }
+
+    def fuzzyKeyQuery = {
+      val fields = Array("fileName", "fileContent")
+      val mparser = new MultiFieldQueryParser(fields, analyzer)
+      mparser.parse(fuzzyKey)
+    }
+
+    val f = Future {
+      val directory = FSDirectory.open(Paths.get(path).resolve(content.id.toString))
+      indexSearcher = new IndexSearcher(DirectoryReader.open(directory))
+
+      if (fuzzyKey.isEmpty && exactKey.trim.isEmpty) {
+        List.empty
+      } else if ((!fuzzyKey.isEmpty) && exactKey.trim.isEmpty) {
+        val fuzzyKeyQuery1 = fuzzyKeyQuery
+        val docs = indexSearcher.search(fuzzyKeyQuery1, 20).scoreDocs.toList
+
+        // 生成高亮器
+        val formatter = new SimpleHTMLFormatter("|||", "|||")
+        val scorer = new QueryScorer(fuzzyKeyQuery1)
+        val highlighter = new Highlighter(formatter, scorer)
+        highlighter.setTextFragmenter(new SimpleFragmenter(textSize))
+
+        val titleHighlighter = new Highlighter(formatter, scorer)
+        titleHighlighter.setTextFragmenter(new SimpleFragmenter(titleSize))
+
+        docs.map { doc =>
+          val hitDoc = indexSearcher.doc(doc.doc)
+          val model = OutputInfo(
+            fileName = Option(hitDoc.get("law_fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            content = Option(hitDoc.get("law_fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            filePath = Option(hitDoc.get("law_filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
+
+          val newTitle = titleHighlighter.getBestFragment(analyzer.tokenStream("", model.fileName), model.fileName)
+          val newContent = highlighter.getBestFragment(analyzer.tokenStream("", model.content), model.content)
+          model.copy(fileName = newTitle, content = newContent)
+        }
+
+      } else if (fuzzyKey.isEmpty && (!exactKey.trim.isEmpty)) {
+        val exactKeyQuery1 = exactKeyQuery
+        val docs = indexSearcher.search(exactKeyQuery1, 20).scoreDocs.toList
+        docs.map { doc =>
+          val hitDoc = indexSearcher.doc(doc.doc)
+          val model = OutputInfo(
+            fileName = Option(hitDoc.get("law_fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            content = Option(hitDoc.get("law_fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            filePath = Option(hitDoc.get("law_filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
+
+          val newTitle = splitFronts.foldLeft(model.fileName.take(titleSize)) { (name, toReplace) =>
+            name.replaceAllLiterally(toReplace, s"|||${toReplace}|||")
+          }.take(titleSize)
+          val newContent = splitFronts.foldLeft(model.content.take(textSize)) { (name, toReplace) =>
+            name.replaceAllLiterally(toReplace, s"|||${toReplace}|||")
+          }.take(textSize)
+          model.copy(fileName = newTitle, content = newContent)
+        }
+      } else {
+        val fuzzyKeyQuery1 = fuzzyKeyQuery
+        val exactKeyQuery1 = exactKeyQuery
+
+        val booleanQueryBuilder = new BooleanQuery.Builder()
+        booleanQueryBuilder.add(fuzzyKeyQuery1, Occur.MUST)
+        booleanQueryBuilder.add(exactKeyQuery1, Occur.MUST)
+        val booleanQuery = booleanQueryBuilder.build()
+        val docs = indexSearcher.search(booleanQuery, 20).scoreDocs.toList
+
+        // 生成高亮器
+        val formatter = new SimpleHTMLFormatter("|||", "|||")
+        val scorer = new QueryScorer(fuzzyKeyQuery1)
+        val highlighter = new Highlighter(formatter, scorer)
+        highlighter.setTextFragmenter(new SimpleFragmenter(textSize))
+
+        val titleHighlighter = new Highlighter(formatter, scorer)
+        titleHighlighter.setTextFragmenter(new SimpleFragmenter(titleSize))
+
+        docs.map { doc =>
+          val hitDoc = indexSearcher.doc(doc.doc)
+          val model = OutputInfo(
+            fileName = Option(hitDoc.get("law_fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            content = Option(hitDoc.get("law_fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            filePath = Option(hitDoc.get("law_filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
+
+          val newTitle = titleHighlighter.getBestFragment(analyzer.tokenStream("", model.fileName), model.fileName)
+          val newContent = highlighter.getBestFragment(analyzer.tokenStream("", model.content), model.content)
+
+          model.copy(fileName = newTitle, content = newContent)
+        }
+
+      }
+    }
+    /*val f = if (fuzzyKey.isEmpty && exactKey.isEmpty)
       Future.successful(List.empty)
     else
       Future {
         val directory = FSDirectory.open(Paths.get(path).resolve(content.id.toString))
-        //println(Paths.get(path).resolve(content.id.toString))
-        //println(Files.exists(Paths.get(path).resolve(content.id.toString)))
-        val analyzer = new CJKAnalyzer()
         indexSearcher = new IndexSearcher(DirectoryReader.open(directory))
 
-        val fields = Array("fileName", "content")
+        /*val fields = Array("fileName", "content")
         val mparser = new MultiFieldQueryParser(fields, analyzer)
-        val mQuery = mparser.parse(keyWord)
-
+        val mQuery123456789 = mparser.parse(fuzzyKey)*/
+        //val b = new BooleanQuery.Builder()
+        //b.add()
+        //val docs = indexSearcher.search(b, 20).scoreDocs
         val docs = indexSearcher.search(mQuery, 20).scoreDocs
+        println(docs)
 
         docs.map { doc =>
           val hitDoc = indexSearcher.doc(doc.doc)
+          println(hitDoc.get("law_fileName"))
+          println(hitDoc.get("fileName"))
           val model = OutputInfo(
             fileName = Option(hitDoc.get("fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
             content = Option(hitDoc.get("content")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
@@ -68,7 +186,7 @@ object FileSearch {
           val newTitle = titleHighlighter.getBestFragment(analyzer.tokenStream("", model.fileName), model.fileName)
           model.copy(content = Option(newContent).getOrElse(model.content.take(textSize)), fileName = Option(newTitle).getOrElse(model.fileName.take(titleSize)))
         }.toList
-      }
+      }*/
     f.andThen {
       case Success(list) =>
       //println(list)

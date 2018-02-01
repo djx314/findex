@@ -63,7 +63,7 @@ class DoSearch(
   def search(fuzzyKey: String, exactKey: String, contents: List[IndexContentRow]): Unit = {
     //println(contents)
     Future {
-      val infosF = Future.sequence(contents.map(item => FileSearch.search(item, fuzzyKey).map(s => item -> s)))
+      val infosF = Future.sequence(contents.map(item => FileSearch.search(item, fuzzyKey, exactKey).map(s => item -> s)))
       infosF.map { infos =>
         Platform.runLater(() => {
           resultTabPane.tabs = List.empty[Tab]

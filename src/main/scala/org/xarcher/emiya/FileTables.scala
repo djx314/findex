@@ -103,6 +103,7 @@ trait FileTables {
     uri: String,
     isDirectory: Boolean,
     lastModified: Date,
+    isFetched: Boolean,
     isFinish: Boolean,
     parentDirId: Int,
     contentId: Int)
@@ -112,10 +113,11 @@ trait FileTables {
     val uri = column[String]("uri")
     val isDirectory = column[Boolean]("is_directory")
     val lastModified = column[Date]("last_modified")
+    val isFetched = column[Boolean]("is_fetched")
     val isFinish = column[Boolean]("is_finish")
     val parentDirId = column[Int]("parent_dir_id")
     val contentId = column[Int]("content_id")
-    override val * = (id, uri, isDirectory, lastModified, isFinish, parentDirId, contentId).mapTo[IndexPathRow]
+    override val * = (id, uri, isDirectory, lastModified, isFetched, isFinish, parentDirId, contentId).mapTo[IndexPathRow]
   }
 
   val IndexPath = TableQuery[IndexPath]

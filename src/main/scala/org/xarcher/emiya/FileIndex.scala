@@ -59,13 +59,14 @@ class FileIndex(
 
     //还没有处理如果文件夹变成了文件或者文件变成了文件夹的情况
     val filesF = fileDB.db.run(IndexPath
-      .filter(s => (s.isFinish === false) && (s.contentId === content.id) && (s.isDirectory === true))
+      .filter(s => /*(s.isFinish === false) &&*/ (s.contentId === content.id) && (s.isDirectory === true) && (s.isFetched === false))
       .take(4).result).map(_.toList)
 
-    filesF.flatMap(rows =>
+    filesF.flatMap { rows =>
       Future.sequence(
         rows.map(row =>
-          fileUpdate.updateIndexRow(row, content))).map(_.sum)).map((_: Int) => true)
+          fileUpdate.updateIndexRow(row, content))).map((_: Seq[Int]) => rows.isEmpty)
+    }
 
     /*filesF.flatMap {
       case dirs if dirs.isEmpty =>
@@ -143,6 +144,7 @@ class FileIndex(
                 parentDirId = -1,
                 isDirectory = Files.isDirectory(rootDir.toPath),
                 lastModified = new java.sql.Date(Files.getLastModifiedTime(rootDir.toPath).toMillis),
+                isFetched = false,
                 isFinish = false,
                 contentId = content.id)
             /*id = -1,
@@ -177,9 +179,13 @@ class FileIndex(
                 case Right(info) =>
                   Future {
                     val document = new Document()
-                    document.add(new TextField("fileName", info.fileName, Field.Store.YES))
-                    document.add(new TextField("content", info.content, Field.Store.YES))
-                    document.add(new TextField("filePath", info.filePath, Field.Store.YES))
+                    document.add(new TextField("fileName", info.fileName, Field.Store.NO))
+                    document.add(new TextField("fileContent", info.content, Field.Store.NO))
+                    document.add(new TextField("filePath", info.filePath, Field.Store.NO))
+                    document.add(new StringField("law_fileName", info.fileName, Field.Store.YES))
+                    document.add(new StringField("law_filePath", info.filePath, Field.Store.YES))
+                    document.add(new StringField("law_fileContent", info.content, Field.Store.YES))
+
                     writer.addDocument(document)
                     logger.debug(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
                     logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.content}")
@@ -226,9 +232,9 @@ class FileIndex(
       val task = new TimerTask {
         override def run(): Unit = {
           lazy val indexingSizeF = fileDB.db.run(
-            IndexPath.filter(s => (s.isFinish === false) && (s.isDirectory === false) && (s.contentId === content.id)).size.result)
+            IndexPath.filter(s => (s.isFetched === false) && (s.contentId === content.id)).size.result)
           lazy val fetchingSizeF = fileDB.db.run(
-            IndexPath.filter(s => (s.isFinish === false) && (s.isDirectory === true) && (s.contentId === content.id)).size.result)
+            IndexPath.filter(s => (s.isFinish === false) && (s.contentId === content.id)).size.result)
           indexingSizeF.zip(fetchingSizeF).map {
             case (indexingSize, fetchingSize) =>
               val nowisIndexFinished = isIndexFinished()
