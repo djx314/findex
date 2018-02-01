@@ -24,6 +24,7 @@ class FileIndex(
   futureTimeLimitedGen: FutureTimeLimitedGen,
   fileExtraction: FileExtraction,
   fileIgnoreService: FileIgnoreService,
+  fileUpdate: FileUpdate,
   shutdownHook: ShutdownHook,
   indexExecutionContext: IndexExecutionContext) {
 
@@ -61,7 +62,12 @@ class FileIndex(
       .filter(s => (s.isFinish === false) && (s.contentId === content.id) && (s.isDirectory === true))
       .take(4).result).map(_.toList)
 
-    filesF.flatMap {
+    filesF.flatMap(rows =>
+      Future.sequence(
+        rows.map(row =>
+          fileUpdate.updateIndexRow(row, content))).map(_.sum)).map((_: Int) => true)
+
+    /*filesF.flatMap {
       case dirs if dirs.isEmpty =>
         Future.successful(true)
       case dirs =>
@@ -110,7 +116,7 @@ class FileIndex(
           val addFileNotesAction = fileDB.writeDB.run((addSubDirsAction >> updateDirStateAction >> addSubFilesAction).transactionally)
           addFileNotesAction
         }.flatten.map((_: Option[Int]) => false)
-    }
+    }*/
   }
 
   def index(content: IndexContentRow)(implicit ec: ExecutionContext): Future[Int] = {
