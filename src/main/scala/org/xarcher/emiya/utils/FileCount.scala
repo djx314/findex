@@ -63,7 +63,7 @@ class CompareGen() {
               }
             }
           case None =>
-            localPaths.toList.map { path =>
+            (local :: localPaths.toList).map { path =>
               AddToLucence(
                 IndexPathRow(
                   id = -1,
@@ -110,10 +110,9 @@ class CompareGen() {
               }
             }
           case None =>
-            dbPaths.map { path =>
-              RemoveFromLucence(
-                path)
-            }.toList
+            (dbPath :: dbPaths.toList).map { path =>
+              RemoveFromLucence(path)
+            }
         }
       case EqualsName =>
         localPaths.dequeueOption match {

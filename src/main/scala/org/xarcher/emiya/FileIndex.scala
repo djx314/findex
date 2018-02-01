@@ -9,7 +9,7 @@ import akka.actor.ActorRef
 import com.softwaremill.tagging.@@
 import org.apache.lucene.analysis.cjk.CJKAnalyzer
 import org.apache.lucene.document._
-import org.apache.lucene.index.{ IndexWriter, IndexWriterConfig }
+import org.apache.lucene.index.{ IndexOptions, IndexWriter, IndexWriterConfig }
 import org.apache.lucene.store.FSDirectory
 import org.slf4j.LoggerFactory
 import org.xarcher.emiya.service.FileIgnoreService
@@ -178,13 +178,20 @@ class FileIndex(
               indexFile(file.toPath, f.id).flatMap {
                 case Right(info) =>
                   Future {
+                    val aa = new FieldType()
+                    aa.setIndexOptions(IndexOptions.DOCS)
+                    aa.setTokenized(false)
+                    aa.setStored(false)
+                    aa.omitNorms()
+                    aa.freeze()
+
                     val document = new Document()
-                    document.add(new TextField("fileName", info.fileName, Field.Store.NO))
-                    document.add(new TextField("fileContent", info.content, Field.Store.NO))
-                    document.add(new TextField("filePath", info.filePath, Field.Store.NO))
-                    document.add(new StringField("law_fileName", info.fileName, Field.Store.YES))
-                    document.add(new StringField("law_filePath", info.filePath, Field.Store.YES))
-                    document.add(new StringField("law_fileContent", info.content, Field.Store.YES))
+                    document.add(new TextField("fileName", info.fileName, Field.Store.YES))
+                    document.add(new TextField("fileContent", info.content, Field.Store.YES))
+                    document.add(new TextField("filePath", info.filePath, Field.Store.YES))
+                    //document.add(new StringField("law_fileName", info.fileName, Field.Store.YES))
+                    //document.add(new StringField("law_filePath", info.filePath, Field.Store.YES))
+                    document.add(new Field("law_fileContent", info.content, aa))
 
                     writer.addDocument(document)
                     logger.debug(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")

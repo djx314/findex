@@ -39,11 +39,11 @@ object FileSearch {
 
     def exactKeyQuery = {
       val queryList1 = splitFronts.map { split =>
-        val eachTerm = new Term("law_fileName", s"*${split}*")
+        val eachTerm = new Term("fileName", s"*${split}*")
         new WildcardQuery(eachTerm)
       }
       val queryList2 = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty).map { split =>
-        val eachTerm = new Term("law_filePath", s"*${split}*")
+        val eachTerm = new Term("filePath", s"*${split}*")
         new WildcardQuery(eachTerm)
       }
       val queryList3 = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty).map { split =>
@@ -84,13 +84,13 @@ object FileSearch {
         docs.map { doc =>
           val hitDoc = indexSearcher.doc(doc.doc)
           val model = OutputInfo(
-            fileName = Option(hitDoc.get("law_fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            fileName = Option(hitDoc.get("fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
             content = Option(hitDoc.get("law_fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
-            filePath = Option(hitDoc.get("law_filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
+            filePath = Option(hitDoc.get("filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
 
           val newTitle = titleHighlighter.getBestFragment(analyzer.tokenStream("", model.fileName), model.fileName)
           val newContent = highlighter.getBestFragment(analyzer.tokenStream("", model.content), model.content)
-          model.copy(fileName = newTitle, content = newContent)
+          model.copy(fileName = Option(newTitle).map(_.trim).filterNot(_.isEmpty).getOrElse(""), content = newContent)
         }
 
       } else if (fuzzyKey.isEmpty && (!exactKey.trim.isEmpty)) {
@@ -99,9 +99,9 @@ object FileSearch {
         docs.map { doc =>
           val hitDoc = indexSearcher.doc(doc.doc)
           val model = OutputInfo(
-            fileName = Option(hitDoc.get("law_fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            fileName = Option(hitDoc.get("fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
             content = Option(hitDoc.get("law_fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
-            filePath = Option(hitDoc.get("law_filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
+            filePath = Option(hitDoc.get("filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
 
           val newTitle = splitFronts.foldLeft(model.fileName.take(titleSize)) { (name, toReplace) =>
             name.replaceAllLiterally(toReplace, s"|||${toReplace}|||")
@@ -109,7 +109,7 @@ object FileSearch {
           val newContent = splitFronts.foldLeft(model.content.take(textSize)) { (name, toReplace) =>
             name.replaceAllLiterally(toReplace, s"|||${toReplace}|||")
           }.take(textSize)
-          model.copy(fileName = newTitle, content = newContent)
+          model.copy(fileName = Option(newTitle).map(_.trim).filterNot(_.isEmpty).getOrElse(""), content = newContent)
         }
       } else {
         val fuzzyKeyQuery1 = fuzzyKeyQuery
@@ -133,14 +133,14 @@ object FileSearch {
         docs.map { doc =>
           val hitDoc = indexSearcher.doc(doc.doc)
           val model = OutputInfo(
-            fileName = Option(hitDoc.get("law_fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            fileName = Option(hitDoc.get("fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
             content = Option(hitDoc.get("law_fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
-            filePath = Option(hitDoc.get("law_filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
+            filePath = Option(hitDoc.get("filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
 
           val newTitle = titleHighlighter.getBestFragment(analyzer.tokenStream("", model.fileName), model.fileName)
           val newContent = highlighter.getBestFragment(analyzer.tokenStream("", model.content), model.content)
 
-          model.copy(fileName = newTitle, content = newContent)
+          model.copy(fileName = Option(newTitle).map(_.trim).filterNot(_.isEmpty).getOrElse(""), content = newContent)
         }
 
       }
@@ -200,6 +200,9 @@ object FileSearch {
 case class OutputInfo(filePath: String, fileName: String, content: String) {
 
   def fileNameFlow: InlineCssTextArea = {
+    println(fileName)
+    println(fileName.split("\\|\\|\\|"))
+    println(fileName.split("\\|\\|\\|").toList)
     val strs = fileName.split("\\|\\|\\|").toList
     val str2 = strs
 
