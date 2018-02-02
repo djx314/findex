@@ -182,16 +182,15 @@ class FileIndex(
                     aa.setIndexOptions(IndexOptions.DOCS)
                     aa.setTokenized(false)
                     aa.setStored(false)
-                    aa.omitNorms()
+                    aa.setOmitNorms(false)
                     aa.freeze()
-
                     val document = new Document()
                     document.add(new TextField("fileName", info.fileName, Field.Store.YES))
                     document.add(new TextField("fileContent", info.content, Field.Store.YES))
                     document.add(new TextField("filePath", info.filePath, Field.Store.YES))
                     //document.add(new StringField("law_fileName", info.fileName, Field.Store.YES))
                     //document.add(new StringField("law_filePath", info.filePath, Field.Store.YES))
-                    document.add(new StoredField("law_fileContent", info.content))
+                    //document.add(new Field("law_fileContent", info.content, aa))
 
                     writer.addDocument(document)
                     logger.debug(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")

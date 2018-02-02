@@ -6,7 +6,7 @@ import java.nio.file.{ Files, Paths }
 
 import org.apache.lucene.analysis.cjk.CJKAnalyzer
 import org.apache.lucene.index.{ DirectoryReader, IndexReader, Term }
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
+import org.apache.lucene.queryparser.classic.{ MultiFieldQueryParser, QueryParser }
 import org.apache.lucene.search.BooleanClause.Occur
 import org.apache.lucene.search.{ BooleanQuery, IndexSearcher, TermQuery, WildcardQuery }
 import org.apache.lucene.search.highlight.{ Highlighter, QueryScorer, SimpleFragmenter, SimpleHTMLFormatter }
@@ -38,7 +38,31 @@ object FileSearch {
     lazy val splitFronts = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
 
     def exactKeyQuery = {
+      val queryParser = new QueryParser("*", analyzer)
+      //val query = queryParser.parse("name:lucene")
+
       val queryList1 = splitFronts.map { split =>
+        //val eachTerm = new Term("fileName", s""""${split}"""")
+        //new WildcardQuery(eachTerm)
+        queryParser.parse(s"""fileName:"${split}"""")
+      }
+      val queryList2 = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty).map { split =>
+        //val eachTerm = new Term("filePath", s"*${split}*")
+        //new WildcardQuery(eachTerm)
+        queryParser.parse(s"""filePath:"${split}"""")
+      }
+      val queryList3 = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty).map { split =>
+        //val eachTerm = new Term("fileContent", s"*${split}*")
+        //new WildcardQuery(eachTerm)
+        queryParser.parse(s"""fileContent:"${split}"""")
+      }
+      val queryList1111 = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty).map { split =>
+        //val eachTerm = new Term("fileContent", s"*${split}*")
+        //new WildcardQuery(eachTerm)
+        queryParser.parse(s"""*:"${split}"""")
+      }
+
+      /*val queryList1 = splitFronts.map { split =>
         val eachTerm = new Term("fileName", s"*${split}*")
         new WildcardQuery(eachTerm)
       }
@@ -47,11 +71,11 @@ object FileSearch {
         new WildcardQuery(eachTerm)
       }
       val queryList3 = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty).map { split =>
-        val eachTerm = new Term("law_fileContent", s"*${split}*")
+        val eachTerm = new Term("fileContent", s"*${split}*")
         new WildcardQuery(eachTerm)
-      }
+      }*/
       val booleanQueryBuilder = new BooleanQuery.Builder()
-      (queryList1 ::: queryList2 ::: queryList3).map(query =>
+      /*(queryList1 ::: queryList2 ::: queryList3)*/ queryList1111.map(query =>
         booleanQueryBuilder.add(query, Occur.SHOULD))
       booleanQueryBuilder.build()
     }
@@ -85,12 +109,12 @@ object FileSearch {
           val hitDoc = indexSearcher.doc(doc.doc)
           val model = OutputInfo(
             fileName = Option(hitDoc.get("fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
-            content = Option(hitDoc.get("law_fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            content = Option(hitDoc.get("fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
             filePath = Option(hitDoc.get("filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
 
           val newTitle = titleHighlighter.getBestFragment(analyzer.tokenStream("", model.fileName), model.fileName)
           val newContent = highlighter.getBestFragment(analyzer.tokenStream("", model.content), model.content)
-          model.copy(fileName = Option(newTitle).map(_.trim).filterNot(_.isEmpty).getOrElse(""), content = newContent)
+          model.copy(fileName = Option(newTitle).map(_.trim).filterNot(_.isEmpty).getOrElse(model.fileName), content = newContent)
         }
 
       } else if (fuzzyKey.isEmpty && (!exactKey.trim.isEmpty)) {
@@ -100,7 +124,7 @@ object FileSearch {
           val hitDoc = indexSearcher.doc(doc.doc)
           val model = OutputInfo(
             fileName = Option(hitDoc.get("fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
-            content = Option(hitDoc.get("law_fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            content = Option(hitDoc.get("fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
             filePath = Option(hitDoc.get("filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
 
           val newTitle = splitFronts.foldLeft(model.fileName.take(titleSize)) { (name, toReplace) =>
@@ -109,7 +133,7 @@ object FileSearch {
           val newContent = splitFronts.foldLeft(model.content.take(textSize)) { (name, toReplace) =>
             name.replaceAllLiterally(toReplace, s"|||${toReplace}|||")
           }.take(textSize)
-          model.copy(fileName = Option(newTitle).map(_.trim).filterNot(_.isEmpty).getOrElse(""), content = newContent)
+          model.copy(fileName = Option(newTitle).map(_.trim).filterNot(_.isEmpty).getOrElse(model.fileName), content = newContent)
         }
       } else {
         val fuzzyKeyQuery1 = fuzzyKeyQuery
@@ -134,13 +158,13 @@ object FileSearch {
           val hitDoc = indexSearcher.doc(doc.doc)
           val model = OutputInfo(
             fileName = Option(hitDoc.get("fileName")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
-            content = Option(hitDoc.get("law_fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
+            content = Option(hitDoc.get("fileContent")).map(_.trim).filterNot(_.isEmpty).getOrElse(""),
             filePath = Option(hitDoc.get("filePath")).map(_.trim).filterNot(_.isEmpty).getOrElse(""))
 
           val newTitle = titleHighlighter.getBestFragment(analyzer.tokenStream("", model.fileName), model.fileName)
           val newContent = highlighter.getBestFragment(analyzer.tokenStream("", model.content), model.content)
 
-          model.copy(fileName = Option(newTitle).map(_.trim).filterNot(_.isEmpty).getOrElse(""), content = newContent)
+          model.copy(fileName = Option(newTitle).map(_.trim).filterNot(_.isEmpty).getOrElse(model.fileName), content = newContent)
         }
 
       }
