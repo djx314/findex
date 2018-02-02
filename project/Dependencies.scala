@@ -4,6 +4,7 @@ import sbt.Keys._
 object Dependencies {
 
   val lucenceV = "7.2.1"
+
   val lucence = Seq(
     //核心包
     "org.apache.lucene" % "lucene-core" % lucenceV,
@@ -15,7 +16,9 @@ object Dependencies {
     //对分词索引查询解析
     "org.apache.lucene" % "lucene-queryparser" % lucenceV,
     //检索关键字高亮显示
-    "org.apache.lucene" % "lucene-highlighter" % lucenceV
+    "org.apache.lucene" % "lucene-highlighter" % lucenceV,
+    "org.apache.solr" % "solr-core" % lucenceV,
+    "org.apache.lucene" % "lucene-analyzers-icu" % lucenceV
   )
 
   val openhtmlVersion = "0.0.1-RC11"

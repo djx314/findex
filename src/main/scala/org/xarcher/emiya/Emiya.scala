@@ -42,6 +42,8 @@ object Emiya extends JFXApp {
   private lazy val fileExtraction = wire[FileExtraction]
   private lazy val fileIgnoreService = wire[FileIgnoreService]
   private lazy val contentService = wire[ContentService]
+  private lazy val embeddedServer = wire[EmbeddedServer]
+  private lazy val fileSearch = wire[FileSearch]
 
   private lazy val IndexExecutionContext = wire[IndexExecutionContext]
   private lazy val selectedFile = wire[SelectedFile]

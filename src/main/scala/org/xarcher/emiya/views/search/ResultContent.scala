@@ -32,6 +32,7 @@ class DoSearch(
   fuzzySearchInput: FuzzySearchInput,
   exactSearchInput: ExactSearchInput,
   resultTabPane: ResultTabPane,
+  fileSearch: FileSearch,
   fileListWrapper: FileListWrapper)(implicit ec: ExecutionContext) {
 
   fuzzySearchInput.text.addListener(new ChangeListener[String] {
@@ -63,7 +64,7 @@ class DoSearch(
   def search(fuzzyKey: String, exactKey: String, contents: List[IndexContentRow]): Unit = {
     //println(contents)
     Future {
-      val infosF = Future.sequence(contents.map(item => FileSearch.search(item, fuzzyKey, exactKey).map(s => item -> s)))
+      val infosF = Future.sequence(contents.map(item => fileSearch.search(item, fuzzyKey, exactKey).map(s => item -> s)))
       infosF.map { infos =>
         Platform.runLater(() => {
           resultTabPane.tabs = List.empty[Tab]

@@ -11,6 +11,7 @@ import org.apache.lucene.analysis.cjk.CJKAnalyzer
 import org.apache.lucene.document._
 import org.apache.lucene.index.{ IndexOptions, IndexWriter, IndexWriterConfig }
 import org.apache.lucene.store.FSDirectory
+import org.apache.solr.common.SolrInputDocument
 import org.slf4j.LoggerFactory
 import org.xarcher.emiya.service.FileIgnoreService
 import org.xarcher.emiya.utils._
@@ -25,6 +26,7 @@ class FileIndex(
   fileExtraction: FileExtraction,
   fileIgnoreService: FileIgnoreService,
   fileUpdate: FileUpdate,
+  embeddedServer: EmbeddedServer,
   shutdownHook: ShutdownHook,
   indexExecutionContext: IndexExecutionContext) {
 
@@ -123,9 +125,9 @@ class FileIndex(
   def index(content: IndexContentRow)(implicit ec: ExecutionContext): Future[Int] = {
     val rootPath = Paths.get(URI.create(content.rootUri))
 
-    val lucencePath = Paths.get(path).resolve(content.id.toString)
-    val writer = writerGen(lucencePath)
-    shutdownHook.addHook(() => Future.successful(Try { writer.close() }))
+    //val lucencePath = Paths.get(path).resolve(content.id.toString)
+    //val writer = writerGen(lucencePath)
+    //shutdownHook.addHook(() => Future.successful(Try { writer.close() }))
 
     def startFetchFiles(rootDir: File): Future[Boolean] = {
       val f = if (!rootDir.isDirectory) {
@@ -178,7 +180,7 @@ class FileIndex(
               indexFile(file.toPath, f.id).flatMap {
                 case Right(info) =>
                   Future {
-                    val aa = new FieldType()
+                    /*val aa = new FieldType()
                     aa.setIndexOptions(IndexOptions.DOCS)
                     aa.setTokenized(false)
                     aa.setStored(false)
@@ -187,13 +189,19 @@ class FileIndex(
                     val document = new Document()
                     document.add(new TextField("fileName", info.fileName, Field.Store.YES))
                     document.add(new TextField("fileContent", info.content, Field.Store.YES))
-                    document.add(new TextField("filePath", info.filePath, Field.Store.YES))
+                    document.add(new TextField("filePath", info.filePath, Field.Store.YES))*/
                     //document.add(new StringField("law_fileName", info.fileName, Field.Store.YES))
                     //document.add(new StringField("law_filePath", info.filePath, Field.Store.YES))
                     //document.add(new Field("law_fileContent", info.content, aa))
 
-                    writer.addDocument(document)
-                    logger.debug(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
+                    val doc = new SolrInputDocument()
+                    doc.addField("id", f.id)
+                    doc.addField("file_name", info.fileName)
+                    doc.addField("file_content", info.content)
+                    doc.addField("file_path", info.filePath)
+                    embeddedServer.solrServer.add("file_index", doc)
+                    embeddedServer.solrServer.commit("file_index")
+                    logger.info(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
                     logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.content}")
                     info.dbId -> 1
                   }(indexEc).andThen {
@@ -277,7 +285,7 @@ class FileIndex(
     } else {
       Future.successful(3)
     }
-    indexAction.andThen {
+    indexAction /*.andThen {
       case _ =>
         if (null != writer) {
           Try {
@@ -286,10 +294,10 @@ class FileIndex(
             e => e.printStackTrace(),
             _ => ())
         }
-    }
+    }*/
   }
 
-  def writerGen(file: Path): IndexWriter = {
+  /*def writerGen(file: Path): IndexWriter = {
     val f = {
       Files.createDirectories(file)
       //1、创建Derictory
@@ -303,9 +311,9 @@ class FileIndex(
       new IndexWriter(directory, indexWriterConfig)
     }
     f
-  }
+  }*/
 
-  val path = "./ext_persistence_不索引/lucenceTemp"
+  //val path = "./ext_persistence_不索引/lucenceTemp"
 
   def indexFile(file: Path, id: Int): Future[Either[Int, IndexInfo]] = {
     Future {

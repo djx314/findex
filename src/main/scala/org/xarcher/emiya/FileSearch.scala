@@ -11,7 +11,9 @@ import org.apache.lucene.search.BooleanClause.Occur
 import org.apache.lucene.search.{ BooleanQuery, IndexSearcher, TermQuery, WildcardQuery }
 import org.apache.lucene.search.highlight.{ Highlighter, QueryScorer, SimpleFragmenter, SimpleHTMLFormatter }
 import org.apache.lucene.store.FSDirectory
+import org.apache.solr.client.solrj.{ SolrClient, SolrQuery }
 import org.fxmisc.richtext.InlineCssTextArea
+import org.xarcher.emiya.utils.EmbeddedServer
 import org.xarcher.xPhoto.FileTables.IndexContentRow
 
 import scalafx.Includes._
@@ -22,8 +24,9 @@ import scalafx.scene.control.Button
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{ Background, BackgroundFill, CornerRadii, Region }
 import scalafx.scene.paint.Paint
+import scala.collection.JavaConverters._
 
-object FileSearch {
+class FileSearch(embeddedServer: EmbeddedServer) {
 
   val path = "./ext_persistence_不索引/lucenceTemp"
   import FileTables.profile._
@@ -37,7 +40,35 @@ object FileSearch {
 
     lazy val splitFronts = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
 
-    def exactKeyQuery = {
+    lazy val filterString = splitFronts.map(s => "\"" + s + "\"")
+
+    lazy val queryString = if (filterString.isEmpty) "*" else filterString.mkString("(", " OR ", ")")
+
+    println(queryString)
+
+    val f = Future {
+      val query = new SolrQuery()
+      query.setQuery(s"file_name:${queryString}")
+      query.addField("*")
+      query.set("q.op", "OR")
+
+      val queryResponse = embeddedServer.solrServer.query(query)
+
+      //Storing the results of the query
+      val docs = queryResponse.getResults().asScala.toList
+      val infos = docs.map { doc =>
+        OutputInfo(
+          fileName = Option(doc.get("file_name")).map(_.asInstanceOf[String].trim).filterNot(_.isEmpty).getOrElse(""),
+          content = Option(doc.get("file_content")).map(_.asInstanceOf[String].trim).filterNot(_.isEmpty).getOrElse(""),
+          filePath = Option(doc.get("file_path")).map(_.asInstanceOf[String].trim).filterNot(_.isEmpty).getOrElse(""))
+      }
+
+      //Saving the operations
+      embeddedServer.solrServer.commit()
+      infos
+    }
+
+    /*def exactKeyQuery = {
       val queryParser = new QueryParser("*", analyzer)
       //val query = queryParser.parse("name:lucene")
 
@@ -168,7 +199,7 @@ object FileSearch {
         }
 
       }
-    }
+    }*/
     /*val f = if (fuzzyKey.isEmpty && exactKey.isEmpty)
       Future.successful(List.empty)
     else
