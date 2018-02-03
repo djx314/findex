@@ -39,28 +39,40 @@ class FileSearch(embeddedServer: EmbeddedServer) {
     val textSize = 300
 
     lazy val splitFronts = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
-
-    lazy val filterString = splitFronts.map(s => "\"" + s + "\"")
-
-    lazy val queryString = if (filterString.isEmpty) "*" else filterString.mkString("(", " OR ", ")")
-
-    println(queryString)
+    lazy val filterString = Option(splitFronts).map(t => t.map(s => "\"" + s + "\"")).filterNot(_.isEmpty)
+    lazy val queryString = filterString.map(s => s.mkString("(", " OR ", ")"))
+    lazy val queryWithField = queryString.map(s => s"file_sum:${s}").getOrElse("")
 
     val f = Future {
       val query = new SolrQuery()
-      query.setQuery(s"file_name:${queryString}")
+      query.setQuery(queryWithField)
       query.addField("*")
       query.set("q.op", "OR")
+      //query.setHighlight(true)
+      query.addHighlightField("file_name")
+      query.addHighlightField("file_content")
+      query.setHighlightSimplePre("|||") //标记，高亮关键字前缀
+      query.setHighlightSimplePost("|||") //后缀
+      query.setHighlight(true)
 
       val queryResponse = embeddedServer.solrServer.query(query)
 
       //Storing the results of the query
       val docs = queryResponse.getResults().asScala.toList
+      val hightlighting = queryResponse.getHighlighting.asScala.mapValues(_.asScala.mapValues(_.asScala.toList))
       val infos = docs.map { doc =>
-        OutputInfo(
-          fileName = Option(doc.get("file_name")).map(_.asInstanceOf[String].trim).filterNot(_.isEmpty).getOrElse(""),
-          content = Option(doc.get("file_content")).map(_.asInstanceOf[String].trim).filterNot(_.isEmpty).getOrElse(""),
-          filePath = Option(doc.get("file_path")).map(_.asInstanceOf[String].trim).filterNot(_.isEmpty).getOrElse(""))
+        def fieldGen(field: String) = {
+          val highOpt = Option(doc.getFieldValue("id")).map(_.asInstanceOf[String].trim).flatMap(s => hightlighting.get(s)).flatMap(s => s.get(field).flatMap(_.headOption))
+          lazy val contentOpt = Option(doc.getFieldValue(field)).map(_.asInstanceOf[String].trim).filterNot(_.isEmpty).getOrElse("")
+          highOpt.getOrElse(contentOpt)
+        }
+        //val id = Option(doc.getFieldValue("id")).map(_.asInstanceOf[String].trim).flatMap(s => hightlighting.get(s)).flatMap(s => s.get("file_name").flatMap(_.headOption)).getOrElse("")
+        val aa = OutputInfo(
+          fileName = fieldGen("file_name"),
+          content = fieldGen("file_content"),
+          filePath = Option(doc.getFieldValue("file_path")).map(_.asInstanceOf[String].trim).filterNot(_.isEmpty).getOrElse(""))
+        println(aa)
+        aa
       }
 
       //Saving the operations
