@@ -38,17 +38,38 @@ class FileSearch(embeddedServer: EmbeddedServer) {
     val titleSize = 80
     val textSize = 300
 
-    lazy val splitFronts = exactKey.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
-    lazy val filterString = Option(splitFronts).map(t => t.map(s => "\"" + s + "\"")).filterNot(_.isEmpty)
-    lazy val queryString = filterString.map(s => s.mkString("(", " OR ", ")"))
-    lazy val queryWithField = queryString.map(s => s"file_sum:${s}").getOrElse("")
+    lazy val exactSplitFronts = exactKey.trim.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
+    lazy val exactFilterString = Option(exactSplitFronts).map { t => t.map(s => s"*$s*") }.filterNot(_.isEmpty)
+    lazy val exactQueryString = exactFilterString.map {
+      case head :: Nil =>
+        head
+      case s =>
+        s.mkString("(", " OR ", ")")
+    }
+    lazy val exactQueryWithField = exactQueryString.map(s => s"(law_file_sum:${s})")
 
+    val fuzzyQueryWithField = Option(fuzzyKey).map(_.trim).filterNot(_.isEmpty).map(s => s"(file_sum:${s})")
+
+    val queryStrig = (fuzzyQueryWithField -> exactQueryWithField) match {
+      case (Some(fuzzy), Some(exact)) =>
+        s"${fuzzy} AND ${exact}"
+      case (None, Some(exact)) =>
+        exact
+      case (Some(fuzzy), None) =>
+        fuzzy
+      case (None, None) =>
+        "*:*"
+    }
+
+    val highlightSize = 400
+
+    println(queryStrig)
     val f = Future {
       val query = new SolrQuery()
-      query.setQuery(queryWithField)
+      query.setQuery(queryStrig)
       query.addField("*")
       query.set("q.op", "OR")
-      //query.setHighlight(true)
+      query.setHighlightFragsize(highlightSize)
       query.addHighlightField("file_name")
       query.addHighlightField("file_content")
       query.setHighlightSimplePre("|||") //标记，高亮关键字前缀
@@ -63,16 +84,14 @@ class FileSearch(embeddedServer: EmbeddedServer) {
       val infos = docs.map { doc =>
         def fieldGen(field: String) = {
           val highOpt = Option(doc.getFieldValue("id")).map(_.asInstanceOf[String].trim).flatMap(s => hightlighting.get(s)).flatMap(s => s.get(field).flatMap(_.headOption))
-          lazy val contentOpt = Option(doc.getFieldValue(field)).map(_.asInstanceOf[String].trim).filterNot(_.isEmpty).getOrElse("")
+          lazy val contentOpt = Option(doc.getFieldValue(field)).map(_.asInstanceOf[String].trim.take(highlightSize)).filterNot(_.isEmpty).getOrElse("")
           highOpt.getOrElse(contentOpt)
         }
         //val id = Option(doc.getFieldValue("id")).map(_.asInstanceOf[String].trim).flatMap(s => hightlighting.get(s)).flatMap(s => s.get("file_name").flatMap(_.headOption)).getOrElse("")
-        val aa = OutputInfo(
+        OutputInfo(
           fileName = fieldGen("file_name"),
           content = fieldGen("file_content"),
           filePath = Option(doc.getFieldValue("file_path")).map(_.asInstanceOf[String].trim).filterNot(_.isEmpty).getOrElse(""))
-        println(aa)
-        aa
       }
 
       //Saving the operations
@@ -267,9 +286,9 @@ class FileSearch(embeddedServer: EmbeddedServer) {
 case class OutputInfo(filePath: String, fileName: String, content: String) {
 
   def fileNameFlow: InlineCssTextArea = {
-    println(fileName)
-    println(fileName.split("\\|\\|\\|"))
-    println(fileName.split("\\|\\|\\|").toList)
+    //println(fileName)
+    //println(fileName.split("\\|\\|\\|"))
+    //println(fileName.split("\\|\\|\\|").toList)
     val strs = fileName.split("\\|\\|\\|").toList
     val str2 = strs
 

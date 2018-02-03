@@ -199,6 +199,19 @@ class FileIndex(
                     doc.addField("file_name", info.fileName)
                     doc.addField("file_content", info.content)
                     doc.addField("file_path", info.filePath)
+                    doc.addField("law_file_name", info.fileName)
+                    info.content.grouped(20000).zipWithIndex.foldLeft("") {
+                      case (prefix, (content, index)) =>
+                        doc.addField("law_file_content_" + index, prefix + content)
+                        content.takeRight(20)
+                    }
+                    /*if (info.content.grouped(20000).size > 20) {
+                      println("11" * 100)
+                      println(f.uri)
+                      println(info.content.grouped(20000).size)
+                      println("11" * 100)
+                    }*/
+                    doc.addField("law_file_path", info.filePath)
                     embeddedServer.solrServer.add("file_index", doc)
                     embeddedServer.solrServer.commit("file_index")
                     logger.info(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
