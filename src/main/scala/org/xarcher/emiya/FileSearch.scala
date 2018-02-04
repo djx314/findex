@@ -4,13 +4,6 @@ import java.awt.Desktop
 import java.io.File
 import java.nio.file.{ Files, Paths }
 
-import org.apache.lucene.analysis.cjk.CJKAnalyzer
-import org.apache.lucene.index.{ DirectoryReader, IndexReader, Term }
-import org.apache.lucene.queryparser.classic.{ MultiFieldQueryParser, QueryParser }
-import org.apache.lucene.search.BooleanClause.Occur
-import org.apache.lucene.search.{ BooleanQuery, IndexSearcher, TermQuery, WildcardQuery }
-import org.apache.lucene.search.highlight.{ Highlighter, QueryScorer, SimpleFragmenter, SimpleHTMLFormatter }
-import org.apache.lucene.store.FSDirectory
 import org.apache.solr.client.solrj.{ SolrClient, SolrQuery }
 import org.fxmisc.richtext.InlineCssTextArea
 import org.xarcher.emiya.utils.EmbeddedServer
@@ -32,9 +25,9 @@ class FileSearch(embeddedServer: EmbeddedServer) {
   import FileTables.profile._
 
   def search(content: IndexContentRow, fuzzyKey: String, exactKey: String)(implicit ec: ExecutionContext): Future[List[OutputInfo]] = {
-    var indexSearcher: IndexSearcher = null
+    //var indexSearcher: IndexSearcher = null
 
-    val analyzer = new CJKAnalyzer()
+    //val analyzer = new CJKAnalyzer()
     val titleSize = 80
     val textSize = 300
 
@@ -46,13 +39,13 @@ class FileSearch(embeddedServer: EmbeddedServer) {
       case s =>
         s.mkString("(", " OR ", ")")
     }
-    lazy val exactQueryWithField = exactQueryString.map(s => s"(law_file_sum:${s})")
+    lazy val exactQueryWithField = exactQueryString.map(s => s"law_file_sum:${s}")
 
-    val fuzzyQueryWithField = Option(fuzzyKey).map(_.trim).filterNot(_.isEmpty).map(s => s"(file_sum:${s})")
+    val fuzzyQueryWithField = Option(fuzzyKey).map(_.trim).filterNot(_.isEmpty).map(s => s"file_sum:${s}")
 
     val queryStrig = (fuzzyQueryWithField -> exactQueryWithField) match {
       case (Some(fuzzy), Some(exact)) =>
-        s"${fuzzy} AND ${exact}"
+        s"(${fuzzy}) AND (${exact})"
       case (None, Some(exact)) =>
         exact
       case (Some(fuzzy), None) =>

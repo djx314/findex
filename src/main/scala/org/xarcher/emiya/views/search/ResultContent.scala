@@ -18,7 +18,7 @@ import scalafx.scene.input.{ KeyCode, KeyEvent, MouseEvent }
 import scalafx.scene.layout._
 import scalafx.scene.paint.Paint
 import scalafx.scene.text.Font
-import scalafx.stage.{ Screen, Window }
+import scalafx.stage.{ Screen, Window, WindowEvent }
 
 /*class ResultContent() extends ScrollPane {
   fitToWidth = true
@@ -73,7 +73,37 @@ class DoSearch(
               val scrollPane = new ScrollPane {
                 self =>
 
-                content = new VBox {
+                /*vvalue.addListener(new ChangeListener[Number] {
+                  override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
+                    println("min:" + self.minHeight.value)
+                    println("max:" + self.maxHeight.value)
+                    println("vvalue:" + self.vvalue.value)
+                  }
+                })*/
+
+                vvalue.addListener(new ChangeListener[Number] {
+                  override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
+                    val scrollHeight = self.contentVBox.height.value - self.height.value
+                    val heightToButtom = scrollHeight - scrollHeight * newValue.doubleValue
+                    val lastHeightSum = contentVBox.children.takeRight(2).map(s => (s.asInstanceOf[javafx.scene.layout.Region]: Region).height.value).sum
+                    if (heightToButtom < lastHeightSum) {
+                      println("11" * 100)
+                    } else {
+                      println("22" * 100)
+                    }
+                    /*println("contentVBoxHeight:" + self.contentVBox.height.value)
+                    println("vvalue:" + newValue.doubleValue)
+                    println("1 - vvalue:" + (1 - newValue.doubleValue))
+                    println("heightToButtom:" + ())
+                    println("heightToButtom:" + (165 / (1 - newValue.doubleValue) - self.contentVBox.height.value))*/
+                  }
+                })
+
+                fitToWidth = true
+
+                content = contentVBox
+
+                lazy val contentVBox = new VBox {
                   children = info.map { eachInfo =>
                     new VBox {
                       children = new VBox {
@@ -116,6 +146,12 @@ class DoSearch(
                             fileName,
                             eachInfo.fileBtn,
                             eachInfo.dirBtn)
+
+                          handleEvent(WindowEvent.WindowShown) {
+                            e: WindowEvent =>
+                              println("11" * 100)
+                              ()
+                          }
                         }
 
                         children = List(
