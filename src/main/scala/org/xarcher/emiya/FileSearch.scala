@@ -24,10 +24,7 @@ class FileSearch(embeddedServer: EmbeddedServer) {
   val path = "./ext_persistence_不索引/lucenceTemp"
   import FileTables.profile._
 
-  def search(content: IndexContentRow, fuzzyKey: String, exactKey: String)(implicit ec: ExecutionContext): Future[List[OutputInfo]] = {
-    //var indexSearcher: IndexSearcher = null
-
-    //val analyzer = new CJKAnalyzer()
+  def search(content: IndexContentRow, fuzzyKey: String, exactKey: String, start: Int, rows: Int)(implicit ec: ExecutionContext): Future[(List[OutputInfo], Int)] = {
     val titleSize = 80
     val textSize = 300
 
@@ -62,6 +59,8 @@ class FileSearch(embeddedServer: EmbeddedServer) {
       query.setQuery(queryStrig)
       query.addField("*")
       query.set("q.op", "OR")
+      query.setStart(start)
+      query.setRows(rows)
       query.setHighlightFragsize(highlightSize)
       query.addHighlightField("file_name")
       query.addHighlightField("file_content")
@@ -80,7 +79,6 @@ class FileSearch(embeddedServer: EmbeddedServer) {
           lazy val contentOpt = Option(doc.getFieldValue(field)).map(_.asInstanceOf[String].trim.take(highlightSize)).filterNot(_.isEmpty).getOrElse("")
           highOpt.getOrElse(contentOpt)
         }
-        //val id = Option(doc.getFieldValue("id")).map(_.asInstanceOf[String].trim).flatMap(s => hightlighting.get(s)).flatMap(s => s.get("file_name").flatMap(_.headOption)).getOrElse("")
         OutputInfo(
           fileName = fieldGen("file_name"),
           content = fieldGen("file_content"),
@@ -89,7 +87,7 @@ class FileSearch(embeddedServer: EmbeddedServer) {
 
       //Saving the operations
       embeddedServer.solrServer.commit()
-      infos
+      infos -> (start + docs.size)
     }
 
     /*def exactKeyQuery = {

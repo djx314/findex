@@ -64,32 +64,88 @@ class DoSearch(
   def search(fuzzyKey: String, exactKey: String, contents: List[IndexContentRow]): Unit = {
     //println(contents)
     Future {
-      val infosF = Future.sequence(contents.map(item => fileSearch.search(item, fuzzyKey, exactKey).map(s => item -> s)))
+      val infosF = Future.sequence(contents.map(item => fileSearch.search(item, fuzzyKey, exactKey, 0, 10).map { case (s, nextIndex) => (item, s, nextIndex) }))
       infosF.map { infos =>
         Platform.runLater(() => {
           resultTabPane.tabs = List.empty[Tab]
           val tabs = infos.map {
-            case (item, info) =>
+            case (item, info, nextIndex) =>
               val scrollPane = new ScrollPane {
                 self =>
 
-                /*vvalue.addListener(new ChangeListener[Number] {
-                  override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
-                    println("min:" + self.minHeight.value)
-                    println("max:" + self.maxHeight.value)
-                    println("vvalue:" + self.vvalue.value)
-                  }
-                })*/
-
-                vvalue.addListener(new ChangeListener[Number] {
+                val changeListener: ChangeListener[Number] = new ChangeListener[Number] {
                   override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
                     val scrollHeight = self.contentVBox.height.value - self.height.value
                     val heightToButtom = scrollHeight - scrollHeight * newValue.doubleValue
                     val lastHeightSum = contentVBox.children.takeRight(2).map(s => (s.asInstanceOf[javafx.scene.layout.Region]: Region).height.value).sum
                     if (heightToButtom < lastHeightSum) {
-                      println("11" * 100)
+                      self.vvalue.removeListener(changeListener)
+                      val nodesF = fileSearch.search(item, fuzzyKey, exactKey, 0, 10).map {
+                        case (infos, nextIndex) =>
+                          infos.map { eachInfo =>
+                            new VBox {
+                              children = new VBox {
+                                val fileName: Region = eachInfo.fileNameFlow
+                                fileName.prefWidth <== self.width - 200
+                                val tooltip = new Tooltip(eachInfo.filePath) {
+                                  font = Font(14)
+                                }
+                                fileName.onMouseEntered = {
+                                  e: MouseEvent =>
+                                    if (!tooltip.showing.value) {
+                                      tooltip.show(fileName, e.screenX + 6, {
+                                        val node: Node = e.source.asInstanceOf[javafx.scene.Node]
+                                        val bounds1 = node.boundsInParent
+                                        val bounds2 = node.localToScene(bounds1.value)
+                                        val bounds3 = node.scene.value.getWindow.getY
+                                        val bounds4 = node.scene.value.getY
+
+                                        bounds2.getMaxY + bounds3 + bounds4
+                                      })
+                                    }
+                                    ()
+                                }
+                                fileName.onMouseExited = {
+                                  e: MouseEvent =>
+                                    tooltip.hide()
+                                    ()
+                                }
+
+                                val content = eachInfo.contentFlow
+                                (content: Region).prefWidth <== self.width
+
+                                val titleContent = new HBox {
+                                  prefHeight <== (fileName.prefHeight + 10)
+                                  //style = " -fx-alignment: center-left; -fx-padding: 8px 0px 6px 0px;"
+                                  background = new Background(Array(new BackgroundFill(Paint.valueOf("#eeeeee"), CornerRadii.Empty, Insets.Empty)))
+                                  padding = Insets.apply(8, 0, 6, 0)
+                                  fillHeight = false
+                                  children = List(
+                                    fileName,
+                                    eachInfo.fileBtn,
+                                    eachInfo.dirBtn)
+                                }
+
+                                children = List(
+                                  titleContent,
+                                  new HBox {
+                                    children = content: Node
+                                  })
+                              }
+                            }
+                          }
+                      }
+                      nodesF.map { nodes =>
+                        Platform.runLater {
+                          self.contentVBox.children.addAll((nodes.map(s => s: javafx.scene.Node)): _*)
+                          self.vvalue.addListener(changeListener)
+                        }
+                      }.recover {
+                        case e: Exception =>
+                          e.printStackTrace
+                      }
                     } else {
-                      println("22" * 100)
+                      //println("22" * 100)
                     }
                     /*println("contentVBoxHeight:" + self.contentVBox.height.value)
                     println("vvalue:" + newValue.doubleValue)
@@ -97,7 +153,9 @@ class DoSearch(
                     println("heightToButtom:" + ())
                     println("heightToButtom:" + (165 / (1 - newValue.doubleValue) - self.contentVBox.height.value))*/
                   }
-                })
+                }
+
+                vvalue.addListener(changeListener)
 
                 fitToWidth = true
 
