@@ -5,12 +5,6 @@ import java.net.URI
 import java.nio.file.{ Files, Path, Paths }
 import java.util.{ Date, Timer, TimerTask }
 
-import akka.actor.ActorRef
-import com.softwaremill.tagging.@@
-import org.apache.lucene.analysis.cjk.CJKAnalyzer
-import org.apache.lucene.document._
-import org.apache.lucene.index.{ IndexOptions, IndexWriter, IndexWriterConfig }
-import org.apache.lucene.store.FSDirectory
 import org.apache.solr.common.SolrInputDocument
 import org.slf4j.LoggerFactory
 import org.xarcher.emiya.service.FileIgnoreService
@@ -125,10 +119,6 @@ class FileIndex(
   def index(content: IndexContentRow)(implicit ec: ExecutionContext): Future[Int] = {
     val rootPath = Paths.get(URI.create(content.rootUri))
 
-    //val lucencePath = Paths.get(path).resolve(content.id.toString)
-    //val writer = writerGen(lucencePath)
-    //shutdownHook.addHook(() => Future.successful(Try { writer.close() }))
-
     def startFetchFiles(rootDir: File): Future[Boolean] = {
       val f = if (!rootDir.isDirectory) {
         Future.successful(true)
@@ -155,11 +145,6 @@ class FileIndex(
           }.flatMap(dir => fetchFiles(content)))
       }
       f
-      /*.andThen {
-        case _ =>
-          println("查找文件完毕" * 100)
-      }*/
-      //Future.successful(true)
     }
 
     def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
@@ -180,37 +165,19 @@ class FileIndex(
               indexFile(file.toPath, f.id).flatMap {
                 case Right(info) =>
                   Future {
-                    /*val aa = new FieldType()
-                    aa.setIndexOptions(IndexOptions.DOCS)
-                    aa.setTokenized(false)
-                    aa.setStored(false)
-                    aa.setOmitNorms(false)
-                    aa.freeze()
-                    val document = new Document()
-                    document.add(new TextField("fileName", info.fileName, Field.Store.YES))
-                    document.add(new TextField("fileContent", info.content, Field.Store.YES))
-                    document.add(new TextField("filePath", info.filePath, Field.Store.YES))*/
-                    //document.add(new StringField("law_fileName", info.fileName, Field.Store.YES))
-                    //document.add(new StringField("law_filePath", info.filePath, Field.Store.YES))
-                    //document.add(new Field("law_fileContent", info.content, aa))
-
                     val doc = new SolrInputDocument()
                     doc.addField("id", f.id)
                     doc.addField("file_name", info.fileName)
                     doc.addField("file_content", info.content)
                     doc.addField("file_path", info.filePath)
                     doc.addField("law_file_name", info.fileName)
+                    doc.addField("content_id", content.id)
+
                     info.content.grouped(20000).zipWithIndex.foldLeft("") {
                       case (prefix, (content, index)) =>
                         doc.addField("law_file_content_" + index, prefix + content)
                         content.takeRight(20)
                     }
-                    /*if (info.content.grouped(20000).size > 20) {
-                      println("11" * 100)
-                      println(f.uri)
-                      println(info.content.grouped(20000).size)
-                      println("11" * 100)
-                    }*/
                     doc.addField("law_file_path", info.filePath)
                     embeddedServer.solrServer.add("file_index", doc)
                     embeddedServer.solrServer.commit("file_index")
@@ -298,35 +265,8 @@ class FileIndex(
     } else {
       Future.successful(3)
     }
-    indexAction /*.andThen {
-      case _ =>
-        if (null != writer) {
-          Try {
-            writer.close()
-          }.fold(
-            e => e.printStackTrace(),
-            _ => ())
-        }
-    }*/
+    indexAction
   }
-
-  /*def writerGen(file: Path): IndexWriter = {
-    val f = {
-      Files.createDirectories(file)
-      //1、创建Derictory
-      //Directory directory = new RAMDirectory();//这个方法是建立在内存中的索引
-      val directory = FSDirectory.open(file)
-      //这个方法是建立在磁盘上面的索引
-      //2、创建IndexWriter，用完后要关闭
-      val analyzer = new CJKAnalyzer()
-      val indexWriterConfig = new IndexWriterConfig(analyzer)
-      indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE)
-      new IndexWriter(directory, indexWriterConfig)
-    }
-    f
-  }*/
-
-  //val path = "./ext_persistence_不索引/lucenceTemp"
 
   def indexFile(file: Path, id: Int): Future[Either[Int, IndexInfo]] = {
     Future {
