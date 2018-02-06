@@ -53,7 +53,9 @@ class FileSearch(embeddedServer: EmbeddedServer) {
 
     val highlightSize = 400
 
+    println("11" * 100)
     println(queryStrig)
+    println(s"start:${start},rows:${rows}")
     val f = Future {
       val query = new SolrQuery()
       query.setQuery(queryStrig)
