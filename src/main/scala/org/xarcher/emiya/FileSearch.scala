@@ -24,7 +24,7 @@ class FileSearch(embeddedServer: EmbeddedServer) {
   val path = "./ext_persistence_不索引/lucenceTemp"
   import FileTables.profile._
 
-  def search(content: IndexContentRow, fuzzyKey: String, exactKey: String, start: Int, rows: Int)(implicit ec: ExecutionContext): Future[(List[OutputInfo], Int)] = {
+  def search(content: IndexContentRow, fuzzyKey: String, exactKey: String, start: Int, rows: Int)(implicit ec: ExecutionContext): Future[(List[OutputInfo], Option[Int])] = {
     val titleSize = 80
     val textSize = 300
 
@@ -89,7 +89,13 @@ class FileSearch(embeddedServer: EmbeddedServer) {
 
       //Saving the operations
       embeddedServer.solrServer.commit()
-      infos -> (start + docs.size)
+
+      val infoSize = infos.size
+      val nextIndexOpt = if (infoSize >= rows)
+        Option(start + infoSize)
+      else Option.empty
+
+      infos -> nextIndexOpt
     }
 
     /*def exactKeyQuery = {

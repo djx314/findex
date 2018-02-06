@@ -128,10 +128,39 @@ class DoSearch(
           Platform.runLater(contentVBox.children.addAll(nodes: _*))
         }
 
-        fileSearch.search(eachContent, fuzzyKey, exactKey, 0, 4).map {
-          case (outinfos, count) =>
+        val initSize = 4
+
+        fileSearch.search(eachContent, fuzzyKey, exactKey, 0, initSize).map {
+          case (outinfos, countOpt) =>
             append(outinfos)
+
+            countOpt.foreach { count =>
+              vvalue.addListener(changeListener(count, 2))
+            }
         }
+
+        def changeListener(start: Int, rows: Int): ChangeListener[Number] = new ChangeListener[Number] {
+          changeListenerSelf =>
+
+          override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
+            println("11" * 100)
+            val scrollHeight = self.contentVBox.height.value - self.height.value
+            val heightToButtom = scrollHeight - scrollHeight * newValue.doubleValue
+            val lastHeightSum = contentVBox.children.takeRight(2).map(s => (s.asInstanceOf[javafx.scene.layout.Region]: Region).height.value).sum
+            if (heightToButtom < lastHeightSum) {
+              self.vvalue.removeListener(changeListenerSelf)
+              val nodesF = fileSearch.search(eachContent, fuzzyKey, exactKey, start, rows).map {
+                case (infos, countOpt) =>
+                  append(infos)
+
+                  countOpt.foreach { count =>
+                    vvalue.addListener(changeListener(count, rows))
+                  }
+              }
+            }
+          }
+        }
+
       }
       new Tab() {
         val path = Paths.get(URI.create(eachContent.rootUri))
