@@ -125,7 +125,8 @@ class FileIndex(
       } else {
         fileDB.writeDB.run {
           //schema.create >>
-          IndexPath.delete
+          //IndexPath.delete
+          DBIO.successful(2)
         }.flatMap((_: Int) =>
           fileDB.writeDB.run {
             IndexPath
@@ -173,7 +174,7 @@ class FileIndex(
                     doc.addField("law_file_name", info.fileName)
                     doc.addField("content_id", content.id)
 
-                    info.content.grouped(20000).zipWithIndex.foldLeft("") {
+                    info.content.grouped(32766 / 3 - 200).zipWithIndex.foldLeft("") {
                       case (prefix, (content, index)) =>
                         doc.addField("law_file_content_" + index, prefix + content)
                         content.takeRight(20)
@@ -186,7 +187,8 @@ class FileIndex(
                     info.dbId -> 1
                   }(indexEc).andThen {
                     case Failure(e) =>
-                      e.printStackTrace
+                      logger.error(s"${new Date().toString}，索引：${Paths.get(URI.create(f.uri)).toRealPath().toString}失败")
+                    //e.printStackTrace
                   }
                 case Left(id) =>
                   //println(s"${new Date().toString}，索引：${f.filePath}失败")
@@ -216,7 +218,7 @@ class FileIndex(
         }
       }).flatten.andThen {
         case Failure(e) =>
-          e.printStackTrace
+          logger.info("索引文件过程发生错误", e)
       }
     }
 
@@ -257,7 +259,7 @@ class FileIndex(
         1
       }.recover {
         case e =>
-          e.printStackTrace
+          //e.printStackTrace
           2
       }
       showInfo(() => indexFilesF.isCompleted)
@@ -280,13 +282,10 @@ class FileIndex(
             case Right(str) =>
               Right(IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str))
             case Left(e) =>
-              logger.error(s"索引文件发生错误，路径：${file.toRealPath().toString}")
+              logger.error(s"索引文件发生错误，路径：${file.toRealPath().toString}", e)
               Left(id)
+            //throw e
           }
-        }(indexEc).recover {
-          case e: Exception =>
-            e.printStackTrace
-            Left(id)
         }(indexEc)).getOrElse {
           Future.successful(Left(id))
         }
@@ -295,7 +294,7 @@ class FileIndex(
       }
     }(indexEc).flatten.andThen {
       case Failure(e) =>
-        e.printStackTrace
+        logger.error(s"索引单个文件发生错误", e)
     }(indexEc)
   }
 

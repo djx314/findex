@@ -34,7 +34,7 @@ class FutureLimited(val exceptWeight: Int, val name: String, limitedActor: Actor
             promise.success(r)
             endPromise.trySuccess(true)
           case Failure(e) =>
-            e.printStackTrace
+            //e.printStackTrace
             promise.failure(e)
             endPromise.trySuccess(true)
         }
@@ -66,7 +66,7 @@ class FutureLimited(val exceptWeight: Int, val name: String, limitedActor: Actor
 
     aa.andThen {
       case Failure(e) =>
-        e.printStackTrace
+      //e.printStackTrace
     }
   }
 

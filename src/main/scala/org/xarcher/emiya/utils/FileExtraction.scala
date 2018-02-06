@@ -9,16 +9,40 @@ import akka.actor.ActorRef
 import com.softwaremill.tagging.@@
 import org.apache.commons.io.IOUtils
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
+import org.apache.poi.ss.usermodel.Workbook
+import org.apache.poi.xssf.streaming.SXSSFWorkbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
-import org.xarcher.cpoi.{ CPoi, PoiOperations }
+import org.xarcher.cpoi._
 import org.xarcher.xPhoto.IndexExecutionContext
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
 class FileExtraction(indexExecutionContext: IndexExecutionContext) {
+
+  object CPoi {
+
+    def load(workbook: Workbook): Stream[Stream[Stream[CCell]]] = {
+
+      val sheetWraps = for {
+        i <- (0 until workbook.getNumberOfSheets).toStream
+        sheet = workbook.getSheetAt(i) if (sheet != null)
+      } yield for {
+        k <- (0 to sheet.getLastRowNum).toStream
+        row = sheet.getRow(k) if (row != null)
+      } yield for {
+        j <- (0 until row.getLastCellNum).toStream
+        cell = row.getCell(j) if (cell != null)
+      } yield {
+        CCell(cell)
+      }
+
+      sheetWraps
+    }
+
+  }
 
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -37,13 +61,13 @@ class FileExtraction(indexExecutionContext: IndexExecutionContext) {
       val workbook = Try {
         Try {
           new HSSFWorkbook(new FileInputStream(path.toFile))
-        }.getOrElse(new XSSFWorkbook(new FileInputStream(path.toFile)))
+        }.getOrElse(new SXSSFWorkbook(new XSSFWorkbook(new FileInputStream(path.toFile))))
       }
       workbook.map { wk =>
         object PoiOperations extends PoiOperations
         import PoiOperations._
         try {
-          Right(CPoi.load(wk).sheets.map(_.rows.map(_.cells.map(_.tryValue[String]).collect { case Some(s) => s }.mkString("\t")).mkString("\n")).mkString("\n"))
+          Right(CPoi.load(wk).map(_.map(_.map(_.tryValue[String]).collect { case Some(text) => text }.mkString("\t")).mkString("\n")).mkString("\n"))
         } catch {
           case e: Throwable =>
             logger.error(s"索引 Excel 文件失败，文件路径：${path.toRealPath().toString}", e)

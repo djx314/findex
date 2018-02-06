@@ -6,6 +6,7 @@ import java.nio.file.{ Files, Paths }
 
 import org.apache.solr.client.solrj.{ SolrClient, SolrQuery }
 import org.fxmisc.richtext.InlineCssTextArea
+import org.slf4j.LoggerFactory
 import org.xarcher.emiya.utils.EmbeddedServer
 import org.xarcher.xPhoto.FileTables.IndexContentRow
 
@@ -22,6 +23,8 @@ import scala.collection.JavaConverters._
 case class OuputWrap(info: List[OutputInfo], nextIndexOpt: Option[Int], countSum: Long)
 
 class FileSearch(embeddedServer: EmbeddedServer) {
+
+  val logger = LoggerFactory.getLogger(classOf[FileSearch])
 
   val path = "./ext_persistence_不索引/lucenceTemp"
   import FileTables.profile._
@@ -55,8 +58,7 @@ class FileSearch(embeddedServer: EmbeddedServer) {
 
     val highlightSize = 400
 
-    println(queryStrig)
-    println(s"start:${start},rows:${rows}")
+    logger.info(s"执行了查询语句：${queryStrig}")
     val f = Future {
       val query = new SolrQuery()
       query.addFilterQuery(s"content_id:${content.id}")

@@ -59,7 +59,7 @@ class DoSearch(
   }
 
   def search(fuzzyKey: String, exactKey: String, contents: List[IndexContentRow]): Unit = {
-    val tabsF = contents.map { eachContent =>
+    val tabs = contents.map { eachContent =>
       val infoLabel = new Label("") {
         alignment = Pos.Center
         maxWidth = Double.MaxValue
@@ -69,6 +69,7 @@ class DoSearch(
 
       val scrollPane = new ScrollPane {
         self =>
+        fitToWidth = true
 
         content = contentVBox
 
@@ -155,7 +156,7 @@ class DoSearch(
             val lastHeightSum = contentVBox.children.takeRight(2).map(s => (s.asInstanceOf[javafx.scene.layout.Region]: Region).height.value).sum
             if (heightToButtom < lastHeightSum) {
               self.vvalue.removeListener(changeListenerSelf)
-              val nodesF = fileSearch.search(eachContent, fuzzyKey, exactKey, start, rows).map { wrap =>
+              fileSearch.search(eachContent, fuzzyKey, exactKey, start, rows).map { wrap =>
                 append(wrap.info)
                 Platform.runLater {
                   infoLabel.text = s"已为你搜索到 ${wrap.countSum} 条结果"
@@ -170,7 +171,7 @@ class DoSearch(
         }
 
       }
-      new Tab() {
+      new Tab {
         val path = Paths.get(URI.create(eachContent.rootUri))
         text = path.getFileName.toString
         tooltip = new Tooltip(path.toRealPath().toString) {
@@ -183,7 +184,7 @@ class DoSearch(
         }
       }: Tab
     }
-    resultTabPane.tabs = tabsF
+    resultTabPane.tabs = tabs
   }
 
 }
