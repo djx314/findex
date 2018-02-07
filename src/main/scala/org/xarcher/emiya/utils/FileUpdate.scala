@@ -27,13 +27,13 @@ class FileUpdate(
       val compares = compareGen.compareWithSorted(subFiles, rows, parentId = pathRow.id, contentId = content.id)
       val actions = compares.map {
         case AddToLucence(row) =>
-          //println("+" + row)
+          println("+ " + row)
           IndexPath.returning(IndexPath.map(_.id)).into((model, id) => model.copy(id = id)) += row
         case RemoveFromLucence(row) =>
-          //println("-" + row)
+          println("- " + row)
           IndexPath.filter(_.id === row.id).delete.map((_: Int) => row)
         case Modified(row) =>
-          //println("*" + row)
+          println("* " + row)
           IndexPath.filter(_.id === row.id).update(row).map((_: Int) => row)
       }
       val actions1: DBIO[Seq[IndexPathRow]] = (

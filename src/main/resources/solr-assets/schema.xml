@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one or more
+ contributor license agreements.  See the NOTICE file distributed with
+ this work for additional information regarding copyright ownership.
+ The ASF licenses this file to You under the Apache License, Version 2.0
+ (the "License"); you may not use this file except in compliance with
+ the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<schema name="index_content" version="1.1">
+
+    <fieldtype name="string" class="solr.StrField" sortMissingLast="true" omitNorms="true"/>
+    <fieldType name="long" class="solr.LongPointField" positionIncrementGap="0"/>
+    <fieldType name="int" class="solr.IntPointField" positionIncrementGap="0"/>
+    <fields>
+        <!-- general -->
+        <field name="id" type="string" indexed="true" stored="true" multiValued="false" required="true"
+               docValues="true"/>
+
+        <field name="content_id" type="int" indexed="true" stored="true" multiValued="false" required="true"/>
+
+        <field name="file_name" type="text_general" indexed="true" stored="true" multiValued="false" required="true"/>
+        <field name="file_content" type="text_general" indexed="true" stored="true" multiValued="false"/>
+        <field name="file_path" type="text_general" indexed="true" stored="true" multiValued="false" required="true"/>
+        <field name="file_sum" type="text_general" indexed="true" stored="true" multiValued="true"/>
+
+        <field name="law_file_name" type="string" indexed="true" stored="false" multiValued="false" required="true"/>
+        <dynamicField name="law_file_content_*" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_path" type="string" indexed="true" stored="false" multiValued="false" required="true"/>
+        <field name="law_file_sum" type="string" indexed="true" stored="false" multiValued="true"/>
+
+        <!--<field name="law_file_content_01" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_02" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_03" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_04" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_05" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_06" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_07" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_08" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_09" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_10" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_11" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_12" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_13" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_14" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_15" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_16" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_17" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_18" type="string" indexed="true" stored="false" multiValued="false"/>
+        <field name="law_file_content_19" type="string" indexed="true" stored="false" multiValued="false"/>-->
+
+
+        <field name="_version_" type="long" indexed="true" stored="true"/>
+    </fields>
+    <copyField source="file_*" dest="file_sum"/>
+    <!--<copyField source="file_content" dest="file_sum"/>
+    <copyField source="file_path" dest="file_sum"/>-->
+    <copyField source="law_file_*" dest="law_file_sum"/>
+    <!--<copyField source="law_file_content" dest="law_file_sum"/>
+    <copyField source="law_file_path" dest="law_file_sum"/>-->
+
+    <!-- field to use to determine and enforce document uniqueness. -->
+    <uniqueKey>id</uniqueKey>
+
+    <!-- field for the QueryParser to use when an explicit fieldname is absent -->
+    <!--<defaultSearchField>file_name</defaultSearchField>-->
+
+    <!-- SolrQueryParser configuration: defaultOperator="AND|OR" -->
+    <solrQueryParser/>
+    <fieldType name="text_general" class="solr.TextField">
+        <!--<analyzer type="index" class="org.apache.lucene.analysis.cjk.CJKAnalyzer"/>
+        <analyzer type="query" class="org.apache.lucene.analysis.cjk.CJKAnalyzer"/>-->
+        <analyzer type="index">
+            <!--<tokenizer class="org.apache.lucene.analysis.icu.segmentation.ICUTokenizerFactory"/>
+            <filter class="org.apache.lucene.analysis.en.EnglishMinimalStemFilterFactory"/>
+            <filter class="solr.CJKWidthFilterFactory"/>
+            <filter class="solr.ICUTransformFilterFactory" id="Traditional-Simplified"/>
+            <filter class="solr.ICUTransformFilterFactory" id="Katakana-Hiragana"/>
+            <filter class="solr.ICUFoldingFilterFactory"/>
+            <filter class="solr.CJKBigramFilterFactory" han="true" hiragana="true" katakana="true" hangul="true"
+                    outputUnigrams="true"/>-->
+            <tokenizer class="org.wltea.analyzer.util.IKTokenizerFactory"/>
+        </analyzer>
+        <analyzer type="query">
+            <!--<tokenizer class="org.apache.lucene.analysis.icu.segmentation.ICUTokenizerFactory"/>
+            <filter class="org.apache.lucene.analysis.en.EnglishMinimalStemFilterFactory"/>
+            <filter class="solr.CJKWidthFilterFactory"/>
+            <filter class="solr.ICUTransformFilterFactory" id="Traditional-Simplified"/>
+            <filter class="solr.ICUTransformFilterFactory" id="Katakana-Hiragana"/>
+            <filter class="solr.ICUFoldingFilterFactory"/>
+            <filter class="solr.CJKBigramFilterFactory" han="true" hiragana="true" katakana="true" hangul="true"
+                    outputUnigrams="true"/>-->
+            <tokenizer class="org.wltea.analyzer.util.IKTokenizerFactory"/>
+        </analyzer>
+    </fieldType>
+</schema>
+

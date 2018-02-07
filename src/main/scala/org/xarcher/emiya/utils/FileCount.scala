@@ -1,6 +1,7 @@
 package org.xarcher.emiya.utils
 
-import java.nio.file.{ Files, Path }
+import java.net.URI
+import java.nio.file.{ Files, Path, Paths }
 
 import org.xarcher.xPhoto.FileTables._
 
@@ -30,6 +31,9 @@ class CompareGen() {
   def compareLoop(localPaths: Queue[Path], dbPaths: Queue[IndexPathRow], content: CompareFileContent, partentId: Int, contentId: Int): List[FileCompare] = {
     content match {
       case LocalPath(local) =>
+        println("55" * 100)
+        println("66" + local.toRealPath().toString)
+
         dbPaths.dequeueOption match {
           case Some((headDB, tailDB)) =>
             val dbUri = headDB.uri
@@ -63,8 +67,9 @@ class CompareGen() {
               }
             }
           case None =>
+            println("11" * 100)
             (local :: localPaths.toList).map { path =>
-              AddToLucence(
+              val aa = AddToLucence(
                 IndexPathRow(
                   id = -1,
                   uri = path.toRealPath().toUri.toASCIIString,
@@ -74,6 +79,8 @@ class CompareGen() {
                   isFinish = false,
                   parentDirId = partentId,
                   contentId = contentId))
+              println("44" + aa + Files.isDirectory(local.toRealPath()))
+              aa
             }
         }
       case DBPath(dbPath) =>
@@ -117,10 +124,14 @@ class CompareGen() {
       case EqualsName =>
         localPaths.dequeueOption match {
           case Some((local, localQueue)) =>
+            println("22" * 100)
+            println("77" + local.toRealPath().toString)
             compareLoop(localQueue, dbPaths, LocalPath(local), partentId, contentId)
           case None =>
+            println("33" * 100)
             dbPaths.dequeueOption match {
               case Some((dbPath, dbQueue)) =>
+                println("88" + Paths.get(URI.create(dbPath.uri)).toRealPath().toString)
                 compareLoop(localPaths, dbQueue, DBPath(dbPath), partentId, contentId)
               case None =>
                 List.empty[FileCompare]
