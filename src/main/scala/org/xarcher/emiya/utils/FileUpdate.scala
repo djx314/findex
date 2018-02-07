@@ -2,6 +2,7 @@ package org.xarcher.emiya.utils
 
 import java.net.URI
 import java.nio.file.{ Files, Path, Paths }
+import java.util.stream.Collectors
 
 import org.xarcher.xPhoto.{ FileDB, IndexExecutionContext }
 import org.xarcher.xPhoto.FileTables._
@@ -21,19 +22,19 @@ class FileUpdate(
   def updateIndexRow(pathRow: IndexPathRow, content: IndexContentRow): Future[Int] = {
     val subRowsF = fileDB.db.run(IndexPath.filter(s => (s.parentDirId === pathRow.id) && (s.contentId === content.id)).to[List].result)
     //val subFiles = Paths.get(URI.create(pathRow.uri)).toFile.listFiles.toList.map(_.toPath)
-    val subFiles = Files.newDirectoryStream(Paths.get(URI.create(pathRow.uri))).asScala.toList
+    val subFiles = Files.list(Paths.get(URI.create(pathRow.uri))).collect(Collectors.toList()).asScala.toList
 
     val dealsAction = subRowsF.map { rows =>
       val compares = compareGen.compareWithSorted(subFiles, rows, parentId = pathRow.id, contentId = content.id)
       val actions = compares.map {
         case AddToLucence(row) =>
-          println("+ " + row)
+          //println("+ " + row)
           IndexPath.returning(IndexPath.map(_.id)).into((model, id) => model.copy(id = id)) += row
         case RemoveFromLucence(row) =>
-          println("- " + row)
+          //println("- " + row)
           IndexPath.filter(_.id === row.id).delete.map((_: Int) => row)
         case Modified(row) =>
-          println("* " + row)
+          //println("* " + row)
           IndexPath.filter(_.id === row.id).update(row).map((_: Int) => row)
       }
       val actions1: DBIO[Seq[IndexPathRow]] = (

@@ -117,35 +117,63 @@ class FileIndex(
   }
 
   def index(content: IndexContentRow)(implicit ec: ExecutionContext): Future[Int] = {
-    val rootPath = Paths.get(URI.create(content.rootUri))
+    //val rootPath = Paths.get(URI.create(content.rootUri))
 
-    def startFetchFiles(rootDir: File): Future[Boolean] = {
-      val f = if (!rootDir.isDirectory) {
-        Future.successful(true)
+    def startFetchFiles(contentModel: IndexContentRow): Future[Boolean] = {
+      val rootFile = Paths.get(URI.create(contentModel.rootUri))
+
+      val f = if (!Files.isDirectory(rootFile)) {
+        Future.successful(Option.empty)
       } else {
         fileDB.writeDB.run {
-          //schema.create >>
-          //IndexPath.delete
-          DBIO.successful(2)
-        }.flatMap((_: Int) =>
-          fileDB.writeDB.run {
-            IndexPath
-              .returning(IndexPath.map(_.id))
-              .into((dir, id) => dir.copy(id = id)) += IndexPathRow(
+          IndexPath.filter(_.id === content.id).result.headOption.map {
+            case Some(rootIndexModel) =>
+              val lastModified = Files.getLastModifiedTime(rootFile).toMillis
+              if (lastModified == rootIndexModel.lastModified.getTime) {
+                Option.empty
+              } else {
+                Option(
+                  rootIndexModel.copy(
+                    uri = rootFile.toUri.toASCIIString,
+                    isDirectory = Files.isDirectory(rootFile),
+                    lastModified = new java.sql.Date(Files.getLastModifiedTime(rootFile).toMillis),
+                    isFetched = false,
+                    isFinish = false))
+              }
+            case None =>
+              Option(IndexPathRow(
                 id = -1,
-                uri = rootDir.toPath.toUri.toASCIIString,
+                uri = rootFile.toUri.toASCIIString,
                 parentDirId = -1,
-                isDirectory = Files.isDirectory(rootDir.toPath),
-                lastModified = new java.sql.Date(Files.getLastModifiedTime(rootDir.toPath).toMillis),
+                isDirectory = Files.isDirectory(rootFile),
+                lastModified = new java.sql.Date(Files.getLastModifiedTime(rootFile).toMillis),
                 isFetched = false,
                 isFinish = false,
-                contentId = content.id)
-            /*id = -1,
+                contentId = content.id))
+
+          }
+        }.flatMap {
+          case Some(indexModel) if indexModel.id > 0 =>
+            fileDB.writeDB.run {
+              (IndexPath.filter(_.id === indexModel.id).update(indexModel) >> DBIO.successful(Option(indexModel))).transactionally
+              /*id = -1,
                 dirPath = rootDir.toPath.toRealPath().toString,
                 isFinish = false)*/
-          }.flatMap(dir => fetchFiles(content)))
+            }
+          case Some(indexModel) if indexModel.id < 0 =>
+            fileDB.writeDB.run {
+              IndexPath
+                .returning(IndexPath.map(_.id))
+                .into((dir, id) => Option(dir.copy(id = id))) += indexModel
+              /*id = -1,
+                  dirPath = rootDir.toPath.toRealPath().toString,
+                  isFinish = false)*/
+            }
+          case _ =>
+            Future.successful(Option.empty)
+        }
       }
-      f
+      f.flatMap((_: Option[IndexPathRow]) => fetchFiles(content))
     }
 
     def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
@@ -249,13 +277,13 @@ class FileIndex(
       Future.successful(1)
     }
 
-    val indexAction = if (Files.isDirectory(rootPath)) {
-      val fetchFilesF = startFetchFiles(rootPath.toFile).recover {
+    val indexAction = /*if (Files.isDirectory(rootPath))*/ {
+      val fetchFilesF = startFetchFiles(content).recover {
         case e => e.printStackTrace
       }
       val indexFilesF = tranFiles(0, () => fetchFilesF.isCompleted)
       indexFilesF.map { count =>
-        println(s"索引:${rootPath.toRealPath()}完成，一共索引了:${count}个文件")
+        println(s"索引:${Paths.get(URI.create(content.rootUri)).toRealPath()}完成，一共索引了:${count}个文件")
         1
       }.recover {
         case e =>
@@ -264,9 +292,9 @@ class FileIndex(
       }
       showInfo(() => indexFilesF.isCompleted)
       indexFilesF
-    } else {
+    } /*else {
       Future.successful(3)
-    }
+    }*/
     indexAction
   }
 
