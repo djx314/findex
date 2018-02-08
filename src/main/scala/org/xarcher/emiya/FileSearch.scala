@@ -39,7 +39,7 @@ class FileSearch(embeddedServer: EmbeddedServer) {
       case head :: Nil =>
         head
       case s =>
-        s.mkString("(", " OR ", ")")
+        s.mkString("(", " AND ", ")")
     }
     lazy val exactQueryWithField = exactQueryString.map(s => s"law_file_sum:${s}")
 
