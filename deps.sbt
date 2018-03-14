@@ -37,7 +37,8 @@ val macwire = Seq(
 
 libraryDependencies ++= macwire
 
-//libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.21"
+//libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.25"
+
 libraryDependencies += "com.h2database" % "h2" % "1.4.196"
 
 libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.9"

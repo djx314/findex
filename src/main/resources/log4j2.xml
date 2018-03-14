@@ -1,0 +1,42 @@
+<configuration status="warn">
+
+    <appenders>
+        <console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n" />
+        </console>
+
+        <RollingFile name="RollingFileInfo" fileName="info.log"
+                     filePattern="${sys:user.home}/logs/hpaasvc/$${date:yyyy-MM}/info-%d{yyyy-MM-dd}-%i.log">
+            <Filters>
+                <ThresholdFilter level="INFO" />
+                <ThresholdFilter level="WARN" onMatch="DENY"
+                                 onMismatch="NEUTRAL" />
+            </Filters>
+            <PatternLayout pattern="[%t] - %m%n" />
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="100 MB" />
+            </Policies>
+        </RollingFile>
+
+        <RandomAccessFile name="RandomAccessFile" fileName="asyncWithLocation.log"
+                          immediateFlush="false" append="true">
+            <PatternLayout>
+                <Pattern>[%t] - %m%n</Pattern>
+            </PatternLayout>
+        </RandomAccessFile>
+
+    </appenders>
+
+    <loggers>
+        <!-- <AsyncLogger name="asynLogger" level="trace"
+        includeLocation="true">
+        <AppenderRef ref="RandomAccessFile" />
+        </AsyncLogger> -->
+        <Root level="info" includeLocation="true">
+            <AppenderRef ref="RollingFileInfo" />
+            <AppenderRef ref="Console" />
+        </Root>
+    </loggers>
+
+</configuration>

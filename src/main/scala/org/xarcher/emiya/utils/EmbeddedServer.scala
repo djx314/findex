@@ -11,6 +11,8 @@ import com.sksamuel.elastic4s.indexes.CreateIndexDefinition
 import com.sksamuel.elastic4s.mappings.dynamictemplate.DynamicMapping
 import org.xarcher.xPhoto.IndexExecutionContext
 
+import scala.util.{ Failure, Success }
+
 // we must import the dsl
 
 import scala.concurrent.Future
@@ -42,14 +44,21 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
 
   implicit protected val ec = exContextWrap.indexEc
 
-  val index: Index = "findex0202"
+  val index: Index = "findex0303"
   val typeName: String = "file_content"
 
+  //org.apache.logging.log4j.core.Logger
+  println("1414" * 300)
+
   protected lazy val initEs: Future[HttpClient] = {
-    Future {
-      val localNode = LocalNode("findex", "./esTmp/tmpDataPath")
-      shutdownHook.addHook(() => Future { localNode.close() })
-      localNode.http(false)
+    println("1212" * 100)
+    println(ec)
+
+    val localNode = LocalNode("findex", "./esTmp/tmpDataPath")
+    //shutdownHook.addHook(() => Future.successful(localNode.close()))
+    val client = localNode.http(true)
+    Future.successful {
+      client
     }
   }
 
@@ -81,6 +90,8 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
   protected lazy val createIndexInitAction = {
     initEs.flatMap {
       client =>
+        println("55" * 100)
+        println(client)
         client.execute {
           createIndex(index.name).mappings(
             mapping(typeName)
@@ -91,6 +102,13 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
                 keywordField("law_file_name"),
                 intField("content_id"))
               .dynamic(DynamicMapping.Strict))
+        }.andThen {
+          case Success(s) =>
+            println("11" * 100)
+            println(s)
+          case Failure(e) =>
+            println("22" * 100)
+            e.printStackTrace
         }
     }
   }

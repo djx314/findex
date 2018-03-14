@@ -1,0 +1,893 @@
+[Thread-21] - Shutting down local node findex
+[Thread-23] - Shutting down local node findex
+[Thread-21] - closing ...
+[Thread-21] - closed
+[pool-4-thread-9] - initializing ...
+[pool-4-thread-9] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-9] - heap size [539mb], compressed ordinary object pointers [true]
+[pool-4-thread-9] - node name [ifNpFCk] derived from node ID [ifNpFCkdQCynKq6V19cx3w]; set [node.name] to override
+[pool-4-thread-9] - version[6.2.2], pid[18332], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-9] - JVM arguments [-Xmx600M]
+[pool-4-thread-9] - no modules loaded
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-9] - using discovery type [zen]
+[pool-4-thread-9] - initialized
+[pool-4-thread-9] - starting ...
+[pool-4-thread-9] - publish_address {127.0.0.1:9301}, bound_addresses {127.0.0.1:9301}, {[::1]:9301}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [100]])
+[pool-4-thread-9] - publish_address {127.0.0.1:9201}, bound_addresses {127.0.0.1:9201}, {[::1]:9201}
+[pool-4-thread-9] - started
+[pool-4-thread-9] - Registering shutdown hook for local node
+[pool-4-thread-10] - initializing ...
+[scala-execution-context-global-38] - 索引文件过程发生错误
+java.lang.NullPointerException: null
+	at org.elasticsearch.cluster.node.DiscoveryNodes.isAllNodes(DiscoveryNodes.java:233) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.cluster.node.DiscoveryNodes.resolveNodes(DiscoveryNodes.java:304) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.resolveRequest(TransportNodesAction.java:148) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction$AsyncAction.<init>(TransportNodesAction.java:166) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:89) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:52) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:167) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:139) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:81) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:83) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:72) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:405) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:394) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:706) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:46) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:53) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at com.sksamuel.elastic4s.embedded.InternalLocalNode.<init>(LocalNode.scala:78) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:179) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:185) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:202) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs$lzycompute(EmbeddedServer.scala:52) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs(EmbeddedServer.scala:50) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction$lzycompute(EmbeddedServer.scala:84) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction(EmbeddedServer.scala:83) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient$lzycompute(EmbeddedServer.scala:59) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient(EmbeddedServer.scala:58) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.xPhoto.FileIndex.$anonfun$index$12(FileIndex.scala:225) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at scala.concurrent.Future.$anonfun$flatMap$1(Future.scala:304) ~[scala-library.jar:?]
+	at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37) ~[scala-library.jar:?]
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60) ~[scala-library.jar:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) ~[?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) ~[?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) ~[?:1.8.0_144]
+[pool-4-thread-10] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-10] - heap size [539mb], compressed ordinary object pointers [true]
+[pool-4-thread-10] - node name [JOf-5Xw] derived from node ID [JOf-5XwsRlSB-8Xq5gkaUQ]; set [node.name] to override
+[pool-4-thread-10] - version[6.2.2], pid[18332], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-10] - JVM arguments [-Xmx600M]
+[pool-4-thread-10] - no modules loaded
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-10] - using discovery type [zen]
+[pool-4-thread-10] - initialized
+[pool-4-thread-10] - starting ...
+[pool-4-thread-10] - publish_address {127.0.0.1:9302}, bound_addresses {127.0.0.1:9302}, {[::1]:9302}
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{8mV_sHfmSruDCS-0SBhNKw}{127.0.0.1}{127.0.0.1:9301},{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [106]])
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{bmtOZRg9RjaPbQrPVGCI-g}{127.0.0.1}{127.0.0.1:9302},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [106]])
+[pool-4-thread-10] - publish_address {127.0.0.1:9202}, bound_addresses {127.0.0.1:9202}, {[::1]:9202}
+[pool-4-thread-10] - started
+[pool-4-thread-10] - Registering shutdown hook for local node
+[Thread-23] - Shutting down local node findex
+[Thread-21] - Shutting down local node findex
+[Thread-23] - stopping ...
+[Thread-21] - stopping ...
+[Thread-23] - closing ...
+[Thread-23] - closed
+[Thread-21] - closing ...
+[Thread-21] - closed
+[pool-4-thread-9] - initializing ...
+[pool-4-thread-9] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-9] - heap size [556mb], compressed ordinary object pointers [true]
+[pool-4-thread-9] - node name [ifNpFCk] derived from node ID [ifNpFCkdQCynKq6V19cx3w]; set [node.name] to override
+[pool-4-thread-9] - version[6.2.2], pid[21432], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-9] - JVM arguments [-Xmx600M]
+[pool-4-thread-9] - no modules loaded
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-9] - using discovery type [zen]
+[pool-4-thread-9] - initialized
+[pool-4-thread-9] - starting ...
+[pool-4-thread-9] - publish_address {127.0.0.1:9301}, bound_addresses {127.0.0.1:9301}, {[::1]:9301}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [114]])
+[pool-4-thread-9] - publish_address {127.0.0.1:9201}, bound_addresses {127.0.0.1:9201}, {[::1]:9201}
+[pool-4-thread-9] - started
+[pool-4-thread-9] - Registering shutdown hook for local node
+[pool-4-thread-10] - initializing ...
+[scala-execution-context-global-29] - 索引文件过程发生错误
+java.lang.NullPointerException: null
+	at org.elasticsearch.cluster.node.DiscoveryNodes.isAllNodes(DiscoveryNodes.java:233) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.cluster.node.DiscoveryNodes.resolveNodes(DiscoveryNodes.java:304) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.resolveRequest(TransportNodesAction.java:148) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction$AsyncAction.<init>(TransportNodesAction.java:166) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:89) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:52) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:167) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:139) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:81) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:83) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:72) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:405) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:394) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:706) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:46) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:53) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at com.sksamuel.elastic4s.embedded.InternalLocalNode.<init>(LocalNode.scala:78) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:179) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:185) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:202) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs$lzycompute(EmbeddedServer.scala:54) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs(EmbeddedServer.scala:52) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction$lzycompute(EmbeddedServer.scala:86) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction(EmbeddedServer.scala:85) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient$lzycompute(EmbeddedServer.scala:61) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient(EmbeddedServer.scala:60) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.xPhoto.FileIndex.$anonfun$index$12(FileIndex.scala:225) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at scala.concurrent.Future.$anonfun$flatMap$1(Future.scala:304) ~[scala-library.jar:?]
+	at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37) ~[scala-library.jar:?]
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60) ~[scala-library.jar:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) ~[?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) ~[?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) ~[?:1.8.0_144]
+[pool-4-thread-10] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-10] - heap size [556mb], compressed ordinary object pointers [true]
+[pool-4-thread-10] - node name [JOf-5Xw] derived from node ID [JOf-5XwsRlSB-8Xq5gkaUQ]; set [node.name] to override
+[pool-4-thread-10] - version[6.2.2], pid[21432], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-10] - JVM arguments [-Xmx600M]
+[pool-4-thread-10] - no modules loaded
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-10] - using discovery type [zen]
+[pool-4-thread-10] - initialized
+[pool-4-thread-10] - starting ...
+[pool-4-thread-10] - publish_address {127.0.0.1:9302}, bound_addresses {127.0.0.1:9302}, {[::1]:9302}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{WzRjlfWIRpODeLdxmfzyhA}{127.0.0.1}{127.0.0.1:9302},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [120]])
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{iY3OvQm9Sbu7JwsgkpceiQ}{127.0.0.1}{127.0.0.1:9301},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [120]])
+[pool-4-thread-10] - publish_address {127.0.0.1:9202}, bound_addresses {127.0.0.1:9202}, {[::1]:9202}
+[pool-4-thread-10] - started
+[pool-4-thread-10] - Registering shutdown hook for local node
+[Thread-23] - Shutting down local node findex
+[Thread-21] - Shutting down local node findex
+[Thread-23] - stopping ...
+[Thread-21] - stopping ...
+[Thread-21] - closing ...
+[Thread-21] - closed
+[pool-4-thread-9] - initializing ...
+[pool-4-thread-9] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-9] - heap size [541mb], compressed ordinary object pointers [true]
+[pool-4-thread-9] - node name [ifNpFCk] derived from node ID [ifNpFCkdQCynKq6V19cx3w]; set [node.name] to override
+[pool-4-thread-9] - version[6.2.2], pid[15472], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-9] - JVM arguments [-Xmx600M]
+[pool-4-thread-9] - no modules loaded
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-9] - using discovery type [zen]
+[pool-4-thread-9] - initialized
+[pool-4-thread-9] - starting ...
+[pool-4-thread-9] - publish_address {127.0.0.1:9301}, bound_addresses {127.0.0.1:9301}, {[::1]:9301}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [127]])
+[pool-4-thread-9] - publish_address {127.0.0.1:9201}, bound_addresses {127.0.0.1:9201}, {[::1]:9201}
+[pool-4-thread-9] - started
+[pool-4-thread-9] - Registering shutdown hook for local node
+[pool-4-thread-10] - initializing ...
+[pool-4-thread-10] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-10] - heap size [541mb], compressed ordinary object pointers [true]
+[pool-4-thread-10] - node name [JOf-5Xw] derived from node ID [JOf-5XwsRlSB-8Xq5gkaUQ]; set [node.name] to override
+[pool-4-thread-10] - version[6.2.2], pid[15472], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-10] - JVM arguments [-Xmx600M]
+[pool-4-thread-10] - no modules loaded
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-10] - using discovery type [zen]
+[pool-4-thread-10] - initialized
+[pool-4-thread-10] - starting ...
+[pool-4-thread-10] - publish_address {127.0.0.1:9302}, bound_addresses {127.0.0.1:9302}, {[::1]:9302}
+[scala-execution-context-global-38] - 还有0个文件正在索引列表中
+还有42个文件夹正在正在查找子文件操作队列中
+是否已完成索引：false
+                   
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{7uzg_x6NSCyHg27VRyRj4w}{127.0.0.1}{127.0.0.1:9302},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [132]])
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{DHe8EKPLRpGLvqKUUQPGRQ}{127.0.0.1}{127.0.0.1:9301},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [132]])
+[pool-4-thread-10] - publish_address {127.0.0.1:9202}, bound_addresses {127.0.0.1:9202}, {[::1]:9202}
+[pool-4-thread-10] - started
+[pool-4-thread-10] - Registering shutdown hook for local node
+[scala-execution-context-global-38] - 索引文件过程发生错误
+java.lang.NullPointerException: null
+	at org.elasticsearch.cluster.node.DiscoveryNodes.isAllNodes(DiscoveryNodes.java:233) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.cluster.node.DiscoveryNodes.resolveNodes(DiscoveryNodes.java:304) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.resolveRequest(TransportNodesAction.java:148) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction$AsyncAction.<init>(TransportNodesAction.java:166) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:89) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:52) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:167) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:139) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:81) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:83) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:72) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:405) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:394) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:706) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:46) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:53) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at com.sksamuel.elastic4s.embedded.InternalLocalNode.<init>(LocalNode.scala:78) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:179) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:185) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:202) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs$lzycompute(EmbeddedServer.scala:54) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs(EmbeddedServer.scala:52) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction$lzycompute(EmbeddedServer.scala:86) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction(EmbeddedServer.scala:85) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient$lzycompute(EmbeddedServer.scala:61) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient(EmbeddedServer.scala:60) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.xPhoto.FileIndex.$anonfun$index$12(FileIndex.scala:225) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at scala.concurrent.Future.$anonfun$flatMap$1(Future.scala:304) ~[scala-library.jar:?]
+	at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37) ~[scala-library.jar:?]
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60) ~[scala-library.jar:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) ~[?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) ~[?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) ~[?:1.8.0_144]
+[Thread-23] - Shutting down local node findex
+[Thread-21] - Shutting down local node findex
+[Thread-23] - stopping ...
+[Thread-21] - stopping ...
+[Thread-21] - closing ...
+[Thread-21] - closed
+[pool-4-thread-9] - initializing ...
+[pool-4-thread-9] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-9] - heap size [546.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-9] - node name [ifNpFCk] derived from node ID [ifNpFCkdQCynKq6V19cx3w]; set [node.name] to override
+[pool-4-thread-9] - version[6.2.2], pid[3736], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-9] - JVM arguments [-Xmx600M]
+[pool-4-thread-9] - no modules loaded
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-9] - using discovery type [zen]
+[pool-4-thread-9] - initialized
+[pool-4-thread-9] - starting ...
+[pool-4-thread-9] - publish_address {127.0.0.1:9301}, bound_addresses {127.0.0.1:9301}, {[::1]:9301}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [142]])
+[pool-4-thread-9] - publish_address {127.0.0.1:9201}, bound_addresses {127.0.0.1:9201}, {[::1]:9201}
+[pool-4-thread-9] - started
+[pool-4-thread-9] - Registering shutdown hook for local node
+[pool-4-thread-10] - initializing ...
+[scala-execution-context-global-38] - 索引文件过程发生错误
+java.lang.NullPointerException: null
+	at org.elasticsearch.cluster.node.DiscoveryNodes.isAllNodes(DiscoveryNodes.java:233) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.cluster.node.DiscoveryNodes.resolveNodes(DiscoveryNodes.java:304) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.resolveRequest(TransportNodesAction.java:148) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction$AsyncAction.<init>(TransportNodesAction.java:166) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:89) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:52) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:167) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:139) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:81) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:83) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:72) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:405) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:394) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:706) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:46) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:53) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at com.sksamuel.elastic4s.embedded.InternalLocalNode.<init>(LocalNode.scala:78) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:179) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:185) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:202) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs$lzycompute(EmbeddedServer.scala:54) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs(EmbeddedServer.scala:52) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction$lzycompute(EmbeddedServer.scala:86) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction(EmbeddedServer.scala:85) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient$lzycompute(EmbeddedServer.scala:61) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient(EmbeddedServer.scala:60) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.xPhoto.FileIndex.$anonfun$index$12(FileIndex.scala:225) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at scala.concurrent.Future.$anonfun$flatMap$1(Future.scala:304) ~[scala-library.jar:?]
+	at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37) ~[scala-library.jar:?]
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60) ~[scala-library.jar:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) ~[?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) ~[?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) ~[?:1.8.0_144]
+[pool-4-thread-10] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-10] - heap size [546.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-10] - node name [JOf-5Xw] derived from node ID [JOf-5XwsRlSB-8Xq5gkaUQ]; set [node.name] to override
+[pool-4-thread-10] - version[6.2.2], pid[3736], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-10] - JVM arguments [-Xmx600M]
+[pool-4-thread-10] - no modules loaded
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-10] - using discovery type [zen]
+[pool-4-thread-10] - initialized
+[pool-4-thread-10] - starting ...
+[pool-4-thread-10] - publish_address {127.0.0.1:9302}, bound_addresses {127.0.0.1:9302}, {[::1]:9302}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{iZlCXMY9TnCbdXbZDF6STA}{127.0.0.1}{127.0.0.1:9302},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [151]])
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{jIFbLtv6SiuwQpBoM0a-VA}{127.0.0.1}{127.0.0.1:9301},{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [151]])
+[pool-4-thread-10] - publish_address {127.0.0.1:9202}, bound_addresses {127.0.0.1:9202}, {[::1]:9202}
+[pool-4-thread-10] - started
+[pool-4-thread-10] - Registering shutdown hook for local node
+[Thread-21] - Shutting down local node findex
+[Thread-23] - Shutting down local node findex
+[Thread-21] - stopping ...
+[Thread-23] - stopping ...
+[Thread-21] - closing ...
+[Thread-21] - closed
+[pool-4-thread-9] - initializing ...
+[pool-4-thread-9] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-9] - heap size [535.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-9] - node name [ifNpFCk] derived from node ID [ifNpFCkdQCynKq6V19cx3w]; set [node.name] to override
+[pool-4-thread-9] - version[6.2.2], pid[5136], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-9] - JVM arguments [-Xmx600M]
+[pool-4-thread-9] - no modules loaded
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-9] - using discovery type [zen]
+[pool-4-thread-9] - initialized
+[pool-4-thread-9] - starting ...
+[pool-4-thread-9] - publish_address {127.0.0.1:9301}, bound_addresses {127.0.0.1:9301}, {[::1]:9301}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [157]])
+[pool-4-thread-9] - publish_address {127.0.0.1:9201}, bound_addresses {127.0.0.1:9201}, {[::1]:9201}
+[pool-4-thread-9] - started
+[pool-4-thread-9] - Registering shutdown hook for local node
+[pool-4-thread-10] - initializing ...
+[scala-execution-context-global-29] - 索引文件过程发生错误
+java.lang.NullPointerException: null
+	at org.elasticsearch.cluster.node.DiscoveryNodes.isAllNodes(DiscoveryNodes.java:233) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.cluster.node.DiscoveryNodes.resolveNodes(DiscoveryNodes.java:304) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.resolveRequest(TransportNodesAction.java:148) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction$AsyncAction.<init>(TransportNodesAction.java:166) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:89) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:52) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:167) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:139) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:81) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:83) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:72) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:405) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:394) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:706) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:46) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:53) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at com.sksamuel.elastic4s.embedded.InternalLocalNode.<init>(LocalNode.scala:78) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:179) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:185) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:202) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs$lzycompute(EmbeddedServer.scala:56) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs(EmbeddedServer.scala:52) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction$lzycompute(EmbeddedServer.scala:88) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction(EmbeddedServer.scala:87) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient$lzycompute(EmbeddedServer.scala:63) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient(EmbeddedServer.scala:62) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.xPhoto.FileIndex.$anonfun$index$12(FileIndex.scala:225) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at scala.concurrent.Future.$anonfun$flatMap$1(Future.scala:304) ~[scala-library.jar:?]
+	at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37) ~[scala-library.jar:?]
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60) ~[scala-library.jar:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) ~[?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) ~[?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) ~[?:1.8.0_144]
+[pool-4-thread-10] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-10] - heap size [535.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-10] - node name [JOf-5Xw] derived from node ID [JOf-5XwsRlSB-8Xq5gkaUQ]; set [node.name] to override
+[pool-4-thread-10] - version[6.2.2], pid[5136], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-10] - JVM arguments [-Xmx600M]
+[pool-4-thread-10] - no modules loaded
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-10] - using discovery type [zen]
+[pool-4-thread-10] - initialized
+[pool-4-thread-10] - starting ...
+[pool-4-thread-10] - publish_address {127.0.0.1:9302}, bound_addresses {127.0.0.1:9302}, {[::1]:9302}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{bA4hAOwzQn24RzlRpuVslg}{127.0.0.1}{127.0.0.1:9302},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [163]])
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{swX6jQweQQy8ya5C1QuN8Q}{127.0.0.1}{127.0.0.1:9301},{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [163]])
+[pool-4-thread-10] - publish_address {127.0.0.1:9202}, bound_addresses {127.0.0.1:9202}, {[::1]:9202}
+[pool-4-thread-10] - started
+[pool-4-thread-10] - Registering shutdown hook for local node
+[Thread-23] - Shutting down local node findex
+[Thread-21] - Shutting down local node findex
+[Thread-21] - stopping ...
+[Thread-23] - stopping ...
+[Thread-21] - closing ...
+[Thread-21] - closed
+[pool-4-thread-9] - initializing ...
+[pool-4-thread-9] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-9] - heap size [533.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-9] - node name [ifNpFCk] derived from node ID [ifNpFCkdQCynKq6V19cx3w]; set [node.name] to override
+[pool-4-thread-9] - version[6.2.2], pid[17032], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-9] - JVM arguments [-Xmx600M]
+[pool-4-thread-9] - no modules loaded
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-9] - using discovery type [zen]
+[pool-4-thread-9] - initialized
+[pool-4-thread-9] - starting ...
+[pool-4-thread-9] - publish_address {127.0.0.1:9301}, bound_addresses {127.0.0.1:9301}, {[::1]:9301}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [171]])
+[pool-4-thread-9] - publish_address {127.0.0.1:9201}, bound_addresses {127.0.0.1:9201}, {[::1]:9201}
+[pool-4-thread-9] - started
+[pool-4-thread-9] - Registering shutdown hook for local node
+[pool-4-thread-10] - initializing ...
+[pool-4-thread-10] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-10] - heap size [533.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-10] - node name [JOf-5Xw] derived from node ID [JOf-5XwsRlSB-8Xq5gkaUQ]; set [node.name] to override
+[pool-4-thread-10] - version[6.2.2], pid[17032], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-10] - JVM arguments [-Xmx600M]
+[pool-4-thread-10] - no modules loaded
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-10] - using discovery type [zen]
+[pool-4-thread-10] - initialized
+[pool-4-thread-10] - starting ...
+[pool-4-thread-10] - publish_address {127.0.0.1:9302}, bound_addresses {127.0.0.1:9302}, {[::1]:9302}
+[scala-execution-context-global-38] - 还有0个文件正在索引列表中
+还有51个文件夹正在正在查找子文件操作队列中
+是否已完成索引：false
+                   
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{KTP2uVAjSWC7qNb64d_szg}{127.0.0.1}{127.0.0.1:9302},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [176]])
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{1Ue1HQASTWOTlZviKLoIUw}{127.0.0.1}{127.0.0.1:9301},{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [176]])
+[pool-4-thread-10] - publish_address {127.0.0.1:9202}, bound_addresses {127.0.0.1:9202}, {[::1]:9202}
+[pool-4-thread-10] - started
+[pool-4-thread-10] - Registering shutdown hook for local node
+[scala-execution-context-global-29] - 索引文件过程发生错误
+java.lang.NullPointerException: null
+	at org.elasticsearch.cluster.node.DiscoveryNodes.isAllNodes(DiscoveryNodes.java:233) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.cluster.node.DiscoveryNodes.resolveNodes(DiscoveryNodes.java:304) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.resolveRequest(TransportNodesAction.java:148) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction$AsyncAction.<init>(TransportNodesAction.java:166) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:89) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:52) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:167) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:139) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:81) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:83) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:72) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:405) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:394) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:706) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:46) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:53) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at com.sksamuel.elastic4s.embedded.InternalLocalNode.<init>(LocalNode.scala:78) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:179) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:185) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:202) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs$lzycompute(EmbeddedServer.scala:56) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs(EmbeddedServer.scala:52) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction$lzycompute(EmbeddedServer.scala:88) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction(EmbeddedServer.scala:87) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient$lzycompute(EmbeddedServer.scala:63) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient(EmbeddedServer.scala:62) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.xPhoto.FileIndex.$anonfun$index$12(FileIndex.scala:225) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at scala.concurrent.Future.$anonfun$flatMap$1(Future.scala:304) ~[scala-library.jar:?]
+	at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37) ~[scala-library.jar:?]
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60) ~[scala-library.jar:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) ~[?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) ~[?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) ~[?:1.8.0_144]
+[Thread-21] - Shutting down local node findex
+[Thread-21] - stopping ...
+[Thread-23] - Shutting down local node findex
+[Thread-21] - closing ...
+[Thread-21] - closed
+[pool-4-thread-9] - initializing ...
+[pool-4-thread-9] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-9] - heap size [539mb], compressed ordinary object pointers [true]
+[pool-4-thread-9] - node name [ifNpFCk] derived from node ID [ifNpFCkdQCynKq6V19cx3w]; set [node.name] to override
+[pool-4-thread-9] - version[6.2.2], pid[23348], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-9] - JVM arguments [-Xmx600M]
+[pool-4-thread-9] - no modules loaded
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-9] - using discovery type [zen]
+[pool-4-thread-9] - initialized
+[pool-4-thread-9] - starting ...
+[pool-4-thread-9] - publish_address {127.0.0.1:9301}, bound_addresses {127.0.0.1:9301}, {[::1]:9301}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [184]])
+[pool-4-thread-9] - publish_address {127.0.0.1:9201}, bound_addresses {127.0.0.1:9201}, {[::1]:9201}
+[pool-4-thread-9] - started
+[pool-4-thread-9] - Registering shutdown hook for local node
+[pool-4-thread-10] - initializing ...
+[pool-4-thread-10] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-10] - heap size [539mb], compressed ordinary object pointers [true]
+[pool-4-thread-10] - node name [JOf-5Xw] derived from node ID [JOf-5XwsRlSB-8Xq5gkaUQ]; set [node.name] to override
+[pool-4-thread-10] - version[6.2.2], pid[23348], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-10] - JVM arguments [-Xmx600M]
+[pool-4-thread-10] - no modules loaded
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-10] - using discovery type [zen]
+[pool-4-thread-10] - initialized
+[pool-4-thread-10] - starting ...
+[pool-4-thread-10] - publish_address {127.0.0.1:9302}, bound_addresses {127.0.0.1:9302}, {[::1]:9302}
+[scala-execution-context-global-38] - 还有0个文件正在索引列表中
+还有54个文件夹正在正在查找子文件操作队列中
+是否已完成索引：false
+                   
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{FMRRGAmmRiGVU1ptYHq5MQ}{127.0.0.1}{127.0.0.1:9302},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [190]])
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{VGbYZw6VSE295JfnpbW-XA}{127.0.0.1}{127.0.0.1:9301},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [190]])
+[pool-4-thread-10] - publish_address {127.0.0.1:9202}, bound_addresses {127.0.0.1:9202}, {[::1]:9202}
+[pool-4-thread-10] - started
+[pool-4-thread-10] - Registering shutdown hook for local node
+[scala-execution-context-global-38] - 索引文件过程发生错误
+java.lang.NullPointerException: null
+	at org.elasticsearch.cluster.node.DiscoveryNodes.isAllNodes(DiscoveryNodes.java:233) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.cluster.node.DiscoveryNodes.resolveNodes(DiscoveryNodes.java:304) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.resolveRequest(TransportNodesAction.java:148) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction$AsyncAction.<init>(TransportNodesAction.java:166) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:89) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:52) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:167) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:139) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:81) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:83) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:72) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:405) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:394) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:706) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:46) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:53) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at com.sksamuel.elastic4s.embedded.InternalLocalNode.<init>(LocalNode.scala:78) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:179) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:185) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:202) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs$lzycompute(EmbeddedServer.scala:56) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs(EmbeddedServer.scala:52) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction$lzycompute(EmbeddedServer.scala:88) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction(EmbeddedServer.scala:87) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient$lzycompute(EmbeddedServer.scala:63) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient(EmbeddedServer.scala:62) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.xPhoto.FileIndex.$anonfun$index$12(FileIndex.scala:225) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at scala.concurrent.Future.$anonfun$flatMap$1(Future.scala:304) ~[scala-library.jar:?]
+	at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37) ~[scala-library.jar:?]
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60) ~[scala-library.jar:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) ~[?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) ~[?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) ~[?:1.8.0_144]
+[Thread-21] - Shutting down local node findex
+[Thread-23] - Shutting down local node findex
+[Thread-23] - stopping ...
+[Thread-21] - stopping ...
+[Thread-21] - closing ...
+[Thread-21] - closed
+[pool-4-thread-10] - initializing ...
+[pool-4-thread-10] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-10] - heap size [536.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-10] - node name [ifNpFCk] derived from node ID [ifNpFCkdQCynKq6V19cx3w]; set [node.name] to override
+[pool-4-thread-10] - version[6.2.2], pid[16116], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-10] - JVM arguments [-Xmx600M]
+[pool-4-thread-10] - no modules loaded
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-10] - using discovery type [zen]
+[pool-4-thread-10] - initialized
+[pool-4-thread-10] - starting ...
+[pool-4-thread-10] - publish_address {127.0.0.1:9301}, bound_addresses {127.0.0.1:9301}, {[::1]:9301}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [198]])
+[pool-4-thread-10] - publish_address {127.0.0.1:9201}, bound_addresses {127.0.0.1:9201}, {[::1]:9201}
+[pool-4-thread-10] - started
+[pool-4-thread-10] - Registering shutdown hook for local node
+[pool-4-thread-9] - initializing ...
+[scala-execution-context-global-36] - 索引文件过程发生错误
+java.lang.NullPointerException: null
+	at org.elasticsearch.cluster.node.DiscoveryNodes.isAllNodes(DiscoveryNodes.java:233) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.cluster.node.DiscoveryNodes.resolveNodes(DiscoveryNodes.java:304) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.resolveRequest(TransportNodesAction.java:148) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction$AsyncAction.<init>(TransportNodesAction.java:166) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:89) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:52) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:167) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:139) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:81) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:83) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:72) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:405) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:394) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:706) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:46) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:53) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at com.sksamuel.elastic4s.embedded.InternalLocalNode.<init>(LocalNode.scala:78) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:179) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:185) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:202) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs$lzycompute(EmbeddedServer.scala:56) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs(EmbeddedServer.scala:52) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction$lzycompute(EmbeddedServer.scala:90) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction(EmbeddedServer.scala:89) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient$lzycompute(EmbeddedServer.scala:65) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient(EmbeddedServer.scala:64) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.xPhoto.FileIndex.$anonfun$index$12(FileIndex.scala:225) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at scala.concurrent.Future.$anonfun$flatMap$1(Future.scala:304) ~[scala-library.jar:?]
+	at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37) ~[scala-library.jar:?]
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60) ~[scala-library.jar:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) ~[?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) ~[?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) ~[?:1.8.0_144]
+[pool-4-thread-9] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-9] - heap size [536.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-9] - node name [JOf-5Xw] derived from node ID [JOf-5XwsRlSB-8Xq5gkaUQ]; set [node.name] to override
+[pool-4-thread-9] - version[6.2.2], pid[16116], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-9] - JVM arguments [-Xmx600M]
+[pool-4-thread-9] - no modules loaded
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-9] - using discovery type [zen]
+[pool-4-thread-9] - initialized
+[pool-4-thread-9] - starting ...
+[pool-4-thread-9] - publish_address {127.0.0.1:9302}, bound_addresses {127.0.0.1:9302}, {[::1]:9302}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{dx4kOrUyTrCnpNeXcrW3CA}{127.0.0.1}{127.0.0.1:9302},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [204]])
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{VcCGORqtQ5uuS3DR9K4X4Q}{127.0.0.1}{127.0.0.1:9301},{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [204]])
+[pool-4-thread-9] - publish_address {127.0.0.1:9202}, bound_addresses {127.0.0.1:9202}, {[::1]:9202}
+[pool-4-thread-9] - started
+[pool-4-thread-9] - Registering shutdown hook for local node
+[Thread-25] - Shutting down local node findex
+[Thread-23] - Shutting down local node findex
+[Thread-25] - stopping ...
+[Thread-23] - stopping ...
+[Thread-23] - closing ...
+[Thread-23] - closed
+[pool-4-thread-9] - initializing ...
+[pool-4-thread-9] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-9] - heap size [533.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-9] - node name [ifNpFCk] derived from node ID [ifNpFCkdQCynKq6V19cx3w]; set [node.name] to override
+[pool-4-thread-9] - version[6.2.2], pid[4696], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-9] - JVM arguments [-Xmx600M]
+[pool-4-thread-9] - no modules loaded
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-9] - using discovery type [zen]
+[pool-4-thread-9] - initialized
+[pool-4-thread-9] - starting ...
+[pool-4-thread-9] - publish_address {127.0.0.1:9301}, bound_addresses {127.0.0.1:9301}, {[::1]:9301}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [212]])
+[pool-4-thread-9] - publish_address {127.0.0.1:9201}, bound_addresses {127.0.0.1:9201}, {[::1]:9201}
+[pool-4-thread-9] - started
+[pool-4-thread-9] - Registering shutdown hook for local node
+[pool-4-thread-10] - initializing ...
+[scala-execution-context-global-38] - 索引文件过程发生错误
+java.lang.NullPointerException: null
+	at org.elasticsearch.cluster.node.DiscoveryNodes.isAllNodes(DiscoveryNodes.java:233) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.cluster.node.DiscoveryNodes.resolveNodes(DiscoveryNodes.java:304) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.resolveRequest(TransportNodesAction.java:148) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction$AsyncAction.<init>(TransportNodesAction.java:166) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:89) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:52) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:167) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:139) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:81) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:83) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:72) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:405) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:394) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:706) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:46) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:53) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at com.sksamuel.elastic4s.embedded.InternalLocalNode.<init>(LocalNode.scala:78) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:179) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:185) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:202) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs$lzycompute(EmbeddedServer.scala:56) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs(EmbeddedServer.scala:52) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction$lzycompute(EmbeddedServer.scala:90) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction(EmbeddedServer.scala:89) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient$lzycompute(EmbeddedServer.scala:65) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient(EmbeddedServer.scala:64) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.xPhoto.FileIndex.$anonfun$index$12(FileIndex.scala:225) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at scala.concurrent.Future.$anonfun$flatMap$1(Future.scala:304) ~[scala-library.jar:?]
+	at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37) ~[scala-library.jar:?]
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60) ~[scala-library.jar:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) ~[?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) ~[?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) ~[?:1.8.0_144]
+[pool-4-thread-10] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-10] - heap size [533.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-10] - node name [JOf-5Xw] derived from node ID [JOf-5XwsRlSB-8Xq5gkaUQ]; set [node.name] to override
+[pool-4-thread-10] - version[6.2.2], pid[4696], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-10] - JVM arguments [-Xmx600M]
+[pool-4-thread-10] - no modules loaded
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-10] - using discovery type [zen]
+[pool-4-thread-10] - initialized
+[pool-4-thread-10] - starting ...
+[pool-4-thread-10] - publish_address {127.0.0.1:9302}, bound_addresses {127.0.0.1:9302}, {[::1]:9302}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{1_t7U0HRSmuLWOxmCNhsgA}{127.0.0.1}{127.0.0.1:9302},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [217]])
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{AxQFzQWJQMOK8Qc3y3_a9Q}{127.0.0.1}{127.0.0.1:9301},{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [217]])
+[pool-4-thread-10] - publish_address {127.0.0.1:9202}, bound_addresses {127.0.0.1:9202}, {[::1]:9202}
+[pool-4-thread-10] - started
+[pool-4-thread-10] - Registering shutdown hook for local node
+[Thread-23] - Shutting down local node findex
+[Thread-21] - Shutting down local node findex
+[Thread-21] - stopping ...
+[Thread-23] - stopping ...
+[Thread-21] - closing ...
+[Thread-21] - closed
+[pool-4-thread-9] - initializing ...
+[pool-4-thread-9] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-9] - heap size [543.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-9] - node name [ifNpFCk] derived from node ID [ifNpFCkdQCynKq6V19cx3w]; set [node.name] to override
+[pool-4-thread-9] - version[6.2.2], pid[7100], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-9] - JVM arguments [-Xmx600M]
+[pool-4-thread-9] - no modules loaded
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-9] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-9] - using discovery type [zen]
+[pool-4-thread-9] - initialized
+[pool-4-thread-9] - starting ...
+[pool-4-thread-9] - publish_address {127.0.0.1:9301}, bound_addresses {127.0.0.1:9301}, {[::1]:9301}
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [225]])
+[pool-4-thread-9] - publish_address {127.0.0.1:9201}, bound_addresses {127.0.0.1:9201}, {[::1]:9201}
+[pool-4-thread-9] - started
+[pool-4-thread-9] - Registering shutdown hook for local node
+[pool-4-thread-10] - initializing ...
+[pool-4-thread-10] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-10] - heap size [543.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-10] - node name [JOf-5Xw] derived from node ID [JOf-5XwsRlSB-8Xq5gkaUQ]; set [node.name] to override
+[pool-4-thread-10] - version[6.2.2], pid[7100], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-10] - JVM arguments [-Xmx600M]
+[pool-4-thread-10] - no modules loaded
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-10] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-10] - using discovery type [zen]
+[pool-4-thread-10] - initialized
+[pool-4-thread-10] - starting ...
+[pool-4-thread-10] - publish_address {127.0.0.1:9302}, bound_addresses {127.0.0.1:9302}, {[::1]:9302}
+[scala-execution-context-global-29] - 还有0个文件正在索引列表中
+还有63个文件夹正在正在查找子文件操作队列中
+是否已完成索引：false
+                   
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{xEc_hdf1RG6mJcL5ww0qgQ}{127.0.0.1}{127.0.0.1:9302},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [230]])
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{a5hr1KhCQK65YDwp6HoAUg}{127.0.0.1}{127.0.0.1:9301},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [230]])
+[pool-4-thread-10] - publish_address {127.0.0.1:9202}, bound_addresses {127.0.0.1:9202}, {[::1]:9202}
+[pool-4-thread-10] - started
+[pool-4-thread-10] - Registering shutdown hook for local node
+[scala-execution-context-global-38] - 索引文件过程发生错误
+java.lang.NullPointerException: null
+	at org.elasticsearch.cluster.node.DiscoveryNodes.isAllNodes(DiscoveryNodes.java:233) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.cluster.node.DiscoveryNodes.resolveNodes(DiscoveryNodes.java:304) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.resolveRequest(TransportNodesAction.java:148) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction$AsyncAction.<init>(TransportNodesAction.java:166) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:89) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:52) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:167) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:139) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:81) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:83) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:72) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:405) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:394) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:706) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:46) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:53) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at com.sksamuel.elastic4s.embedded.InternalLocalNode.<init>(LocalNode.scala:78) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:179) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:185) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:202) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs$lzycompute(EmbeddedServer.scala:57) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs(EmbeddedServer.scala:53) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction$lzycompute(EmbeddedServer.scala:91) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction(EmbeddedServer.scala:90) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient$lzycompute(EmbeddedServer.scala:66) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient(EmbeddedServer.scala:65) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.xPhoto.FileIndex.$anonfun$index$12(FileIndex.scala:225) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at scala.concurrent.Future.$anonfun$flatMap$1(Future.scala:304) ~[scala-library.jar:?]
+	at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37) ~[scala-library.jar:?]
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60) ~[scala-library.jar:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) ~[?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) ~[?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) ~[?:1.8.0_144]
+[pool-4-thread-29] - initializing ...
+[pool-4-thread-29] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-29] - heap size [543.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-29] - node name [Qi36xmS] derived from node ID [Qi36xmSCSly7r55EGXw9XA]; set [node.name] to override
+[pool-4-thread-29] - version[6.2.2], pid[7100], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-29] - JVM arguments [-Xmx600M]
+[pool-4-thread-29] - no modules loaded
+[pool-4-thread-29] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-29] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-29] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-29] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-29] - using discovery type [zen]
+[pool-4-thread-29] - initialized
+[pool-4-thread-29] - starting ...
+[pool-4-thread-29] - publish_address {127.0.0.1:9303}, bound_addresses {127.0.0.1:9303}, {[::1]:9303}
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - added {{Qi36xmS}{Qi36xmSCSly7r55EGXw9XA}{g9DvOgQVRIq2jYNsATTADw}{127.0.0.1}{127.0.0.1:9303},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [235]])
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{Qi36xmS}{Qi36xmSCSly7r55EGXw9XA}{g9DvOgQVRIq2jYNsATTADw}{127.0.0.1}{127.0.0.1:9303},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [235]])
+[elasticsearch[Qi36xmS][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{xEc_hdf1RG6mJcL5ww0qgQ}{127.0.0.1}{127.0.0.1:9302},{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{a5hr1KhCQK65YDwp6HoAUg}{127.0.0.1}{127.0.0.1:9301},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [235]])
+[pool-4-thread-29] - publish_address {127.0.0.1:9203}, bound_addresses {127.0.0.1:9203}, {[::1]:9203}
+[pool-4-thread-29] - started
+[pool-4-thread-29] - Registering shutdown hook for local node
+[pool-4-thread-31] - initializing ...
+[scala-execution-context-global-29] - 索引文件过程发生错误
+java.lang.NullPointerException: null
+	at org.elasticsearch.cluster.node.DiscoveryNodes.isAllNodes(DiscoveryNodes.java:233) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.cluster.node.DiscoveryNodes.resolveNodes(DiscoveryNodes.java:304) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.resolveRequest(TransportNodesAction.java:148) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction$AsyncAction.<init>(TransportNodesAction.java:166) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:89) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.nodes.TransportNodesAction.doExecute(TransportNodesAction.java:52) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:167) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:139) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:81) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:83) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:72) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:405) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:394) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:706) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:46) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:53) ~[elasticsearch-6.2.2.jar:6.2.2]
+	at com.sksamuel.elastic4s.embedded.InternalLocalNode.<init>(LocalNode.scala:78) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:179) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:185) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at com.sksamuel.elastic4s.embedded.LocalNode$.apply(LocalNode.scala:202) ~[elastic4s-embedded_2.12-6.2.3.jar:6.2.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs$lzycompute(EmbeddedServer.scala:57) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.initEs(EmbeddedServer.scala:53) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction$lzycompute(EmbeddedServer.scala:91) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.createIndexInitAction(EmbeddedServer.scala:90) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient$lzycompute(EmbeddedServer.scala:66) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.emiya.utils.EmbeddedServer.esLocalClient(EmbeddedServer.scala:65) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at org.xarcher.xPhoto.FileIndex.$anonfun$index$12(FileIndex.scala:225) ~[findex_2.12-0.0.3.jar:0.0.3]
+	at scala.concurrent.Future.$anonfun$flatMap$1(Future.scala:304) ~[scala-library.jar:?]
+	at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37) ~[scala-library.jar:?]
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60) ~[scala-library.jar:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) ~[?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) ~[?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) ~[?:1.8.0_144]
+[pool-4-thread-31] - using [1] data paths, mounts [[(E:)]], net usable_space [71.4gb], net total_space [299.9gb], types [NTFS]
+[pool-4-thread-31] - heap size [543.5mb], compressed ordinary object pointers [true]
+[pool-4-thread-31] - node name [dYVfMyI] derived from node ID [dYVfMyI_SWeSq_ykUUx8MA]; set [node.name] to override
+[pool-4-thread-31] - version[6.2.2], pid[7100], build[10b1edd/2018-02-16T19:01:30.685723Z], OS[Windows 8.1/6.3/amd64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[pool-4-thread-31] - JVM arguments [-Xmx600M]
+[pool-4-thread-31] - no modules loaded
+[pool-4-thread-31] - loaded plugin [org.elasticsearch.index.reindex.ReindexPlugin]
+[pool-4-thread-31] - loaded plugin [org.elasticsearch.percolator.PercolatorPlugin]
+[pool-4-thread-31] - loaded plugin [org.elasticsearch.script.mustache.MustachePlugin]
+[pool-4-thread-31] - loaded plugin [org.elasticsearch.transport.Netty4Plugin]
+[pool-4-thread-31] - using discovery type [zen]
+[pool-4-thread-31] - initialized
+[pool-4-thread-31] - starting ...
+[pool-4-thread-31] - publish_address {127.0.0.1:9304}, bound_addresses {127.0.0.1:9304}, {[::1]:9304}
+[elasticsearch[JOf-5Xw][clusterApplierService#updateTask][T#1]] - added {{dYVfMyI}{dYVfMyI_SWeSq_ykUUx8MA}{vZcyDY78SjONoNnXDonLAA}{127.0.0.1}{127.0.0.1:9304},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [238]])
+[elasticsearch[ifNpFCk][clusterApplierService#updateTask][T#1]] - added {{dYVfMyI}{dYVfMyI_SWeSq_ykUUx8MA}{vZcyDY78SjONoNnXDonLAA}{127.0.0.1}{127.0.0.1:9304},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [238]])
+[elasticsearch[dYVfMyI][clusterApplierService#updateTask][T#1]] - detected_master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300}, added {{Qi36xmS}{Qi36xmSCSly7r55EGXw9XA}{g9DvOgQVRIq2jYNsATTADw}{127.0.0.1}{127.0.0.1:9303},{ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300},{JOf-5Xw}{JOf-5XwsRlSB-8Xq5gkaUQ}{xEc_hdf1RG6mJcL5ww0qgQ}{127.0.0.1}{127.0.0.1:9302},{ifNpFCk}{ifNpFCkdQCynKq6V19cx3w}{a5hr1KhCQK65YDwp6HoAUg}{127.0.0.1}{127.0.0.1:9301},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [238]])
+[elasticsearch[Qi36xmS][clusterApplierService#updateTask][T#1]] - added {{dYVfMyI}{dYVfMyI_SWeSq_ykUUx8MA}{vZcyDY78SjONoNnXDonLAA}{127.0.0.1}{127.0.0.1:9304},}, reason: apply cluster state (from master [master {ceYiYhX}{ceYiYhX8Rs-l6SdwAEE5yw}{EQolgoHYTZimMHXMUAmRvg}{127.0.0.1}{127.0.0.1:9300} committed version [238]])
+[pool-4-thread-31] - publish_address {127.0.0.1:9204}, bound_addresses {127.0.0.1:9204}, {[::1]:9204}
+[pool-4-thread-31] - started
+[pool-4-thread-31] - Registering shutdown hook for local node
