@@ -1,8 +1,7 @@
 libraryDependencies += "net.coobird" % "thumbnailator" % "0.4.8"
 libraryDependencies += "org.scalafx" %% "scalafx" % "8.0.144-R12"
 libraryDependencies += "commons-io" % "commons-io" % "2.6"
-libraryDependencies ++= Dependencies.lucence
-
+//libraryDependencies ++= Dependencies.lucence
 val poiVersion = "3.17"
 libraryDependencies ++= Seq(
   //poi
@@ -20,11 +19,12 @@ libraryDependencies ++= Seq(
   "org.apache.poi" % "ooxml-schemas" % "1.3"
 )
 
-val slickVersion = "3.2.1"
+val slickVersion = "3.2.2"
 libraryDependencies += "com.typesafe.slick" %% "slick" % slickVersion
 libraryDependencies += "com.typesafe.slick" %% "slick-hikaricp" % slickVersion exclude("com.zaxxer", "HikariCP-java6")
 
 libraryDependencies ++= Dependencies.openhtmltopdf
+libraryDependencies ++= Dependencies.elastic4s
 
 libraryDependencies += "org.fxmisc.richtext" % "richtextfx" % "0.8.1"
 
@@ -37,9 +37,11 @@ val macwire = Seq(
 
 libraryDependencies ++= macwire
 
-libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.21"
+//libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.21"
 libraryDependencies += "com.h2database" % "h2" % "1.4.196"
 
 libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.9"
+
+libraryDependencies += "io.circe" % "circe-generic-extras_2.12" % "0.9.0"
 
 resolvers ++= Seq("restlet" at "http://maven.restlet.org")

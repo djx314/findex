@@ -20,3 +20,4 @@ bin
 .cache-tests
 .cache-main
 /ext_persistence_不索引
+/esTmp

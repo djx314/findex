@@ -36,6 +36,7 @@ object CustomSettings {
             path match {
               case "reference.conf" => MergeStrategy.concat
               case PathList("play", "reference-overrides.conf") => MergeStrategy.concat
+              case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.discard
               case PathList("META-INF", "spring.tooling") => MergeStrategy.discard
               case x => old(x)
             }

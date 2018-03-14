@@ -2,9 +2,7 @@ package org.xarcher.xPhoto
 
 import java.awt.Desktop
 import java.io.File
-import java.nio.file.{ Files, Paths }
 
-import org.apache.solr.client.solrj.{ SolrClient, SolrQuery }
 import org.fxmisc.richtext.InlineCssTextArea
 import org.slf4j.LoggerFactory
 import org.xarcher.emiya.utils.EmbeddedServer
@@ -12,13 +10,16 @@ import org.xarcher.xPhoto.FileTables.IndexContentRow
 
 import scalafx.Includes._
 import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.{ Failure, Success }
 import scalafx.geometry.Insets
 import scalafx.scene.control.Button
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{ Background, BackgroundFill, CornerRadii, Region }
 import scalafx.scene.paint.Paint
 import scala.collection.JavaConverters._
+
+import io.circe.generic.auto._
+import com.sksamuel.elastic4s.circe._
+import com.sksamuel.elastic4s.http.ElasticDsl._
 
 case class OuputWrap(info: List[OutputInfo], nextIndexOpt: Option[Int], countSum: Long)
 
@@ -30,7 +31,7 @@ class FileSearch(embeddedServer: EmbeddedServer) {
   import FileTables.profile._
 
   def search(content: IndexContentRow, fuzzyKey: String, exactKey: String, start: Int, rows: Int)(implicit ec: ExecutionContext): Future[OuputWrap] = {
-    val titleSize = 80
+    /*val titleSize = 80
     val textSize = 300
 
     lazy val exactSplitFronts = exactKey.trim.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
@@ -110,7 +111,8 @@ class FileSearch(embeddedServer: EmbeddedServer) {
       //println(list)
       case Failure(e) =>
         e.printStackTrace
-    }
+    }*/
+    Future.successful(OuputWrap(List.empty, Option.empty, 10))
   }
 
 }

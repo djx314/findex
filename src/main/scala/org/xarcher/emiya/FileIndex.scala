@@ -5,10 +5,21 @@ import java.net.URI
 import java.nio.file.{ Files, Path, Paths }
 import java.util.{ Date, Timer, TimerTask }
 
-import org.apache.solr.common.SolrInputDocument
+import com.sksamuel.elastic4s.http.update.UpdateResponse
+import com.sksamuel.elastic4s.http.{ RequestFailure, RequestSuccess }
+import io.circe.Encoder
+
+import scala.util.Success
+
+//import org.apache.solr.common.SolrInputDocument
 import org.slf4j.LoggerFactory
 import org.xarcher.emiya.service.FileIgnoreService
 import org.xarcher.emiya.utils._
+
+import io.circe.syntax._
+import io.circe.generic.auto._
+import com.sksamuel.elastic4s.circe._
+import com.sksamuel.elastic4s.http.ElasticDsl._
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Try }
@@ -193,8 +204,8 @@ class FileIndex(
               logger.debug(s"${new Date().toString}，正在索引：${f.uri}")
               indexFile(file.toPath, f.id).flatMap {
                 case Right(info) =>
-                  Future {
-                    val doc = new SolrInputDocument()
+                  {
+                    /*val doc = new SolrInputDocument()
                     doc.addField("id", f.id)
                     doc.addField("file_name", info.fileName)
                     doc.addField("file_content", info.content)
@@ -209,11 +220,17 @@ class FileIndex(
                     }
                     doc.addField("law_file_path", info.filePath)
                     embeddedServer.solrServer.add("file_index", doc)
-                    embeddedServer.solrServer.commit("file_index")
-                    logger.info(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
-                    logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.content}")
-                    info.dbId -> 1
-                  }(indexEc).andThen {
+                    embeddedServer.solrServer.commit("file_index")*/
+
+                    embeddedServer.esLocalClient.flatMap { client =>
+                      client.execute {
+                        updateById(embeddedServer.index, embeddedServer.typeName, info.dbId.toString).doc(info.asJson)
+                      }
+                    }.map { (s: Either[RequestFailure, RequestSuccess[UpdateResponse]]) => info.dbId -> 1 }
+                  }.andThen {
+                    case Success(result) =>
+                      logger.info(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
+                      logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.content}")
                     case Failure(e) =>
                       logger.error(s"${new Date().toString}，索引：${Paths.get(URI.create(f.uri)).toRealPath().toString}失败")
                     //e.printStackTrace
@@ -329,3 +346,15 @@ class FileIndex(
 }
 
 case class IndexInfo(dbId: Int, filePath: String, fileName: String, content: String)
+
+object IndexInfo {
+
+  import io.circe.generic.extras.auto._
+
+  implicit val config = io.circe.generic.extras.Configuration.default.withSnakeCaseMemberNames
+
+  implicit val encoder: Encoder[IndexInfo] = {
+    exportEncoder.instance
+  }
+
+}
