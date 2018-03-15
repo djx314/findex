@@ -2,7 +2,7 @@ package org.xarcher.emiya.utils
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
-import scala.util.Failure
+import scala.util.{ Failure, Try }
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ShutdownHook() {
@@ -15,16 +15,12 @@ class ShutdownHook() {
 
   def exec(): Future[Unit] = {
     hooks.foldLeft(Future.successful(())) { (front, each) =>
-      front.flatMap { (_: Unit) =>
+      front.transformWith { (_: Try[Unit]) =>
         //println("closing")
         each()
-      }.recover {
-        case e: Exception =>
-          e.printStackTrace
-          ()
       }
     }
-    Future.sequence(hooks.map(_.apply())).map((_: ListBuffer[Unit]) => ())
+    //Future.sequence(hooks.map(_.apply())).map((_: ListBuffer[Unit]) => ())
   }
 
 }

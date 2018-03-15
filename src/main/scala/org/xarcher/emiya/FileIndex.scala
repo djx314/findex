@@ -5,6 +5,7 @@ import java.net.URI
 import java.nio.file.{ Files, Path, Paths }
 import java.util.{ Date, Timer, TimerTask }
 
+import com.sksamuel.elastic4s.http.index.IndexResponse
 import com.sksamuel.elastic4s.http.update.UpdateResponse
 import com.sksamuel.elastic4s.http.{ RequestFailure, RequestSuccess }
 import io.circe.Encoder
@@ -224,17 +225,23 @@ class FileIndex(
 
                     embeddedServer.esLocalClient.flatMap { client =>
                       client.execute {
-                        updateById(embeddedServer.index, embeddedServer.typeName, info.dbId.toString).doc(info.asJson)
+                        indexInto(embeddedServer.index, embeddedServer.typeName).id(info.dbId.toString).doc(info.asJson)
                       }
-                    }.map { (s: Either[RequestFailure, RequestSuccess[UpdateResponse]]) => info.dbId -> 1 }
+                    }.map { (s: Either[RequestFailure, RequestSuccess[IndexResponse]]) => info.dbId -> s }
                   }.andThen {
-                    case Success(result) =>
-                      logger.info(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
-                      logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.content}")
+                    case Success((dbId, result)) =>
+                      result match {
+                        case Left(failInfo) =>
+                          logger.info(s"${new Date().toString}，文件：${info.filePath}的索引工作遇到错误，" +
+                            s"错误信息：{ reason: ${failInfo.error.reason}, rootCause: ${failInfo.error.rootCause}")
+                        case Right(successResponse) =>
+                          logger.info(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
+                          logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.content}")
+                      }
                     case Failure(e) =>
                       logger.error(s"${new Date().toString}，索引：${Paths.get(URI.create(f.uri)).toRealPath().toString}失败")
                     //e.printStackTrace
-                  }
+                  }.map(s => s._1 -> 1)
                 case Left(id) =>
                   //println(s"${new Date().toString}，索引：${f.filePath}失败")
                   Future.successful(id -> 0)
