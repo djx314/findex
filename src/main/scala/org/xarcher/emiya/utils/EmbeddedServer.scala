@@ -9,9 +9,10 @@ import com.sksamuel.elastic4s.http.index.CreateIndexResponse
 import com.sksamuel.elastic4s.http.{ HttpClient, RequestFailure, RequestSuccess }
 import com.sksamuel.elastic4s.indexes.CreateIndexDefinition
 import com.sksamuel.elastic4s.mappings.dynamictemplate.DynamicMapping
+import org.slf4j.LoggerFactory
 import org.xarcher.xPhoto.IndexExecutionContext
 
-import scala.util.{ Failure, Success }
+import scala.util.{ Failure, Success, Try }
 
 // we must import the dsl
 
@@ -44,21 +45,44 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
 
   implicit protected val ec = exContextWrap.indexEc
 
-  val index: Index = "findex0303"
+  val index: Index = "findex0404"
   val typeName: String = "file_content"
 
-  //org.apache.logging.log4j.core.Logger
-  println("1414" * 300)
+  val logger = LoggerFactory.getLogger(getClass)
 
   protected lazy val initEs: Future[HttpClient] = {
-    println("1212" * 100)
-    println(ec)
-
-    val localNode = LocalNode("findex", "./esTmp/tmpDataPath")
-    //shutdownHook.addHook(() => Future.successful(localNode.close()))
-    val client = localNode.http(true)
-    Future.successful {
+    Future {
+      val localNode = LocalNode("findex0303", "./esTmp/tmpDataPath0303")
+      shutdownHook.addHook(new Thread() {
+        override def run(): Unit = {
+          Try {
+            logger.info("开始关闭 elasticSearch 服务端")
+            localNode.close()
+          } match {
+            case Failure(e) => logger.error("关闭 elasticSearch 服务端遇到错误", e)
+            case Success(_) => logger.info("关闭 elasticSearch 服务端成功")
+          }
+        }
+      })
+      val client = localNode.http(false)
+      shutdownHook.addHook(new Thread() {
+        override def run(): Unit = {
+          Try {
+            logger.info("开始关闭 elasticSearch 客户端")
+            client.client.close()
+            client.close()
+          } match {
+            case Failure(e) => logger.error("关闭 elasticSearch 客户端遇到错误", e)
+            case Success(_) => logger.info("关闭 elasticSearch 客户端成功")
+          }
+        }
+      })
       client
+    }.andThen {
+      case Failure(e) =>
+        logger.error("创建 elasticSearch 实例遇到错误", e)
+      case Success(_) =>
+        logger.info("创建 elasticSearch 实例成功")
     }
   }
 
@@ -88,29 +112,21 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
    */
 
   protected lazy val createIndexInitAction = {
-    initEs.flatMap {
-      client =>
-        println("55" * 100)
-        println(client)
-        client.execute {
-          createIndex(index.name).mappings(
-            mapping(typeName)
-              .fields(
-                keywordField("file_name"),
-                textField("file_content"),
-                keywordField("file_path"),
-                keywordField("law_file_name"),
-                intField("content_id"))
-              .dynamic(DynamicMapping.Strict))
-        }.andThen {
-          case Success(s) =>
-            println("11" * 100)
-            println(s)
-          case Failure(e) =>
-            println("22" * 100)
-            e.printStackTrace
-        }
-    }
+    initEs
+      .flatMap {
+        client =>
+          client.execute {
+            createIndex(index.name).mappings(
+              mapping(typeName)
+                .fields(
+                  intField("db_id"),
+                  keywordField("file_name"),
+                  textField("file_content"),
+                  keywordField("file_path"),
+                  keywordField("law_file_name"))
+                .dynamic(DynamicMapping.Strict))
+          }
+      }
   }
 
 }

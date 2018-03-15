@@ -9,14 +9,13 @@ import org.xarcher.emiya.views._
 import org.xarcher.emiya.views.index._
 import org.xarcher.emiya.views.search._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scalafx.scene.image.Image
 import com.softwaremill.macwire.akkasupport._
 import com.softwaremill.tagging._
 import org.xarcher.emiya.service.{ ContentService, FileIgnoreService }
 import org.xarcher.emiya.utils._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutorService }
 import scalafx.stage.WindowEvent
 import scalafx.Includes._
 import scalafx.scene.input.MouseEvent
@@ -28,7 +27,7 @@ object Emiya extends JFXApp {
   private lazy val fileIndex = wire[FileIndex]
   private lazy val shutdownHook = wire[ShutdownHook]
 
-  shutdownHook.addHook(() => system.terminate().map((_: Terminated) => ()))
+  shutdownHook.addHook(new Thread() { override def run: Unit = { system.terminate().map((_: Terminated) => ()) } })
 
   private def limitedActor: ActorRef @@ LimitedActor =
     wireAnonymousActor[LimitedActor].taggedWith[LimitedActor]
@@ -36,16 +35,22 @@ object Emiya extends JFXApp {
   private def timeLimitedActor: ActorRef @@ TimeLimitedActor =
     wireAnonymousActor[TimeLimitedActor].taggedWith[TimeLimitedActor]
 
-  private def futureLimitedGen = wire[FutureLimitedGen]
-  private def futureTimeLimitedGen = wire[FutureTimeLimitedGen]
+  private def futureLimitedGen: () => FutureLimitedGen = { () =>
+    wire[FutureLimitedGen]
+  }
+  private def futureTimeLimitedGen: () => FutureTimeLimitedGen = { () =>
+    wire[FutureTimeLimitedGen]
+  }
 
   private lazy val fileExtraction = wire[FileExtraction]
   private lazy val fileIgnoreService = wire[FileIgnoreService]
   private lazy val contentService = wire[ContentService]
   private lazy val embeddedServer = wire[EmbeddedServer]
+  embeddedServer.esLocalClient
   private lazy val fileSearch = wire[FileSearch]
 
-  private lazy val IndexExecutionContext = wire[IndexExecutionContext]
+  private lazy val indexExecutionContext: IndexExecutionContext = wire[IndexExecutionContext]
+  implicit lazy val ec: ExecutionContextExecutorService = indexExecutionContext.indexEc
   private lazy val selectedFile = wire[SelectedFile]
   private lazy val fileSelectButton = wire[FileSelectButton]
   private lazy val startIndexButton = wire[StartIndexButton]

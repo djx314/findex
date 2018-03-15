@@ -1,7 +1,7 @@
 package org.xarcher.emiya.utils
 
 import java.util.Timer
-import java.util.concurrent.Executors
+import java.util.concurrent.{ Executors, TimeUnit }
 
 import akka.actor.ActorRef
 import com.softwaremill.tagging.@@
@@ -51,7 +51,11 @@ class FutureLimited(val exceptWeight: Int, val name: String, limitedActor: Actor
     {
       import java.util.TimerTask
       val timer = new Timer()
-      shutdownHook.addHook(() => Future.successful(Try { timer.cancel() }))
+      shutdownHook.addHook(new Thread() {
+        override def run(): Unit = {
+          timer.cancel()
+        }
+      })
       timer.schedule(new TimerTask() {
         override def run(): Unit = {
           if (!aa.isCompleted) {
@@ -75,7 +79,12 @@ class FutureLimited(val exceptWeight: Int, val name: String, limitedActor: Actor
 class FutureLimitedGen(limitedActor: ActorRef @@ LimitedActor, shutdownHook: ShutdownHook) {
   def create(exceptWeight: Int, name: String): FutureLimited = {
     val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(8))
-    shutdownHook.addHook(() => Future.successful(Try { ec.shutdown() }))
+    shutdownHook.addHook(new Thread() {
+      override def run(): Unit = {
+        ec.shutdown() //.awaitTermination(20, TimeUnit.SECONDS)
+      }
+    })
+    shutdownHook.addHook(new Thread() { override def run(): Unit = { limitedActor ! LimitedActor.Shutdown } })
 
     limitedActor ! LimitedActor.Start(exceptWeight)
     new FutureLimited(exceptWeight, name, limitedActor, shutdownHook)(ec)
