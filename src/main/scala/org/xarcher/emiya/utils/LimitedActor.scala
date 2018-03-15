@@ -1,9 +1,9 @@
 package org.xarcher.emiya.utils
 
 import akka.actor.Actor
+import org.xarcher.xPhoto.IndexExecutionContext
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object LimitedActor {
 
@@ -12,10 +12,11 @@ object LimitedActor {
   case object Consume
   case class Plus(weight: Long)
   case class Minus(weight: Long)
+  case object Shutdown
 
 }
 
-class LimitedActor() extends Actor {
+class LimitedActor(indexExecutionContext: IndexExecutionContext) extends Actor {
 
   @volatile protected var futureQueue = mutable.Queue.empty[FutureWrapper]
   @volatile protected var weightSum: Long = 0
@@ -33,7 +34,7 @@ class LimitedActor() extends Actor {
             wrapper.runFuture.andThen {
               case _ =>
                 self1 ! LimitedActor.Minus(wrapper.weight)
-            }
+            }(indexExecutionContext.indexEc)
           case None =>
         }
       }
@@ -43,6 +44,9 @@ class LimitedActor() extends Actor {
     case LimitedActor.AddWrapperModel(wrapper) =>
       futureQueue += wrapper
       self ! LimitedActor.Consume
+    case LimitedActor.Shutdown =>
+      futureQueue.dequeueAll(_ => true).map(_.runFuture)
+      context.stop(self)
   }
 
 }

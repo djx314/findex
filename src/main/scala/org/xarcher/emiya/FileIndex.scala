@@ -5,6 +5,7 @@ import java.net.URI
 import java.nio.file.{ Files, Path, Paths }
 import java.util.{ Date, Timer, TimerTask }
 
+import com.sksamuel.elastic4s.RefreshPolicy
 import com.sksamuel.elastic4s.http.index.IndexResponse
 import com.sksamuel.elastic4s.http.update.UpdateResponse
 import com.sksamuel.elastic4s.http.{ RequestFailure, RequestSuccess }
@@ -24,11 +25,12 @@ import com.sksamuel.elastic4s.http.ElasticDsl._
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Try }
+import scala.concurrent.duration._
 
 class FileIndex(
   fileDB: FileDB,
-  futureLimitedGen: FutureLimitedGen,
-  futureTimeLimitedGen: FutureTimeLimitedGen,
+  futureLimitedGen: () => FutureLimitedGen,
+  futureTimeLimitedGen: () => FutureTimeLimitedGen,
   fileExtraction: FileExtraction,
   fileIgnoreService: FileIgnoreService,
   fileUpdate: FileUpdate,
@@ -38,9 +40,13 @@ class FileIndex(
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  val indexLimited = futureLimitedGen.create(3 * 1024 * 1024, "fileIndexPool")
-  val timeLimited = futureTimeLimitedGen.create(6, "fileSearchPool", 1000)
+  val fileSizeIndexLimit = futureLimitedGen().create(60 * 1024 * 1024, "fileSizeIndexLimit")
+  val fileTimeIndexLimit = futureTimeLimitedGen().create(60, "fileTimeIndexLimit", 1926)
+
+  val timeLimited = futureTimeLimitedGen().create(8, "timeLimited", 1000)
   val indexEc = indexExecutionContext.indexEc
+
+  @volatile var needToShutdonw: Boolean = false
 
   import FileTables._
   import FileTables.profile.api._
@@ -68,12 +74,12 @@ class FileIndex(
     //还没有处理如果文件夹变成了文件或者文件变成了文件夹的情况
     val filesF = fileDB.db.run(IndexPath
       .filter(s => /*(s.isFinish === false) &&*/ (s.contentId === content.id) && (s.isDirectory === true) && (s.isFetched === false))
-      .take(4).result).map(_.toList)
+      .take(16).result).map(_.toList)
 
     filesF.flatMap { rows =>
       Future.sequence(
         rows.map(row =>
-          fileUpdate.updateIndexRow(row, content))).map((_: Seq[Int]) => rows.isEmpty)
+          fileUpdate.updateIndexRow(row, content))).map((_: Seq[Int]) => if (needToShutdonw) true else rows.isEmpty)
     }
 
     /*filesF.flatMap {
@@ -191,17 +197,25 @@ class FileIndex(
     def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
       val isIndexing = !isFetchFileFinished()
       val fileListF = fileDB.db.run(
-        IndexPath.filter(s => (s.isFinish === false) && (s.isDirectory === false) && (s.contentId === content.id)).take(2).result)
+        IndexPath.filter(s => (s.isFinish === false) && (s.isDirectory === false) && (s.contentId === content.id)).take(120).result)
       //(s"是否已查找文件完毕：${!isIndexing}")
       (for {
         fileList <- fileListF
       } yield {
-        if (fileList.isEmpty && (!isIndexing)) {
+        if (needToShutdonw) {
+          Future.successful(sum)
+        } else if (fileList.isEmpty && (!isIndexing)) {
           Future.successful(sum)
         } else if (!fileList.isEmpty) {
           val listF = Future.sequence(fileList.map { f =>
             val file = new File(URI.create(f.uri))
-            indexLimited.limit(() => {
+
+            def indexLimited[T](f: () => Future[T]): Future[T] = {
+              val aa = () => fileTimeIndexLimit.limit(f, 1, s"索引文件（${file.toPath.toUri}）")
+              fileSizeIndexLimit.limit(aa, Files.size(file.toPath), s"索引文件（${file.toPath.toUri}）")
+            }
+
+            indexLimited(() => {
               logger.debug(s"${new Date().toString}，正在索引：${f.uri}")
               indexFile(file.toPath, f.id).flatMap {
                 case Right(info) =>
@@ -225,41 +239,50 @@ class FileIndex(
 
                     embeddedServer.esLocalClient.flatMap { client =>
                       client.execute {
-                        indexInto(embeddedServer.index, embeddedServer.typeName).id(info.dbId.toString).doc(info.asJson)
+                        indexInto(embeddedServer.index, embeddedServer.typeName)
+                          .id(info.dbId.toString)
+                          .doc(info.asJson)
+                          .refresh(RefreshPolicy.NONE)
                       }
                     }.map { (s: Either[RequestFailure, RequestSuccess[IndexResponse]]) => info.dbId -> s }
-                  }.andThen {
-                    case Success((dbId, result)) =>
-                      result match {
-                        case Left(failInfo) =>
-                          logger.info(s"${new Date().toString}，文件：${info.filePath}的索引工作遇到错误，" +
-                            s"错误信息：{ reason: ${failInfo.error.reason}, rootCause: ${failInfo.error.rootCause}")
-                        case Right(successResponse) =>
-                          logger.info(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
-                          logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.content}")
+                  }.transform {
+                    r =>
+                      r match {
+                        case Success((dbId, result)) =>
+                          result match {
+                            case Left(failInfo) =>
+                              logger.info(s"${new Date().toString}，文件：${info.filePath}的索引工作遇到错误，" +
+                                s"错误信息：{ reason: ${failInfo.error.reason}, rootCause: ${failInfo.error.rootCause}")
+                              Try { dbId -> 1 }
+                            case Right(successResponse) =>
+                              logger.info(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
+                              logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.fileContent}")
+                              Try { dbId -> 0 }
+                          }
+                        case Failure(e) =>
+                          logger.error(s"${new Date().toString}，索引：${Paths.get(URI.create(f.uri)).toRealPath().toString}失败")
+                          Try { info.dbId -> 0 }
+                        //e.printStackTrace
                       }
-                    case Failure(e) =>
-                      logger.error(s"${new Date().toString}，索引：${Paths.get(URI.create(f.uri)).toRealPath().toString}失败")
-                    //e.printStackTrace
-                  }.map(s => s._1 -> 1)
+                  }
                 case Left(id) =>
-                  //println(s"${new Date().toString}，索引：${f.filePath}失败")
+                  logger.error(s"${new Date().toString}，索引：${file.toPath.toRealPath()}失败")
                   Future.successful(id -> 0)
               }(indexEc).andThen {
                 case Failure(e) =>
-                  e.printStackTrace
+                  logger.info(s"索引文件：${f.uri}过程发生错误", e)
               }: Future[(Int, Int)]
-            }, file.length, s"索引文件（${f.uri}）")
+            } /*, file.length, s"索引文件（${f.uri}）"*/ )
           })
           listF.flatMap { ids =>
             fileDB.writeDB.run(
-              IndexPath.filter(_.id inSetBind ids.map(_._1)).map(_.isFinish).update(true).transactionally)
+              IndexPath.filter(_.id inSetBind ids.filter(_._2 > 0).map(_._1)).map(_.isFinish).update(true).transactionally)
               .map(_ => sum + ids.map(_._2).sum).flatMap(newSum => tranFiles(newSum, isFetchFileFinished))
           }: Future[Int]
         } else {
           val promise = Promise[Future[Int]]
           val timer = new Timer()
-          shutdownHook.addHook(() => Future.successful(Try { timer.cancel() }))
+          shutdownHook.addHook(new Thread() { override def run: Unit = { Try { timer.cancel() } } })
           val task = new TimerTask {
             override def run(): Unit = {
               promise.success(tranFiles(sum, isFetchFileFinished))
@@ -276,7 +299,7 @@ class FileIndex(
 
     def showInfo(isIndexFinished: () => Boolean): Future[Int] = {
       val timer = new Timer()
-      shutdownHook.addHook(() => Future.successful(Try { timer.cancel() }))
+      shutdownHook.addHook(new Thread() { override def run: Unit = { Try { timer.cancel() } } })
       val task = new TimerTask {
         override def run(): Unit = {
           lazy val indexingSizeF = fileDB.db.run(
@@ -332,7 +355,7 @@ class FileIndex(
           }.left.map(_ => id)*/
           strEither match {
             case Right(str) =>
-              Right(IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str))
+              Right(IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, fileContent = str))
             case Left(e) =>
               logger.error(s"索引文件发生错误，路径：${file.toRealPath().toString}", e)
               Left(id)
@@ -352,7 +375,7 @@ class FileIndex(
 
 }
 
-case class IndexInfo(dbId: Int, filePath: String, fileName: String, content: String)
+case class IndexInfo(dbId: Int, filePath: String, fileName: String, fileContent: String)
 
 object IndexInfo {
 

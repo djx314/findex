@@ -5,7 +5,6 @@ import java.util.{ Timer, TimerTask }
 import akka.actor.Actor
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
 
@@ -17,6 +16,7 @@ object TimeLimitedActor {
   //case class Plus(weight: Long)
   case class Minus(weight: Long)
   case object Reset
+  case object Shutdown
 
 }
 
@@ -36,7 +36,11 @@ class TimeLimitedActor(shutdownHook: ShutdownHook) extends Actor {
         }
       }
       val timer = new Timer()
-      shutdownHook.addHook(() => Future.successful(Try { timer.cancel() }))
+      shutdownHook.addHook(new Thread() {
+        override def run(): Unit = {
+          timer.cancel()
+        }
+      })
       timer.schedule(task, 0, millions1)
     case TimeLimitedActor.Reset =>
       weightSum = maxWeightSum
@@ -57,6 +61,9 @@ class TimeLimitedActor(shutdownHook: ShutdownHook) extends Actor {
     case TimeLimitedActor.AddWrapperModel(wrapper) =>
       futureQueue += wrapper
       self ! TimeLimitedActor.Consume
+    case TimeLimitedActor.Shutdown =>
+      futureQueue.dequeueAll(_ => true).map(_.runFuture)
+      context.stop(self)
   }
 
 }

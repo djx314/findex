@@ -45,7 +45,7 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
 
   implicit protected val ec = exContextWrap.indexEc
 
-  val index: Index = "findex0303"
+  val index: Index = "findex0404"
   val typeName: String = "file_content"
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -53,22 +53,30 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
   protected lazy val initEs: Future[HttpClient] = {
     Future {
       val localNode = LocalNode("findex0303", "./esTmp/tmpDataPath0303")
-      shutdownHook.addHook(() => Future.successful(Try {
-        logger.info("开始关闭 elasticSearch 服务端")
-        localNode.close()
-      } match {
-        case Failure(e) => logger.error("关闭 elasticSearch 服务端遇到错误", e)
-        case Success(_) => logger.info("关闭 elasticSearch 服务端成功")
-      }))
+      shutdownHook.addHook(new Thread() {
+        override def run(): Unit = {
+          Try {
+            logger.info("开始关闭 elasticSearch 服务端")
+            localNode.close()
+          } match {
+            case Failure(e) => logger.error("关闭 elasticSearch 服务端遇到错误", e)
+            case Success(_) => logger.info("关闭 elasticSearch 服务端成功")
+          }
+        }
+      })
       val client = localNode.http(false)
-      shutdownHook.addHook(() => Future.successful(Try {
-        logger.info("开始关闭 elasticSearch 客户端")
-        client.client.close()
-        client.close()
-      } match {
-        case Failure(e) => logger.error("关闭 elasticSearch 客户端遇到错误", e)
-        case Success(_) => logger.info("关闭 elasticSearch 客户端成功")
-      }))
+      shutdownHook.addHook(new Thread() {
+        override def run(): Unit = {
+          Try {
+            logger.info("开始关闭 elasticSearch 客户端")
+            client.client.close()
+            client.close()
+          } match {
+            case Failure(e) => logger.error("关闭 elasticSearch 客户端遇到错误", e)
+            case Success(_) => logger.info("关闭 elasticSearch 客户端成功")
+          }
+        }
+      })
       client
     }.andThen {
       case Failure(e) =>
@@ -111,11 +119,11 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
             createIndex(index.name).mappings(
               mapping(typeName)
                 .fields(
+                  intField("db_id"),
                   keywordField("file_name"),
                   textField("file_content"),
                   keywordField("file_path"),
-                  keywordField("law_file_name"),
-                  intField("content_id"))
+                  keywordField("law_file_name"))
                 .dynamic(DynamicMapping.Strict))
           }
       }

@@ -5,14 +5,13 @@ import java.sql.Date
 import org.xarcher.emiya.utils.{ FutureLimited, FutureLimitedGen, LimitedActor, ShutdownHook }
 import slick.jdbc.{ H2Profile, JdbcProfile, SQLiteProfile }
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Failure
 
-class FileDB(futureLimitedGen: FutureLimitedGen, shutdownHook: ShutdownHook) {
+class FileDB(futureLimitedGen: () => FutureLimitedGen, shutdownHook: ShutdownHook) {
   val profile = FileTables.profile
 
-  val fLimited = futureLimitedGen.create(4, "dbPool")
+  val fLimited = futureLimitedGen().create(4, "dbPool")
 
   import profile.api._
 
@@ -25,8 +24,12 @@ class FileDB(futureLimitedGen: FutureLimitedGen, shutdownHook: ShutdownHook) {
 
   lazy val db = Database.forURL(driver = "org.h2.Driver", url = "jdbc:h2:./ext_persistence_不索引/db/file_db.h2")
 
-  shutdownHook.addHook { () =>
-    Future.successful(db.close())
+  shutdownHook.addHook {
+    new Thread() {
+      override def run(): Unit = {
+        db.close()
+      }
+    }
   }
 
   lazy val writeDB: ExtDB = {
