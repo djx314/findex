@@ -31,6 +31,8 @@ class FileSearch(embeddedServer: EmbeddedServer) {
   import FileTables.profile._
 
   def search(content: IndexContentRow, fuzzyKey: String, exactKey: String, start: Int, rows: Int)(implicit ec: ExecutionContext): Future[OuputWrap] = {
+    lazy val exactSplitFronts = exactKey.trim.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
+    lazy val exactFilterString = Option(exactSplitFronts).map { t => t.map(s => s"*$s*") }.filterNot(_.isEmpty)
     /*val titleSize = 80
     val textSize = 300
 

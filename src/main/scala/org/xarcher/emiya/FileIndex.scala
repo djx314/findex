@@ -47,6 +47,11 @@ class FileIndex(
   val indexEc = indexExecutionContext.indexEc
 
   @volatile var needToShutdonw: Boolean = false
+  shutdownHook.addHook(new Thread() {
+    override def run(): Unit = {
+      needToShutdonw = true
+    }
+  })
 
   import FileTables._
   import FileTables.profile.api._
@@ -217,7 +222,7 @@ class FileIndex(
 
             indexLimited(() => {
               logger.debug(s"${new Date().toString}，正在索引：${f.uri}")
-              indexFile(file.toPath, f.id).flatMap {
+              indexFile(file.toPath, dbId = f.id, contentId = f.contentId).flatMap {
                 case Right(info) =>
                   {
                     /*val doc = new SolrInputDocument()
@@ -266,8 +271,8 @@ class FileIndex(
                       }
                   }
                 case Left(id) =>
-                  logger.error(s"${new Date().toString}，索引：${file.toPath.toRealPath()}失败")
-                  Future.successful(id -> 0)
+                  logger.error(s"${new Date().toString}，索引：${file.toPath.toRealPath()}失败，跳过此文件")
+                  Future.successful(id -> 1)
               }(indexEc).andThen {
                 case Failure(e) =>
                   logger.info(s"索引文件：${f.uri}过程发生错误", e)
@@ -345,7 +350,7 @@ class FileIndex(
     indexAction
   }
 
-  def indexFile(file: Path, id: Int): Future[Either[Int, IndexInfo]] = {
+  def indexFile(file: Path, dbId: Int, contentId: Int): Future[Either[Int, IndexInfo]] = {
     Future {
       val fileName = file.getFileName.toString
       if (Files.size(file) < (2 * 1024 * 1024)) {
@@ -355,17 +360,17 @@ class FileIndex(
           }.left.map(_ => id)*/
           strEither match {
             case Right(str) =>
-              Right(IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, fileContent = str))
+              Right(IndexInfo(dbId = dbId, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, fileContent = str, contentId = contentId))
             case Left(e) =>
               logger.error(s"索引文件发生错误，路径：${file.toRealPath().toString}", e)
-              Left(id)
+              Left(dbId)
             //throw e
           }
         }(indexEc)).getOrElse {
-          Future.successful(Left(id))
+          Future.successful(Left(dbId))
         }
       } else {
-        Future.successful(Left(id))
+        Future.successful(Left(dbId))
       }
     }(indexEc).flatten.andThen {
       case Failure(e) =>
@@ -375,7 +380,7 @@ class FileIndex(
 
 }
 
-case class IndexInfo(dbId: Int, filePath: String, fileName: String, fileContent: String)
+case class IndexInfo(dbId: Int, filePath: String, fileName: String, fileContent: String, contentId: Int)
 
 object IndexInfo {
 

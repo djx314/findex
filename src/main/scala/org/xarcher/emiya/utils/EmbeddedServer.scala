@@ -45,7 +45,7 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
 
   implicit protected val ec = exContextWrap.indexEc
 
-  val index: Index = "findex0404"
+  val index: Index = "findex0505"
   val typeName: String = "file_content"
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -123,7 +123,8 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
                   keywordField("file_name"),
                   textField("file_content"),
                   keywordField("file_path"),
-                  keywordField("law_file_name"))
+                  keywordField("law_file_name"),
+                  intField("content_id"))
                 .dynamic(DynamicMapping.Strict))
           }
       }
