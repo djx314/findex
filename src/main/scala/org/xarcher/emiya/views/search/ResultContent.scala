@@ -142,9 +142,9 @@ class DoSearch(
             infoLabel.text = s"已为你搜索到 ${wrap.countSum} 条结果"
             infoLabel.visible = true
           }
-          wrap.nextIndexOpt.foreach { count =>
+          /*wrap.nextIndexOpt.foreach { count =>
             vvalue.addListener(changeListener(count, 2))
-          }
+          }*/
         }
 
         def changeListener(start: Int, rows: Int): ChangeListener[Number] = new ChangeListener[Number] {

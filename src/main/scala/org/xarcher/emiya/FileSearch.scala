@@ -34,7 +34,7 @@ class FileSearch(embeddedServer: EmbeddedServer) {
 
   def searchFromView(content: IndexContentRow, fuzzyKey: String, exactKey: String, start: Int, rows: Int)(implicit ec: ExecutionContext): Future[OuputWrap] = {
     lazy val exactSplitFronts = exactKey.trim.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
-    lazy val exactFilterString = Option(exactSplitFronts).map { t => t.map(s => s"*$s*") }.filterNot(_.isEmpty)
+    lazy val exactFilterString = exactSplitFronts.map { t => s"*$t*" }.filterNot(_.isEmpty)
 
     println(boolQuery().filter(exactSplitFronts.map(s => matchQuery("file_content", s))))
     println(boolQuery().filter(exactFilterString.map(s => wildcardQuery("file_content", s))))
@@ -43,12 +43,9 @@ class FileSearch(embeddedServer: EmbeddedServer) {
     val bb = if (exactSplitFronts.isEmpty) aa else boolQuery().filter(exactSplitFronts.map(s => matchQuery("file_content", s))) :: aa
     val cc = if (exactSplitFronts.isEmpty) bb else boolQuery().filter(exactFilterString.map(s => wildcardQuery("file_content", s))) :: bb
 
-    val dd = List(exactFilterString.map(s => wildcardQuery("file_content", s)).toList).flatten
-
     embeddedServer.esLocalClient.flatMap { client =>
       client.execute {
-        val aa = search(embeddedServer.index).query(boolQuery().should(
-          matchQuery("file_content", "aa")))
+        val aa = search(embeddedServer.index).query(boolQuery().should(cc))
           .types(embeddedServer.typeName).start(start).limit(rows)
         println("1122" * 200)
         println(SearchBodyBuilderFn(aa).string())
@@ -65,12 +62,12 @@ class FileSearch(embeddedServer: EmbeddedServer) {
           Option(start + infoSize)
         else Option.empty
 
-        val infos = result.result.to[Json].map(s => s.as[IndexInfo].toOption)
-        val extraInfos = infos.collect { case Some(s) => s }.zipWithIndex.map {
+        val infos = result.result.to[IndexInfo]
+        val extraInfos = infos.zipWithIndex.map {
           case (info, index) =>
             OutputInfo(searchIndex = index, filePath = info.filePath, fileName = info.fileName, content = info.fileContent, contentId = info.contentId)
         }
-        OuputWrap(extraInfos.toList, Option.empty, result.result.totalHits)
+        OuputWrap(extraInfos.toList, Option.empty, 0)
     }
 
     /*val titleSize = 80
