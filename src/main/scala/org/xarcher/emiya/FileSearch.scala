@@ -19,6 +19,8 @@ import scala.collection.JavaConverters._
 import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.search.SearchBodyBuilderFn
+import com.sksamuel.elastic4s.searches.queries.BoolQueryDefinition
 import io.circe.Json
 
 case class OuputWrap(info: List[OutputInfo], nextIndexOpt: Option[Int], countSum: Long)
@@ -33,29 +35,42 @@ class FileSearch(embeddedServer: EmbeddedServer) {
   def searchFromView(content: IndexContentRow, fuzzyKey: String, exactKey: String, start: Int, rows: Int)(implicit ec: ExecutionContext): Future[OuputWrap] = {
     lazy val exactSplitFronts = exactKey.trim.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
     lazy val exactFilterString = Option(exactSplitFronts).map { t => t.map(s => s"*$s*") }.filterNot(_.isEmpty)
+
+    println(boolQuery().filter(exactSplitFronts.map(s => matchQuery("file_content", s))))
+    println(boolQuery().filter(exactFilterString.map(s => wildcardQuery("file_content", s))))
+
+    val aa = List.empty[BoolQueryDefinition]
+    val bb = if (exactSplitFronts.isEmpty) aa else boolQuery().filter(exactSplitFronts.map(s => matchQuery("file_content", s))) :: aa
+    val cc = if (exactSplitFronts.isEmpty) bb else boolQuery().filter(exactFilterString.map(s => wildcardQuery("file_content", s))) :: bb
+
+    val dd = List(exactFilterString.map(s => wildcardQuery("file_content", s)).toList).flatten
+
     embeddedServer.esLocalClient.flatMap { client =>
       client.execute {
-        search(embeddedServer.index).types(embeddedServer.typeName).query {
-          boolQuery().should(
-            boolQuery().filter(exactSplitFronts.map(s => matchQuery("file_content", s))),
-            boolQuery().filter(exactFilterString.map(s => wildcardQuery("file_content", s))))
-        }.start(start).limit(rows)
+        val aa = search(embeddedServer.index).query(boolQuery().should(
+          matchQuery("file_content", "aa")))
+          .types(embeddedServer.typeName).start(start).limit(rows)
+        println("1122" * 200)
+        println(SearchBodyBuilderFn(aa).string())
+        aa
       }
     }.map {
       case Left(s) =>
         println(s)
-        Future.successful(OuputWrap(List.empty, Option.empty, 0))
+        OuputWrap(List.empty, Option.empty, 0)
       case Right(result) =>
+        println(result)
         val infoSize = result.result.size
         val nextIndexOpt = if (infoSize >= rows)
           Option(start + infoSize)
         else Option.empty
+
         val infos = result.result.to[Json].map(s => s.as[IndexInfo].toOption)
         val extraInfos = infos.collect { case Some(s) => s }.zipWithIndex.map {
           case (info, index) =>
             OutputInfo(searchIndex = index, filePath = info.filePath, fileName = info.fileName, content = info.fileContent, contentId = info.contentId)
         }
-        OuputWrap(extraInfos.toList, nextIndexOpt.map(_.toInt), result.result.totalHits)
+        OuputWrap(extraInfos.toList, Option.empty, result.result.totalHits)
     }
 
     /*val titleSize = 80
@@ -139,7 +154,7 @@ class FileSearch(embeddedServer: EmbeddedServer) {
       case Failure(e) =>
         e.printStackTrace
     }*/
-    Future.successful(OuputWrap(List.empty, Option.empty, 10))
+    //Future.successful(OuputWrap(List.empty, Option.empty, 10))
   }
 
 }

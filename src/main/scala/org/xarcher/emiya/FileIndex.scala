@@ -9,7 +9,7 @@ import com.sksamuel.elastic4s.RefreshPolicy
 import com.sksamuel.elastic4s.http.index.IndexResponse
 import com.sksamuel.elastic4s.http.update.UpdateResponse
 import com.sksamuel.elastic4s.http.{ RequestFailure, RequestSuccess }
-import io.circe.Encoder
+import io.circe.{ Decoder, Encoder }
 
 import scala.util.Success
 
@@ -390,6 +390,10 @@ object IndexInfo {
 
   implicit val encoder: Encoder[IndexInfo] = {
     exportEncoder.instance
+  }
+
+  implicit val decoder: Decoder[IndexInfo] = {
+    exportDecoder.instance
   }
 
 }

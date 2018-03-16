@@ -24,13 +24,14 @@ class FileDB(futureLimitedGen: () => FutureLimitedGen, shutdownHook: ShutdownHoo
 
   lazy val db = Database.forURL(driver = "org.h2.Driver", url = "jdbc:h2:./ext_persistence_不索引/db/file_db.h2")
 
-  shutdownHook.addHook {
+  //暂停回收，让程序自然关闭
+  /*shutdownHook.addHook {
     new Thread() {
       override def run(): Unit = {
         db.close()
       }
     }
-  }
+  }*/
 
   lazy val writeDB: ExtDB = {
     val db1 = db
