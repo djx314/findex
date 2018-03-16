@@ -16,10 +16,10 @@ import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{ Background, BackgroundFill, CornerRadii, Region }
 import scalafx.scene.paint.Paint
 import scala.collection.JavaConverters._
-
 import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
+import io.circe.Json
 
 case class OuputWrap(info: List[OutputInfo], nextIndexOpt: Option[Int], countSum: Long)
 
@@ -30,9 +30,34 @@ class FileSearch(embeddedServer: EmbeddedServer) {
   val path = "./ext_persistence_不索引/lucenceTemp"
   import FileTables.profile._
 
-  def search(content: IndexContentRow, fuzzyKey: String, exactKey: String, start: Int, rows: Int)(implicit ec: ExecutionContext): Future[OuputWrap] = {
+  def searchFromView(content: IndexContentRow, fuzzyKey: String, exactKey: String, start: Int, rows: Int)(implicit ec: ExecutionContext): Future[OuputWrap] = {
     lazy val exactSplitFronts = exactKey.trim.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
     lazy val exactFilterString = Option(exactSplitFronts).map { t => t.map(s => s"*$s*") }.filterNot(_.isEmpty)
+    embeddedServer.esLocalClient.flatMap { client =>
+      client.execute {
+        search(embeddedServer.index).types(embeddedServer.typeName).query {
+          boolQuery().should(
+            boolQuery().filter(exactSplitFronts.map(s => matchQuery("file_content", s))),
+            boolQuery().filter(exactFilterString.map(s => wildcardQuery("file_content", s))))
+        }.start(start).limit(rows)
+      }
+    }.map {
+      case Left(s) =>
+        println(s)
+        Future.successful(OuputWrap(List.empty, Option.empty, 0))
+      case Right(result) =>
+        val infoSize = result.result.size
+        val nextIndexOpt = if (infoSize >= rows)
+          Option(start + infoSize)
+        else Option.empty
+        val infos = result.result.to[Json].map(s => s.as[IndexInfo].toOption)
+        val extraInfos = infos.collect { case Some(s) => s }.zipWithIndex.map {
+          case (info, index) =>
+            OutputInfo(searchIndex = index, filePath = info.filePath, fileName = info.fileName, content = info.fileContent, contentId = info.contentId)
+        }
+        OuputWrap(extraInfos.toList, nextIndexOpt.map(_.toInt), result.result.totalHits)
+    }
+
     /*val titleSize = 80
     val textSize = 300
 

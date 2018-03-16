@@ -136,7 +136,7 @@ class DoSearch(
 
         val initSize = 4
 
-        fileSearch.search(eachContent, fuzzyKey, exactKey, 0, initSize).map { wrap =>
+        fileSearch.searchFromView(eachContent, fuzzyKey, exactKey, 0, initSize).map { wrap =>
           append(wrap.info)
           Platform.runLater {
             infoLabel.text = s"已为你搜索到 ${wrap.countSum} 条结果"
@@ -156,7 +156,7 @@ class DoSearch(
             val lastHeightSum = contentVBox.children.takeRight(2).map(s => (s.asInstanceOf[javafx.scene.layout.Region]: Region).height.value).sum
             if (heightToButtom < lastHeightSum) {
               self.vvalue.removeListener(changeListenerSelf)
-              fileSearch.search(eachContent, fuzzyKey, exactKey, start, rows).map { wrap =>
+              fileSearch.searchFromView(eachContent, fuzzyKey, exactKey, start, rows).map { wrap =>
                 append(wrap.info)
                 Platform.runLater {
                   infoLabel.text = s"已为你搜索到 ${wrap.countSum} 条结果"
