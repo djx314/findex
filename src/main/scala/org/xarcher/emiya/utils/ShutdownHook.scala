@@ -20,7 +20,10 @@ class ShutdownHook() {
       }
     }*/
     //Future.sequence(hooks.map(_.apply())).map((_: ListBuffer[Unit]) => ())
-    hooks.map(s => s.start())
+    hooks.zipWithIndex.map {
+      case (s, _) =>
+        s.start
+    }
   }
 
 }

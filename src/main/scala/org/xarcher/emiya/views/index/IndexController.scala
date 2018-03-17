@@ -6,7 +6,7 @@ import java.nio.file.Paths
 
 import org.xarcher.emiya.service.ContentService
 import org.xarcher.emiya.views.search.DoSearch
-import org.xarcher.xPhoto.{ FileDB, FileIndex, FileTables }
+import org.xarcher.xPhoto.{ FileDB, FileIndex, FileTables, IndexExecutionContext }
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Failure
@@ -29,11 +29,14 @@ class IndexController(
   removeIndexButton: RemoveIndexButton,
   fileIndex: FileIndex,
   stage: Stage,
-  contentService: ContentService)(implicit ec: ExecutionContext) extends BorderPane {
+  indexExecutionContext: IndexExecutionContext,
+  contentService: ContentService) extends BorderPane {
   top = new HBox {
     children = List(fileSelectButton, startIndexButton, removeIndexButton)
   }
   center = fileListWrapper.FileList
+
+  implicit val aa = indexExecutionContext.indexEc
 
   fileSelectButton.onAction = {
     event: ActionEvent =>
@@ -86,7 +89,7 @@ class FileSelectButton() extends Button("", new ImageView(getClass.getResource("
 
 }
 
-class StartIndexButton( /*selectedFile: SelectedFile, fileIndex: FileIndex*/ )(implicit ec: ExecutionContext) extends Button("", new ImageView(getClass.getResource("/arrow_right.png").toURI.toASCIIString)) {
+class StartIndexButton( /*selectedFile: SelectedFile, fileIndex: FileIndex*/ ) extends Button("", new ImageView(getClass.getResource("/arrow_right.png").toURI.toASCIIString)) {
 
   tooltip = new Tooltip("开始索引选中目录") {
     font = Font(14)
@@ -94,7 +97,7 @@ class StartIndexButton( /*selectedFile: SelectedFile, fileIndex: FileIndex*/ )(i
 
 }
 
-class RemoveIndexButton(selectedFile: SelectedFile, fileIndex: FileIndex)(implicit ec: ExecutionContext) extends Button("", new ImageView(getClass.getResource("/arrow_right.png").toURI.toASCIIString)) {
+class RemoveIndexButton(selectedFile: SelectedFile, fileIndex: FileIndex) extends Button("", new ImageView(getClass.getResource("/arrow_right.png").toURI.toASCIIString)) {
 
   tooltip = new Tooltip("删除选中目录") {
     font = Font(14)
@@ -102,7 +105,9 @@ class RemoveIndexButton(selectedFile: SelectedFile, fileIndex: FileIndex)(implic
 
 }
 
-class FileListWrapper(contentService: ContentService, fileDB: FileDB)(implicit ec: ExecutionContext) {
+class FileListWrapper(
+  contentService: ContentService,
+  fileDB: FileDB)(implicit executionContext: ExecutionContext) {
   object FileList extends ListView[FileTables.IndexContentRow] {
     selectionModel.value.selectionMode = SelectionMode.Multiple
     //items = ObservableBuffer(List.empty[FileTables.IndexContentRow])

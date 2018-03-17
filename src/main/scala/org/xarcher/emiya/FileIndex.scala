@@ -35,8 +35,7 @@ class FileIndex(
   fileIgnoreService: FileIgnoreService,
   fileUpdate: FileUpdate,
   embeddedServer: EmbeddedServer,
-  shutdownHook: ShutdownHook,
-  indexExecutionContext: IndexExecutionContext) {
+  shutdownHook: ShutdownHook)(implicit executionContext: ExecutionContext) {
 
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -44,7 +43,6 @@ class FileIndex(
   val fileTimeIndexLimit = futureTimeLimitedGen().create(60, "fileTimeIndexLimit", 1926)
 
   val timeLimited = futureTimeLimitedGen().create(8, "timeLimited", 1000)
-  val indexEc = indexExecutionContext.indexEc
 
   @volatile var needToShutdonw: Boolean = false
   shutdownHook.addHook(new Thread() {
@@ -62,7 +60,6 @@ class FileIndex(
   }(indexEc)*/
 
   def fetchFiles(content: IndexContentRow): Future[Boolean] = {
-    implicit val ec = indexEc
     timeLimited.limit(() => fetchFilesGen(content), "索引文件").flatMap { s =>
       //println("索引文件")
       if (s) {
@@ -74,7 +71,6 @@ class FileIndex(
   }
 
   def fetchFilesGen(content: IndexContentRow): Future[Boolean] = {
-    implicit val ec = indexEc
 
     //还没有处理如果文件夹变成了文件或者文件变成了文件夹的情况
     val filesF = fileDB.db.run(IndexPath
@@ -139,7 +135,7 @@ class FileIndex(
     }*/
   }
 
-  def index(content: IndexContentRow)(implicit ec: ExecutionContext): Future[Int] = {
+  def index(content: IndexContentRow): Future[Int] = {
     //val rootPath = Paths.get(URI.create(content.rootUri))
 
     def startFetchFiles(contentModel: IndexContentRow): Future[Boolean] = {
@@ -273,7 +269,7 @@ class FileIndex(
                 case Left(id) =>
                   logger.error(s"${new Date().toString}，索引：${file.toPath.toRealPath()}失败，跳过此文件")
                   Future.successful(id -> 1)
-              }(indexEc).andThen {
+              }.andThen {
                 case Failure(e) =>
                   logger.info(s"索引文件：${f.uri}过程发生错误", e)
               }: Future[(Int, Int)]
@@ -291,6 +287,7 @@ class FileIndex(
           val task = new TimerTask {
             override def run(): Unit = {
               promise.success(tranFiles(sum, isFetchFileFinished))
+              timer.cancel()
             }
           }
           timer.schedule(task, 500)
@@ -303,7 +300,7 @@ class FileIndex(
     }
 
     def showInfo(isIndexFinished: () => Boolean): Future[Int] = {
-      val timer = new Timer()
+      /*val timer = new Timer()
       shutdownHook.addHook(new Thread() { override def run: Unit = { Try { timer.cancel() } } })
       val task = new TimerTask {
         override def run(): Unit = {
@@ -325,7 +322,7 @@ class FileIndex(
           }
         }
       }
-      timer.schedule(task, 8000, 8000)
+      timer.schedule(task, 8000, 8000)*/
       Future.successful(1)
     }
 
@@ -366,16 +363,16 @@ class FileIndex(
               Left(dbId)
             //throw e
           }
-        }(indexEc)).getOrElse {
+        }).getOrElse {
           Future.successful(Left(dbId))
         }
       } else {
         Future.successful(Left(dbId))
       }
-    }(indexEc).flatten.andThen {
+    }.flatten.andThen {
       case Failure(e) =>
         logger.error(s"索引单个文件发生错误", e)
-    }(indexEc)
+    }
   }
 
 }

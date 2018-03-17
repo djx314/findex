@@ -3,6 +3,7 @@ package org.xarcher.emiya.utils
 import java.util.{ Timer, TimerTask }
 
 import akka.actor.Actor
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -25,6 +26,9 @@ class TimeLimitedActor(shutdownHook: ShutdownHook) extends Actor {
   @volatile protected var futureQueue = mutable.Queue.empty[FutureWrapper]
   @volatile protected var weightSum: Long = 0
   @volatile protected var maxWeightSum: Long = -1
+  protected val timer: Timer = new Timer()
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   override lazy val receive = {
     case TimeLimitedActor.Start(maxWeightSum1, millions1) =>
@@ -35,12 +39,12 @@ class TimeLimitedActor(shutdownHook: ShutdownHook) extends Actor {
           self1 ! TimeLimitedActor.Reset
         }
       }
-      val timer = new Timer()
-      shutdownHook.addHook(new Thread() {
+      //val timer = new Timer()
+      /*shutdownHook.addHook(new Thread() {
         override def run(): Unit = {
           timer.cancel()
         }
-      })
+      })*/
       timer.schedule(task, 0, millions1)
     case TimeLimitedActor.Reset =>
       weightSum = maxWeightSum
@@ -63,6 +67,8 @@ class TimeLimitedActor(shutdownHook: ShutdownHook) extends Actor {
       self ! TimeLimitedActor.Consume
     case TimeLimitedActor.Shutdown =>
       futureQueue.dequeueAll(_ => true).map(_.runFuture)
+      logger.info("关闭按时间限流定时器")
+      timer.cancel()
       context.stop(self)
   }
 

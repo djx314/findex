@@ -27,7 +27,7 @@ object Emiya extends JFXApp {
   private lazy val fileIndex = wire[FileIndex]
   private lazy val shutdownHook = wire[ShutdownHook]
 
-  shutdownHook.addHook(new Thread() { override def run: Unit = { system.terminate().map((_: Terminated) => ()) } })
+  shutdownHook.addHook(new Thread() { override def run: Unit = { system.terminate().map((_: Terminated) => ())(indexExecutionContext.indexEc) } })
 
   private def limitedActor: ActorRef @@ LimitedActor =
     wireAnonymousActor[LimitedActor].taggedWith[LimitedActor]
@@ -45,12 +45,16 @@ object Emiya extends JFXApp {
   private lazy val fileExtraction = wire[FileExtraction]
   private lazy val fileIgnoreService = wire[FileIgnoreService]
   private lazy val contentService = wire[ContentService]
-  private lazy val embeddedServer = wire[EmbeddedServer]
-  embeddedServer.esLocalClient
+  private lazy val embeddedServer = {
+    val a: EmbeddedServer = wire[EmbeddedServer]
+    a.esLocalClient
+    a
+  }
+
   private lazy val fileSearch = wire[FileSearch]
 
   private lazy val indexExecutionContext: IndexExecutionContext = wire[IndexExecutionContext]
-  implicit lazy val ec: ExecutionContextExecutorService = indexExecutionContext.indexEc
+  implicit lazy val ec = indexExecutionContext.indexEc
   private lazy val selectedFile = wire[SelectedFile]
   private lazy val fileSelectButton = wire[FileSelectButton]
   private lazy val startIndexButton = wire[StartIndexButton]

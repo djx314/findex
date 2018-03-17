@@ -5,7 +5,7 @@ import java.nio.file.Paths
 import javafx.beans.value.{ ChangeListener, ObservableValue }
 
 import org.xarcher.emiya.views.index.FileListWrapper
-import org.xarcher.xPhoto.{ FileSearch, OutputInfo }
+import org.xarcher.xPhoto.{ FileSearch, IndexExecutionContext, OutputInfo }
 import org.xarcher.xPhoto.FileTables.IndexContentRow
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -32,7 +32,7 @@ class DoSearch(
   exactSearchInput: ExactSearchInput,
   resultTabPane: ResultTabPane,
   fileSearch: FileSearch,
-  fileListWrapper: FileListWrapper)(implicit ec: ExecutionContext) {
+  fileListWrapper: FileListWrapper)(implicit executionContext: ExecutionContext) {
 
   fuzzySearchInput.text.addListener(new ChangeListener[String] {
     override def changed(observable: ObservableValue[_ <: String], oldValue: String, newValue: String): Unit = {
@@ -59,6 +59,7 @@ class DoSearch(
   }
 
   def search(fuzzyKey: String, exactKey: String, contents: List[IndexContentRow]): Unit = {
+
     val tabs = contents.map { eachContent =>
       val infoLabel = new Label("") {
         alignment = Pos.Center

@@ -3,17 +3,19 @@ package org.xarcher.emiya.service
 import java.nio.file.Path
 import java.util.Date
 
-import org.xarcher.xPhoto.{FileDB, FileTables}
+import org.xarcher.xPhoto.{ FileDB, FileTables, IndexExecutionContext }
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
-class ContentService(                 fileDB: FileDB,
-                    )(implicit ec: ExecutionContext) {
+class ContentService(
+  fileDB: FileDB,
+  indexExecutionContext: IndexExecutionContext) {
 
   import FileTables._
   import FileTables.profile.api._
 
-  def create(path: Path): Future[Boolean] = {
+  def create(path: Path)(implicit executionContext: ExecutionContext): Future[Boolean] = {
+
     val content = IndexContentRow(
       id = -1,
       rootUri = path.toUri.toASCIIString,

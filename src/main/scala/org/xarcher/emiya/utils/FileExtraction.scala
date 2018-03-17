@@ -2,7 +2,6 @@ package org.xarcher.emiya.utils
 
 import java.io.{ File, FileInputStream }
 import java.nio.file.Path
-import java.util.Timer
 import java.util.concurrent.Executors
 
 import akka.actor.ActorRef
@@ -20,7 +19,7 @@ import org.xarcher.xPhoto.IndexExecutionContext
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
-class FileExtraction(indexExecutionContext: IndexExecutionContext) {
+class FileExtraction(implicit executionContext: ExecutionContext) {
 
   object CPoi {
 
@@ -45,8 +44,6 @@ class FileExtraction(indexExecutionContext: IndexExecutionContext) {
   }
 
   val logger = LoggerFactory.getLogger(getClass)
-
-  implicit val ec = indexExecutionContext.indexEc
 
   val txtGen: Path => Future[Either[Throwable, String]] = { path =>
     Future {

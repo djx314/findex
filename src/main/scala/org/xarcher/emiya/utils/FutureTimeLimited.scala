@@ -5,6 +5,7 @@ import java.util.concurrent.{ Executors, TimeUnit }
 
 import akka.actor.ActorRef
 import com.softwaremill.tagging.@@
+import org.xarcher.xPhoto.IndexExecutionContext
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
@@ -41,7 +42,7 @@ class FutureTimeLimited(val exceptWeight: Int, val name: String, limitedActor: A
 
     val aa = promise.future
 
-    {
+    /*{
       import java.util.TimerTask
       val timer = new Timer()
       shutdownHook.addHook(new Thread() {
@@ -59,7 +60,7 @@ class FutureTimeLimited(val exceptWeight: Int, val name: String, limitedActor: A
           }
         }
       }, 12000, 12000)
-    }
+    }*/
 
     aa.andThen {
       case Failure(e) =>
@@ -69,19 +70,19 @@ class FutureTimeLimited(val exceptWeight: Int, val name: String, limitedActor: A
 
 }
 
-class FutureTimeLimitedGen(limitedActor: ActorRef @@ TimeLimitedActor, shutdownHook: ShutdownHook) {
+class FutureTimeLimitedGen(limitedActor: ActorRef @@ TimeLimitedActor, shutdownHook: ShutdownHook)(implicit executionContext: ExecutionContext) {
   def create(exceptWeight: Int, name: String, period: Int): FutureTimeLimited = {
-    val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(8))
+    /*val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(8))
     shutdownHook.addHook(new Thread() {
       override def run: Unit = {
         ec.shutdown() //.awaitTermination(20, TimeUnit.SECONDS)
       }
-    })
+    })*/
     shutdownHook.addHook(new Thread() {
       override def run: Unit = { limitedActor ! TimeLimitedActor.Shutdown }
     })
 
     limitedActor ! TimeLimitedActor.Start(exceptWeight, period)
-    new FutureTimeLimited(exceptWeight, name, limitedActor, shutdownHook)(ec)
+    new FutureTimeLimited(exceptWeight, name, limitedActor, shutdownHook)
   }
 }

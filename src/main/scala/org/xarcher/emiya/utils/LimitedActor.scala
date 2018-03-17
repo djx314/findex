@@ -4,6 +4,7 @@ import akka.actor.Actor
 import org.xarcher.xPhoto.IndexExecutionContext
 
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext
 
 object LimitedActor {
 
@@ -22,6 +23,8 @@ class LimitedActor(indexExecutionContext: IndexExecutionContext) extends Actor {
   @volatile protected var weightSum: Long = 0
   @volatile protected var maxWeightSum: Long = -1
 
+  implicit val exec = indexExecutionContext.indexEc
+
   override lazy val receive = {
     case LimitedActor.Start(maxWeightSum1) =>
       maxWeightSum = maxWeightSum1
@@ -34,7 +37,7 @@ class LimitedActor(indexExecutionContext: IndexExecutionContext) extends Actor {
             wrapper.runFuture.andThen {
               case _ =>
                 self1 ! LimitedActor.Minus(wrapper.weight)
-            }(indexExecutionContext.indexEc)
+            }
           case None =>
         }
       }

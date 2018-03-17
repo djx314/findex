@@ -12,13 +12,14 @@ import com.sksamuel.elastic4s.mappings.dynamictemplate.DynamicMapping
 import org.slf4j.LoggerFactory
 import org.xarcher.xPhoto.IndexExecutionContext
 
+import scala.concurrent.ExecutionContext
 import scala.util.{ Failure, Success, Try }
 
 // we must import the dsl
 
 import scala.concurrent.Future
 
-class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionContext) {
+class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: ExecutionContext) {
 
   /*val pathStr = "./ext_persistence_不索引/file_index_solr_db"
   val path = Paths.get(pathStr)
@@ -43,8 +44,6 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
     embbed
   }*/
 
-  implicit protected val ec = exContextWrap.indexEc
-
   val index: Index = "findex0505"
   val typeName: String = "file_content"
 
@@ -53,7 +52,7 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
   protected lazy val initEs: Future[HttpClient] = {
     Future {
       val localNode = LocalNode("findex0303", "./esTmp/tmpDataPath0303")
-      /*shutdownHook.addHook(new Thread() {
+      shutdownHook.addHook(new Thread() {
         override def run(): Unit = {
           Try {
             logger.info("开始关闭 elasticSearch 服务端")
@@ -63,14 +62,14 @@ class EmbeddedServer(shutdownHook: ShutdownHook, exContextWrap: IndexExecutionCo
             case Success(_) => logger.info("关闭 elasticSearch 服务端成功")
           }
         }
-      })*/
+      })
       val client = localNode.http(false)
       shutdownHook.addHook(new Thread() {
         override def run(): Unit = {
           Try {
             logger.info("开始关闭 elasticSearch 客户端")
             client.client.close()
-            //client.close()
+            client.close()
           } match {
             case Failure(e) => logger.error("关闭 elasticSearch 客户端遇到错误", e)
             case Success(_) => logger.info("关闭 elasticSearch 客户端成功")
