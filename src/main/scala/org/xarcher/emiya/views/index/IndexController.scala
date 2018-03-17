@@ -29,14 +29,11 @@ class IndexController(
   removeIndexButton: RemoveIndexButton,
   fileIndex: FileIndex,
   stage: Stage,
-  indexExecutionContext: IndexExecutionContext,
-  contentService: ContentService) extends BorderPane {
+  contentService: ContentService)(implicit executionContext: ExecutionContext) extends BorderPane {
   top = new HBox {
     children = List(fileSelectButton, startIndexButton, removeIndexButton)
   }
   center = fileListWrapper.FileList
-
-  implicit val aa = indexExecutionContext.indexEc
 
   fileSelectButton.onAction = {
     event: ActionEvent =>

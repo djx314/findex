@@ -27,7 +27,10 @@ object Emiya extends JFXApp {
   private lazy val fileIndex = wire[FileIndex]
   private lazy val shutdownHook = wire[ShutdownHook]
 
-  shutdownHook.addHook(new Thread() { override def run: Unit = { system.terminate().map((_: Terminated) => ())(indexExecutionContext.indexEc) } })
+  private lazy val indexExecutionContext: IndexExecutionContext = wire[IndexExecutionContext]
+  implicit lazy val ec = indexExecutionContext.fineIndexExec
+
+  shutdownHook.addHook(new Thread() { override def run: Unit = { system.terminate().map((_: Terminated) => ()) } })
 
   private def limitedActor: ActorRef @@ LimitedActor =
     wireAnonymousActor[LimitedActor].taggedWith[LimitedActor]
@@ -53,8 +56,6 @@ object Emiya extends JFXApp {
 
   private lazy val fileSearch = wire[FileSearch]
 
-  private lazy val indexExecutionContext: IndexExecutionContext = wire[IndexExecutionContext]
-  implicit lazy val ec = indexExecutionContext.indexEc
   private lazy val selectedFile = wire[SelectedFile]
   private lazy val fileSelectButton = wire[FileSelectButton]
   private lazy val startIndexButton = wire[StartIndexButton]

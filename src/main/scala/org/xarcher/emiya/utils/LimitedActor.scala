@@ -17,13 +17,13 @@ object LimitedActor {
 
 }
 
-class LimitedActor(indexExecutionContext: IndexExecutionContext) extends Actor {
+class LimitedActor(executionContext: ExecutionContext) extends Actor {
 
   @volatile protected var futureQueue = mutable.Queue.empty[FutureWrapper]
   @volatile protected var weightSum: Long = 0
   @volatile protected var maxWeightSum: Long = -1
 
-  implicit val exec = indexExecutionContext.indexEc
+  implicit val exec = executionContext
 
   override lazy val receive = {
     case LimitedActor.Start(maxWeightSum1) =>

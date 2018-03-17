@@ -7,19 +7,16 @@ import java.util.stream.Collectors
 import org.xarcher.xPhoto.{ FileDB, IndexExecutionContext }
 import org.xarcher.xPhoto.FileTables._
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.collection.JavaConverters._
 
 class FileUpdate(
   compareGen: CompareGen,
-  fileDB: FileDB,
-  indexExecutionContext: IndexExecutionContext) {
+  fileDB: FileDB) {
 
   import profile.api._
 
-  implicit val ec = indexExecutionContext.indexEc
-
-  def updateIndexRow(pathRow: IndexPathRow, content: IndexContentRow): Future[Int] = {
+  def updateIndexRow(pathRow: IndexPathRow, content: IndexContentRow)(implicit executionContext: ExecutionContext): Future[Int] = {
     val subRowsF = fileDB.db.run(IndexPath.filter(s => (s.parentDirId === pathRow.id) && (s.contentId === content.id)).to[List].result)
     //val subFiles = Paths.get(URI.create(pathRow.uri)).toFile.listFiles.toList.map(_.toPath)
     val subFiles = Files.list(Paths.get(URI.create(pathRow.uri))).collect(Collectors.toList()).asScala.toList

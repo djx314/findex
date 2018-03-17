@@ -8,6 +8,6 @@ import scala.concurrent.ExecutionContext
 
 class IndexExecutionContext(shutdownHook: ShutdownHook) {
 
-  val indexEc = ExecutionContext.fromExecutor(null: Executor)
+  val fineIndexExec = ExecutionContext.fromExecutor(null: Executor)
 
 }

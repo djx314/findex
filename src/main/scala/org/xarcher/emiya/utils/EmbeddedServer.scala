@@ -52,7 +52,7 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
   protected lazy val initEs: Future[HttpClient] = {
     Future {
       val localNode = LocalNode("findex0303", "./esTmp/tmpDataPath0303")
-      shutdownHook.addHook(new Thread() {
+      /*shutdownHook.addHook(new Thread() {
         override def run(): Unit = {
           Try {
             logger.info("开始关闭 elasticSearch 服务端")
@@ -62,14 +62,14 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
             case Success(_) => logger.info("关闭 elasticSearch 服务端成功")
           }
         }
-      })
-      val client = localNode.http(false)
+      })*/
+      val client = localNode.http(true)
       shutdownHook.addHook(new Thread() {
         override def run(): Unit = {
           Try {
             logger.info("开始关闭 elasticSearch 客户端")
             client.client.close()
-            client.close()
+            //client.close()
           } match {
             case Failure(e) => logger.error("关闭 elasticSearch 客户端遇到错误", e)
             case Success(_) => logger.info("关闭 elasticSearch 客户端成功")
