@@ -40,7 +40,7 @@ class FileIndex(
   val logger = LoggerFactory.getLogger(getClass)
 
   val fileSizeIndexLimit = futureLimitedGen().create(800 * 1024 * 1024, "fileSizeIndexLimit")
-  val fileTimeIndexLimit = futureTimeLimitedGen().create(160, "fileTimeIndexLimit", 1926)
+  val fileTimeIndexLimit = futureTimeLimitedGen().create(817 / 100 + 1, "fileTimeIndexLimit", 1926 / 10)
 
   val timeLimited = futureTimeLimitedGen().create(8, "timeLimited", 1000)
 
