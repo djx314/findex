@@ -34,22 +34,20 @@ class FileSearch(embeddedServer: EmbeddedServer) {
 
   def searchFromView(content: IndexContentRow, fuzzyKey: String, exactKey: String, start: Int, rows: Int)(implicit ec: ExecutionContext): Future[OuputWrap] = {
     lazy val exactSplitFronts = exactKey.trim.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
-    lazy val exactFilterString = exactSplitFronts.map { t => s"*$t*" }.filterNot(_.isEmpty)
+    lazy val exactFilterString = exactSplitFronts.map { t => s"*$t*" }
 
-    println(boolQuery().filter(exactSplitFronts.map(s => matchQuery("file_content", s))))
-    println(boolQuery().filter(exactFilterString.map(s => wildcardQuery("file_content", s))))
-
-    val aa = List.empty[BoolQueryDefinition]
-    val bb = if (exactSplitFronts.isEmpty) aa else boolQuery().filter(exactSplitFronts.map(s => matchQuery("file_content", s))) :: aa
-    val cc = if (exactSplitFronts.isEmpty) bb else boolQuery().filter(exactFilterString.map(s => wildcardQuery("file_content", s))) :: bb
+    val exactEmptyBoolean = List.empty[BoolQueryDefinition]
+    val exactBool1 = if (exactFilterString.isEmpty)
+      exactEmptyBoolean
+    else
+      boolQuery().should(exactFilterString.map(s => wildcardQuery("search_law_body", s))) :: exactEmptyBoolean
 
     embeddedServer.esLocalClient.flatMap { client =>
       client.execute {
-        val aa = search(embeddedServer.index).query(boolQuery().should(cc))
+        val searchDef = search(embeddedServer.index).query(boolQuery().filter(matchQuery("content_id", content.id)).must(exactBool1))
           .types(embeddedServer.typeName).start(start).limit(rows)
-        println("1122" * 200)
-        println(SearchBodyBuilderFn(aa).string())
-        aa
+        println(SearchBodyBuilderFn(searchDef).string())
+        searchDef
       }
     }.map {
       case Left(s) =>

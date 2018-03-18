@@ -44,14 +44,14 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
     embbed
   }*/
 
-  val index: Index = "findex0505"
+  val index: Index = "findex0909"
   val typeName: String = "file_content"
 
   val logger = LoggerFactory.getLogger(getClass)
 
   protected lazy val initEs: Future[HttpClient] = {
     Future {
-      val localNode = LocalNode("findex0303", "./esTmp/tmpDataPath0303")
+      val localNode = LocalNode("findex0404", "./esTmp/tmpDataPath0303")
       /*shutdownHook.addHook(new Thread() {
         override def run(): Unit = {
           Try {
@@ -110,6 +110,19 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
                     embeddedServer.solrServer.add("file_index", doc)
    */
 
+  /*
+  "dynamic_templates": [
+        {
+          "law_body_dyn": {
+            "path_match": "law_body.law_body_*",
+            "mapping": {
+              "type": "keyword",
+              "copy_to": "search_law_body"
+            }
+          }
+        }
+      ],
+   */
   protected lazy val createIndexInitAction = {
     initEs
       .flatMap {
@@ -123,8 +136,11 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
                   textField("file_content"),
                   keywordField("file_path"),
                   keywordField("law_file_name"),
-                  intField("content_id"))
-                .dynamic(DynamicMapping.Strict))
+                  intField("content_id"),
+                  objectField("law_body").dynamic(true),
+                  keywordField("search_law_body"))
+                .dynamic(DynamicMapping.Strict)
+                .dynamicTemplates(dynamicTemplate("law_body_dyn").mapping(dynamicKeywordField().copyTo("search_law_body")).pathMatch("law_body.law_body_*")))
           }
       }
   }

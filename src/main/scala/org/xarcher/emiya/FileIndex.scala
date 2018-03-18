@@ -357,7 +357,20 @@ class FileIndex(
           }.left.map(_ => id)*/
           strEither match {
             case Right(str) =>
-              Right(IndexInfo(dbId = dbId, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, fileContent = str, contentId = contentId))
+
+              val lawBody = str.grouped(32766 / 3 - 200).zipWithIndex.foldLeft(Map.empty[String, String] -> "") {
+                case ((bodyMap, prefix), (content, index)) =>
+                  val newMap = bodyMap + (("law_body_" + index) -> (prefix + content))
+                  newMap -> content.takeRight(120)
+              }
+
+              Right(IndexInfo(
+                dbId = dbId,
+                filePath = file.toRealPath().toString,
+                fileName = file.getFileName().toString,
+                fileContent = str,
+                contentId = contentId,
+                law_body = lawBody._1))
             case Left(e) =>
               logger.error(s"索引文件发生错误，路径：${file.toRealPath().toString}", e)
               Left(dbId)
@@ -377,7 +390,7 @@ class FileIndex(
 
 }
 
-case class IndexInfo(dbId: Int, filePath: String, fileName: String, fileContent: String, contentId: Int)
+case class IndexInfo(dbId: Int, filePath: String, fileName: String, fileContent: String, contentId: Int, law_body: Map[String, String])
 
 object IndexInfo {
 
