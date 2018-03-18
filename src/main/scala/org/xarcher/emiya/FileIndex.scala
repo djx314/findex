@@ -39,8 +39,8 @@ class FileIndex(
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  val fileSizeIndexLimit = futureLimitedGen().create(60 * 1024 * 1024, "fileSizeIndexLimit")
-  val fileTimeIndexLimit = futureTimeLimitedGen().create(60, "fileTimeIndexLimit", 1926)
+  val fileSizeIndexLimit = futureLimitedGen().create(800 * 1024 * 1024, "fileSizeIndexLimit")
+  val fileTimeIndexLimit = futureTimeLimitedGen().create(160, "fileTimeIndexLimit", 1926)
 
   val timeLimited = futureTimeLimitedGen().create(8, "timeLimited", 1000)
 
@@ -254,11 +254,11 @@ class FileIndex(
                             case Left(failInfo) =>
                               logger.info(s"${new Date().toString}，文件：${info.filePath}的索引工作遇到错误，" +
                                 s"错误信息：{ reason: ${failInfo.error.reason}, rootCause: ${failInfo.error.rootCause}")
-                              Try { dbId -> 1 }
+                              Try { dbId -> 0 }
                             case Right(successResponse) =>
                               logger.info(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
                               logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.fileContent}")
-                              Try { dbId -> 0 }
+                              Try { dbId -> 1 }
                           }
                         case Failure(e) =>
                           logger.error(s"${new Date().toString}，索引：${Paths.get(URI.create(f.uri)).toRealPath().toString}失败")

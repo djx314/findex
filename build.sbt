@@ -24,4 +24,4 @@ enablePlugins(JDKPackagerPlugin)
 
 enablePlugins(WindowsPlugin)
 
-javaOptions in run += "-Xmx600M"
+javaOptions in run += "-Xmx3200M"

@@ -1,11 +1,13 @@
 package org.xarcher.emiya.utils
 
-import java.io.{ File, FileInputStream }
-import java.nio.file.Path
+import java.io.{ ByteArrayInputStream, File, FileInputStream }
+import java.nio.ByteBuffer
+import java.nio.file.{ Files, Path }
 import java.util.concurrent.Executors
 
 import akka.actor.ActorRef
 import com.softwaremill.tagging.@@
+import io.netty.buffer.ByteBufInputStream
 import org.apache.commons.io.IOUtils
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.usermodel.Workbook
@@ -14,7 +16,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import org.xarcher.cpoi._
-import org.xarcher.xPhoto.IndexExecutionContext
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
@@ -77,7 +78,7 @@ class FileExtraction(implicit executionContext: ExecutionContext) {
   val htmlGen: Path => Future[Either[Throwable, String]] = { path =>
     Future {
       Try {
-        Jsoup.parse(path.toFile, "utf-8").text()
+        Jsoup.parse(path.toFile, null).text()
       }.toEither
     }
   }
@@ -120,6 +121,7 @@ class FileExtraction(implicit executionContext: ExecutionContext) {
     "bat" -> txtGen,
     "htm" -> htmlGen,
     "html" -> htmlGen,
+    "shtml" -> htmlGen,
     "properties" -> txtGen,
     "xls" -> poiGen,
     "xlsx" -> poiGen,

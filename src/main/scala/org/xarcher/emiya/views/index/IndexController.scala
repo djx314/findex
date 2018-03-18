@@ -5,8 +5,9 @@ import java.net.URI
 import java.nio.file.Paths
 
 import org.xarcher.emiya.service.ContentService
+import org.xarcher.emiya.utils.FileExtraction
 import org.xarcher.emiya.views.search.DoSearch
-import org.xarcher.xPhoto.{ FileDB, FileIndex, FileTables, IndexExecutionContext }
+import org.xarcher.xPhoto.{ FileDB, FileIndex, FileTables }
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Failure
@@ -86,7 +87,7 @@ class FileSelectButton() extends Button("", new ImageView(getClass.getResource("
 
 }
 
-class StartIndexButton( /*selectedFile: SelectedFile, fileIndex: FileIndex*/ ) extends Button("", new ImageView(getClass.getResource("/arrow_right.png").toURI.toASCIIString)) {
+class StartIndexButton( /*selectedFile: SelectedFile, fileIndex: DocUtil*/ ) extends Button("", new ImageView(getClass.getResource("/arrow_right.png").toURI.toASCIIString)) {
 
   tooltip = new Tooltip("开始索引选中目录") {
     font = Font(14)
@@ -94,7 +95,7 @@ class StartIndexButton( /*selectedFile: SelectedFile, fileIndex: FileIndex*/ ) e
 
 }
 
-class RemoveIndexButton(selectedFile: SelectedFile, fileIndex: FileIndex) extends Button("", new ImageView(getClass.getResource("/arrow_right.png").toURI.toASCIIString)) {
+class RemoveIndexButton(selectedFile: SelectedFile) extends Button("", new ImageView(getClass.getResource("/arrow_right.png").toURI.toASCIIString)) {
 
   tooltip = new Tooltip("删除选中目录") {
     font = Font(14)
