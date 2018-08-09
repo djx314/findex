@@ -15,10 +15,8 @@ import com.softwaremill.tagging._
 import org.xarcher.emiya.service.{ ContentService, FileIgnoreService }
 import org.xarcher.emiya.utils._
 
-import scala.concurrent.{ ExecutionContext, ExecutionContextExecutorService }
 import scalafx.stage.WindowEvent
 import scalafx.Includes._
-import scalafx.scene.input.MouseEvent
 
 object Emiya extends JFXApp {
 
@@ -48,11 +46,7 @@ object Emiya extends JFXApp {
   private lazy val fileExtraction = wire[FileExtraction]
   private lazy val fileIgnoreService = wire[FileIgnoreService]
   private lazy val contentService = wire[ContentService]
-  private lazy val embeddedServer = wire[EmbeddedServer] /*{
-    val a: EmbeddedServer = wire[EmbeddedServer]
-    a.esLocalClient
-    a
-  }*/
+  private lazy val embeddedServer = wire[EmbeddedServer]
 
   private lazy val fileSearch = wire[FileSearch]
 

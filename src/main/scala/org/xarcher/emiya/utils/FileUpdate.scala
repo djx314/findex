@@ -1,10 +1,10 @@
 package org.xarcher.emiya.utils
 
 import java.net.URI
-import java.nio.file.{ Files, Path, Paths }
+import java.nio.file.{ Files, Paths }
 import java.util.stream.Collectors
 
-import org.xarcher.xPhoto.{ FileDB, IndexExecutionContext }
+import org.xarcher.xPhoto.{ FileDB }
 import org.xarcher.xPhoto.FileTables._
 
 import scala.concurrent.{ ExecutionContext, Future }

@@ -7,21 +7,21 @@ import org.fxmisc.richtext.InlineCssTextArea
 import org.slf4j.LoggerFactory
 import org.xarcher.emiya.utils.EmbeddedServer
 import org.xarcher.xPhoto.FileTables.IndexContentRow
-
 import scalafx.Includes._
+
 import scala.concurrent.{ ExecutionContext, Future }
 import scalafx.geometry.Insets
 import scalafx.scene.control.Button
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{ Background, BackgroundFill, CornerRadii, Region }
 import scalafx.scene.paint.Paint
-import scala.collection.JavaConverters._
+
 import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.search.SearchBodyBuilderFn
-import com.sksamuel.elastic4s.searches.queries.BoolQueryDefinition
-import io.circe.Json
+import com.sksamuel.elastic4s.http.{ RequestFailure, RequestSuccess }
+import com.sksamuel.elastic4s.http.search.{ SearchBodyBuilderFn, SearchResponse }
+import com.sksamuel.elastic4s.searches.queries.BoolQuery
 
 case class OuputWrap(info: List[OutputInfo], nextIndexOpt: Option[Int], countSum: Long)
 
@@ -36,7 +36,7 @@ class FileSearch(embeddedServer: EmbeddedServer) {
     lazy val exactSplitFronts = exactKey.trim.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
     lazy val exactFilterString = exactSplitFronts.map { t => s"*$t*" }
 
-    val exactEmptyBoolean = List.empty[BoolQueryDefinition]
+    val exactEmptyBoolean = List.empty[BoolQuery]
     val exactBool1 = if (exactFilterString.isEmpty)
       exactEmptyBoolean
     else
@@ -50,10 +50,10 @@ class FileSearch(embeddedServer: EmbeddedServer) {
         searchDef
       }
     }.map {
-      case Left(s) =>
+      case s: RequestFailure =>
         println(s)
         OuputWrap(List.empty, Option.empty, 0)
-      case Right(result) =>
+      case result: RequestSuccess[SearchResponse] =>
         println(result)
         val infoSize = result.result.size
         val nextIndexOpt = if (infoSize >= rows)

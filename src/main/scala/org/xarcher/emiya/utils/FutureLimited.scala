@@ -1,11 +1,7 @@
 package org.xarcher.emiya.utils
 
-import java.util.Timer
-import java.util.concurrent.{ Executors, TimeUnit }
-
 import akka.actor.ActorRef
 import com.softwaremill.tagging.@@
-import org.xarcher.xPhoto.IndexExecutionContext
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }

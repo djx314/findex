@@ -8,7 +8,7 @@ import java.util.{ Date, Timer, TimerTask }
 import com.sksamuel.elastic4s.RefreshPolicy
 import com.sksamuel.elastic4s.http.index.IndexResponse
 import com.sksamuel.elastic4s.http.update.UpdateResponse
-import com.sksamuel.elastic4s.http.{ RequestFailure, RequestSuccess }
+import com.sksamuel.elastic4s.http.{ RequestFailure, RequestSuccess, Response }
 import io.circe.{ Decoder, Encoder }
 
 import scala.util.Success
@@ -245,17 +245,17 @@ class FileIndex(
                           .doc(info.asJson)
                           .refresh(RefreshPolicy.NONE)
                       }
-                    }.map { (s: Either[RequestFailure, RequestSuccess[IndexResponse]]) => info.dbId -> s }
+                    }.map { (s: Response[IndexResponse]) => info.dbId -> s }
                   }.transform {
                     r =>
                       r match {
                         case Success((dbId, result)) =>
                           result match {
-                            case Left(failInfo) =>
+                            case failInfo: RequestFailure =>
                               logger.info(s"${new Date().toString}，文件：${info.filePath}的索引工作遇到错误，" +
                                 s"错误信息：{ reason: ${failInfo.error.reason}, rootCause: ${failInfo.error.rootCause}")
                               Try { dbId -> 0 }
-                            case Right(successResponse) =>
+                            case successResponse: RequestSuccess[IndexResponse] =>
                               logger.info(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作")
                               logger.trace(s"${new Date().toString}，已完成文件：${info.filePath}的索引工作\n索引内容：${info.fileContent}")
                               Try { dbId -> 1 }

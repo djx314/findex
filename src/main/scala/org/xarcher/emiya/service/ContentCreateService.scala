@@ -3,13 +3,12 @@ package org.xarcher.emiya.service
 import java.nio.file.Path
 import java.util.Date
 
-import org.xarcher.xPhoto.{ FileDB, FileTables, IndexExecutionContext }
+import org.xarcher.xPhoto.{ FileDB, FileTables }
 
 import scala.concurrent.{ ExecutionContext, Future }
 
 class ContentService(
-  fileDB: FileDB,
-  indexExecutionContext: IndexExecutionContext) {
+  fileDB: FileDB) {
 
   import FileTables._
   import FileTables.profile.api._

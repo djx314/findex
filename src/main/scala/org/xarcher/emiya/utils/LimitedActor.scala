@@ -1,7 +1,6 @@
 package org.xarcher.emiya.utils
 
 import akka.actor.Actor
-import org.xarcher.xPhoto.IndexExecutionContext
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
@@ -23,7 +22,7 @@ class LimitedActor(executionContext: ExecutionContext) extends Actor {
   @volatile protected var weightSum: Long = 0
   @volatile protected var maxWeightSum: Long = -1
 
-  implicit val exec = executionContext
+  implicit val ec = executionContext
 
   override lazy val receive = {
     case LimitedActor.Start(maxWeightSum1) =>

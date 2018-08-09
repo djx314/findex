@@ -2,7 +2,7 @@ import sbt._
 import sbt.Keys._
 
 object Dependencies {
-  val elastic4sVersion = "6.2.3"
+  val elastic4sVersion = "6.3.5"
   val elastic4s = Seq(
     "com.sksamuel.elastic4s" %% "elastic4s-core" % elastic4sVersion,
 
@@ -13,6 +13,7 @@ object Dependencies {
     //"com.sksamuel.elastic4s" %% "elastic4s-streams" % elastic4sVersion,
 
     // testing
+    "org.elasticsearch.plugin" % "transport-netty4-client" % "6.3.2",
     "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test",
     "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion,
     "com.sksamuel.elastic4s" %% "elastic4s-embedded" % elastic4sVersion,

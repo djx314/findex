@@ -5,10 +5,10 @@ import java.nio.file.Paths
 import javafx.beans.value.{ ChangeListener, ObservableValue }
 
 import org.xarcher.emiya.views.index.FileListWrapper
-import org.xarcher.xPhoto.{ FileSearch, IndexExecutionContext, OutputInfo }
+import org.xarcher.xPhoto.{ FileSearch, OutputInfo }
 import org.xarcher.xPhoto.FileTables.IndexContentRow
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.ExecutionContext
 import scalafx.application.Platform
 import scalafx.scene.Node
 import scalafx.Includes._

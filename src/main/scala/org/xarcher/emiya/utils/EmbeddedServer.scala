@@ -5,8 +5,8 @@ import com.sksamuel.elastic4s.embedded.LocalNode
 import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.index.CreateIndexResponse
-import com.sksamuel.elastic4s.http.{ HttpClient, RequestFailure, RequestSuccess }
+import com.sksamuel.elastic4s.http.index.{ CreateIndexResponse, IndexResponse }
+import com.sksamuel.elastic4s.http.{ ElasticClient, RequestFailure, RequestSuccess, Response }
 import com.sksamuel.elastic4s.mappings.dynamictemplate.DynamicMapping
 import org.slf4j.LoggerFactory
 
@@ -47,7 +47,7 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  protected lazy val initEs: Future[HttpClient] = {
+  protected lazy val initEs: Future[ElasticClient] = {
     Future {
       val localNode = LocalNode("findex0404", "./esTmp/tmpDataPath0303")
       /*shutdownHook.addHook(new Thread() {
@@ -61,8 +61,8 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
           }
         }
       })*/
-      val client = localNode.http(true)
-      shutdownHook.addHook(new Thread() {
+      val client = localNode.client(true)
+      /*shutdownHook.addHook(new Thread() {
         override def run(): Unit = {
           Try {
             logger.info("开始关闭 elasticSearch 客户端")
@@ -73,7 +73,7 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
             case Success(_) => logger.info("关闭 elasticSearch 客户端成功")
           }
         }
-      })
+      })*/
       client
     }.andThen {
       case Failure(e) =>
@@ -83,9 +83,9 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
     }
   }
 
-  val esLocalClient: Future[HttpClient] = {
+  val esLocalClient: Future[ElasticClient] = {
     createIndexInitAction.flatMap {
-      _: Either[RequestFailure, RequestSuccess[CreateIndexResponse]] =>
+      _: Response[CreateIndexResponse] =>
         initEs
     }
   }
