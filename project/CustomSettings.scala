@@ -3,23 +3,13 @@ import sbt.Keys._
 
 object CustomSettings {
   
-  def customSettings = scalaSettings ++ resolversSettings ++ assemblyPluginSettings ++ nativePackageSettings
-  def commonProjectSettings = scalaSettings ++ resolversSettings
+  def customSettings = scalaSettings ++ assemblyPluginSettings ++ nativePackageSettings
+  def commonProjectSettings = scalaSettings
   
   def scalaSettings =
     Seq(
-      scalaVersion := "2.12.4",
+      scalaVersion := "2.12.6",
       scalacOptions ++= Seq("-feature", "-deprecation")
-    )
-  
-  def resolversSettings =
-    Seq(
-      resolvers ++= Seq(
-        "mavenRepoJX" at "http://repo1.maven.org/maven2/",
-        "bintray/non" at "http://dl.bintray.com/non/maven",
-        Resolver.sonatypeRepo("release"),
-        Resolver.url("typesafe-ivy", url("http://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
-      )
     )
 
   val assemblyPluginSettings = {

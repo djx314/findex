@@ -16,7 +16,6 @@ lazy val findex = (project in file("."))
 fork := true
 
 CustomSettings.scalaSettings
-CustomSettings.resolversSettings
 CustomSettings.assemblyPluginSettings
 CustomSettings.nativePackageSettings
 
