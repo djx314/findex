@@ -48,11 +48,11 @@ object Emiya extends JFXApp {
   private lazy val fileExtraction = wire[FileExtraction]
   private lazy val fileIgnoreService = wire[FileIgnoreService]
   private lazy val contentService = wire[ContentService]
-  private lazy val embeddedServer = {
+  private lazy val embeddedServer = wire[EmbeddedServer] /*{
     val a: EmbeddedServer = wire[EmbeddedServer]
     a.esLocalClient
     a
-  }
+  }*/
 
   private lazy val fileSearch = wire[FileSearch]
 

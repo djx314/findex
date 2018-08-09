@@ -7,12 +7,10 @@ import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.index.CreateIndexResponse
 import com.sksamuel.elastic4s.http.{ HttpClient, RequestFailure, RequestSuccess }
-import com.sksamuel.elastic4s.indexes.CreateIndexDefinition
 import com.sksamuel.elastic4s.mappings.dynamictemplate.DynamicMapping
 import org.slf4j.LoggerFactory
-import org.xarcher.xPhoto.IndexExecutionContext
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ Await, ExecutionContext }
 import scala.util.{ Failure, Success, Try }
 
 // we must import the dsl
@@ -85,44 +83,13 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
     }
   }
 
-  lazy val esLocalClient: Future[HttpClient] = {
+  val esLocalClient: Future[HttpClient] = {
     createIndexInitAction.flatMap {
       _: Either[RequestFailure, RequestSuccess[CreateIndexResponse]] =>
         initEs
     }
   }
 
-  /*
-  val doc = new SolrInputDocument()
-                    doc.addField("id", f.id)
-                    doc.addField("file_name", info.fileName)
-                    doc.addField("file_content", info.content)
-                    doc.addField("file_path", info.filePath)
-                    doc.addField("law_file_name", info.fileName)
-                    doc.addField("content_id", content.id)
-
-                    info.content.grouped(32766 / 3 - 200).zipWithIndex.foldLeft("") {
-                      case (prefix, (content, index)) =>
-                        doc.addField("law_file_content_" + index, prefix + content)
-                        content.takeRight(20)
-                    }
-                    doc.addField("law_file_path", info.filePath)
-                    embeddedServer.solrServer.add("file_index", doc)
-   */
-
-  /*
-  "dynamic_templates": [
-        {
-          "law_body_dyn": {
-            "path_match": "law_body.law_body_*",
-            "mapping": {
-              "type": "keyword",
-              "copy_to": "search_law_body"
-            }
-          }
-        }
-      ],
-   */
   protected lazy val createIndexInitAction = {
     initEs
       .flatMap {
