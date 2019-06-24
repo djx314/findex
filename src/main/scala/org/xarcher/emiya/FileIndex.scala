@@ -2,44 +2,40 @@ package org.xarcher.xPhoto
 
 import java.io.File
 import java.net.URI
-import java.nio.file.{ Files, Path, Paths }
-import java.util.{ Date, Timer, TimerTask }
+import java.nio.file.{Files, Path, Paths}
+import java.util.{Date, Timer, TimerTask}
 
-import com.sksamuel.elastic4s.RefreshPolicy
-import com.sksamuel.elastic4s.http.index.IndexResponse
-import com.sksamuel.elastic4s.http.update.UpdateResponse
-import com.sksamuel.elastic4s.http.{ RequestFailure, RequestSuccess, Response }
-import io.circe.{ Decoder, Encoder }
+import io.circe.{Decoder, Encoder}
 
 import scala.util.Success
-
-//import org.apache.solr.common.SolrInputDocument
 import org.slf4j.LoggerFactory
 import org.xarcher.emiya.service.FileIgnoreService
 import org.xarcher.emiya.utils._
-
 import io.circe.syntax._
 import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
-import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.{RequestFailure, RequestSuccess, Response}
+import com.sksamuel.elastic4s.requests.common.RefreshPolicy
+import com.sksamuel.elastic4s.requests.indexes.IndexResponse
 
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.util.{ Failure, Try }
+import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.util.{Failure, Try}
 import scala.concurrent.duration._
 
-class FileIndex(
-  fileDB: FileDB,
-  futureLimitedGen: () => FutureLimitedGen,
-  futureTimeLimitedGen: () => FutureTimeLimitedGen,
-  fileExtraction: FileExtraction,
-  fileIgnoreService: FileIgnoreService,
-  fileUpdate: FileUpdate,
-  embeddedServer: EmbeddedServer,
-  shutdownHook: ShutdownHook)(implicit executionContext: ExecutionContext) {
+class FileIndex(fileDB: FileDB,
+                futureLimitedGen: () => FutureLimitedGen,
+                futureTimeLimitedGen: () => FutureTimeLimitedGen,
+                fileExtraction: FileExtraction,
+                fileIgnoreService: FileIgnoreService,
+                fileUpdate: FileUpdate,
+                embeddedServer: EmbeddedServer,
+                shutdownHook: ShutdownHook)(implicit executionContext: ExecutionContext) {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  val fileSizeIndexLimit = futureLimitedGen().create(800 * 1024 * 1024, "fileSizeIndexLimit")
+  val fileSizeIndexLimit =
+    futureLimitedGen().create(800 * 1024 * 1024, "fileSizeIndexLimit")
   val fileTimeIndexLimit = futureTimeLimitedGen().create(817 / 100 + 1, "fileTimeIndexLimit", 1926 / 10)
 
   val timeLimited = futureTimeLimitedGen().create(8, "timeLimited", 1000)
@@ -73,14 +69,12 @@ class FileIndex(
   def fetchFilesGen(content: IndexContentRow): Future[Boolean] = {
 
     //还没有处理如果文件夹变成了文件或者文件变成了文件夹的情况
-    val filesF = fileDB.db.run(IndexPath
-      .filter(s => /*(s.isFinish === false) &&*/ (s.contentId === content.id) && (s.isDirectory === true) && (s.isFetched === false))
-      .take(16).result).map(_.toList)
+    val filesF = fileDB.db
+      .run(IndexPath.filter(s => /*(s.isFinish === false) &&*/ (s.contentId === content.id) && (s.isDirectory === true) && (s.isFetched === false)).take(16).result)
+      .map(_.toList)
 
     filesF.flatMap { rows =>
-      Future.sequence(
-        rows.map(row =>
-          fileUpdate.updateIndexRow(row, content))).map((_: Seq[Int]) => if (needToShutdonw) true else rows.isEmpty)
+      Future.sequence(rows.map(row => fileUpdate.updateIndexRow(row, content))).map((_: Seq[Int]) => if (needToShutdonw) true else rows.isEmpty)
     }
 
     /*filesF.flatMap {
@@ -144,61 +138,61 @@ class FileIndex(
       val f = if (!Files.isDirectory(rootFile)) {
         Future.successful(Option.empty)
       } else {
-        fileDB.writeDB.run {
-          IndexPath.filter(_.id === content.id).result.headOption.map {
-            case Some(rootIndexModel) =>
-              val lastModified = Files.getLastModifiedTime(rootFile).toMillis
-              if (lastModified == rootIndexModel.lastModified.getTime) {
-                Option.empty
-              } else {
-                Option(
-                  rootIndexModel.copy(
-                    uri = rootFile.toUri.toASCIIString,
-                    isDirectory = Files.isDirectory(rootFile),
-                    lastModified = new java.sql.Date(Files.getLastModifiedTime(rootFile).toMillis),
-                    isFetched = false,
-                    isFinish = false))
-              }
-            case None =>
-              Option(IndexPathRow(
-                id = -1,
-                uri = rootFile.toUri.toASCIIString,
-                parentDirId = -1,
-                isDirectory = Files.isDirectory(rootFile),
-                lastModified = new java.sql.Date(Files.getLastModifiedTime(rootFile).toMillis),
-                isFetched = false,
-                isFinish = false,
-                contentId = content.id))
+        fileDB.writeDB
+          .run {
+            IndexPath.filter(_.id === content.id).result.headOption.map {
+              case Some(rootIndexModel) =>
+                val lastModified = Files.getLastModifiedTime(rootFile).toMillis
+                if (lastModified == rootIndexModel.lastModified.getTime) {
+                  Option.empty
+                } else {
+                  Option(rootIndexModel.copy(
+                      uri = rootFile.toUri.toASCIIString
+                    , isDirectory = Files.isDirectory(rootFile)
+                    , lastModified = new java.sql.Date(Files.getLastModifiedTime(rootFile).toMillis)
+                    , isFetched = false
+                    , isFinish = false
+                  ))
+                }
+              case None =>
+                Option(IndexPathRow(
+                    id = -1
+                  , uri = rootFile.toUri.toASCIIString
+                  , parentDirId = -1
+                  , isDirectory = Files.isDirectory(rootFile)
+                  , lastModified = new java.sql.Date(Files.getLastModifiedTime(rootFile).toMillis)
+                  , isFetched = false
+                  , isFinish = false
+                  , contentId = content.id
+                ))
 
+            }
           }
-        }.flatMap {
-          case Some(indexModel) if indexModel.id > 0 =>
-            fileDB.writeDB.run {
-              (IndexPath.filter(_.id === indexModel.id).update(indexModel) >> DBIO.successful(Option(indexModel))).transactionally
-              /*id = -1,
+          .flatMap {
+            case Some(indexModel) if indexModel.id > 0 =>
+              fileDB.writeDB.run {
+                (IndexPath.filter(_.id === indexModel.id).update(indexModel) >> DBIO.successful(Option(indexModel))).transactionally
+                /*id = -1,
                 dirPath = rootDir.toPath.toRealPath().toString,
                 isFinish = false)*/
-            }
-          case Some(indexModel) if indexModel.id < 0 =>
-            fileDB.writeDB.run {
-              IndexPath
-                .returning(IndexPath.map(_.id))
-                .into((dir, id) => Option(dir.copy(id = id))) += indexModel
-              /*id = -1,
+              }
+            case Some(indexModel) if indexModel.id < 0 =>
+              fileDB.writeDB.run {
+                IndexPath.returning(IndexPath.map(_.id)).into((dir, id) => Option(dir.copy(id = id))) += indexModel
+                /*id = -1,
                   dirPath = rootDir.toPath.toRealPath().toString,
                   isFinish = false)*/
-            }
-          case _ =>
-            Future.successful(Option.empty)
-        }
+              }
+            case _ =>
+              Future.successful(Option.empty)
+          }
       }
       f.flatMap((_: Option[IndexPathRow]) => fetchFiles(content))
     }
 
     def tranFiles(sum: Int, isFetchFileFinished: () => Boolean): Future[Int] = {
       val isIndexing = !isFetchFileFinished()
-      val fileListF = fileDB.db.run(
-        IndexPath.filter(s => (s.isFinish === false) && (s.isDirectory === false) && (s.contentId === content.id)).take(120).result)
+      val fileListF  = fileDB.db.run(IndexPath.filter(s => (s.isFinish === false) && (s.isDirectory === false) && (s.contentId === content.id)).take(120).result)
       //(s"是否已查找文件完毕：${!isIndexing}")
       (for {
         fileList <- fileListF
@@ -218,9 +212,9 @@ class FileIndex(
 
             indexLimited(() => {
               logger.debug(s"${new Date().toString}，正在索引：${f.uri}")
-              indexFile(file.toPath, dbId = f.id, contentId = f.contentId).flatMap {
-                case Right(info) =>
-                  {
+              indexFile(file.toPath, dbId = f.id, contentId = f.contentId)
+                .flatMap {
+                  case Right(info) => {
                     /*val doc = new SolrInputDocument()
                     doc.addField("id", f.id)
                     doc.addField("file_name", info.fileName)
@@ -238,14 +232,15 @@ class FileIndex(
                     embeddedServer.solrServer.add("file_index", doc)
                     embeddedServer.solrServer.commit("file_index")*/
 
-                    embeddedServer.esLocalClient.flatMap { client =>
-                      client.execute {
-                        indexInto(embeddedServer.index, embeddedServer.typeName)
-                          .id(info.dbId.toString)
-                          .doc(info.asJson)
-                          .refresh(RefreshPolicy.NONE)
+                    embeddedServer.esLocalClient
+                      .flatMap { client =>
+                        client.execute {
+                          indexInto(embeddedServer.index /*, embeddedServer.typeName*/ ).id(info.dbId.toString).doc(info.asJson).refresh(RefreshPolicy.NONE)
+                        }
                       }
-                    }.map { (s: Response[IndexResponse]) => info.dbId -> s }
+                      .map { (s: Response[IndexResponse]) =>
+                        info.dbId -> s
+                      }
                   }.transform {
                     r =>
                       r match {
@@ -266,24 +261,28 @@ class FileIndex(
                         //e.printStackTrace
                       }
                   }
-                case Left(id) =>
-                  logger.error(s"${new Date().toString}，索引：${file.toPath.toRealPath()}失败，跳过此文件")
-                  Future.successful(id -> 1)
-              }.andThen {
-                case Failure(e) =>
-                  logger.info(s"索引文件：${f.uri}过程发生错误", e)
-              }: Future[(Int, Int)]
+                  case Left(id) =>
+                    logger.error(s"${new Date().toString}，索引：${file.toPath.toRealPath()}失败，跳过此文件")
+                    Future.successful(id -> 1)
+                }
+                .andThen {
+                  case Failure(e) =>
+                    logger.info(s"索引文件：${f.uri}过程发生错误", e)
+                }: Future[(Int, Int)]
             } /*, file.length, s"索引文件（${f.uri}）"*/ )
           })
           listF.flatMap { ids =>
-            fileDB.writeDB.run(
-              IndexPath.filter(_.id inSetBind ids.filter(_._2 > 0).map(_._1)).map(_.isFinish).update(true).transactionally)
-              .map(_ => sum + ids.map(_._2).sum).flatMap(newSum => tranFiles(newSum, isFetchFileFinished))
+            fileDB.writeDB
+              .run(IndexPath.filter(_.id inSetBind ids.filter(_._2 > 0).map(_._1)).map(_.isFinish).update(true).transactionally)
+              .map(_ => sum + ids.map(_._2).sum)
+              .flatMap(newSum => tranFiles(newSum, isFetchFileFinished))
           }: Future[Int]
         } else {
           val promise = Promise[Future[Int]]
-          val timer = new Timer()
-          shutdownHook.addHook(new Thread() { override def run: Unit = { Try { timer.cancel() } } })
+          val timer   = new Timer()
+          shutdownHook.addHook(new Thread() {
+            override def run: Unit = { Try { timer.cancel() } }
+          })
           val task = new TimerTask {
             override def run(): Unit = {
               promise.success(tranFiles(sum, isFetchFileFinished))
@@ -331,14 +330,16 @@ class FileIndex(
         case e => e.printStackTrace
       }
       val indexFilesF = tranFiles(0, () => fetchFilesF.isCompleted)
-      indexFilesF.map { count =>
-        println(s"索引:${Paths.get(URI.create(content.rootUri)).toRealPath()}完成，一共索引了:${count}个文件")
-        1
-      }.recover {
-        case e =>
-          //e.printStackTrace
-          2
-      }
+      indexFilesF
+        .map { count =>
+          println(s"索引:${Paths.get(URI.create(content.rootUri)).toRealPath()}完成，一共索引了:${count}个文件")
+          1
+        }
+        .recover {
+          case e =>
+            //e.printStackTrace
+            2
+        }
       showInfo(() => indexFilesF.isCompleted)
       indexFilesF
     } /*else {
@@ -351,34 +352,37 @@ class FileIndex(
     Future {
       val fileName = file.getFileName.toString
       if (Files.size(file) < (2 * 1024 * 1024)) {
-        fileExtraction.indexer.find { case (extName, _) => fileName.endsWith(s".${extName}") }.map(_._2).map(_.apply(file).map { strEither =>
-          /*strEither.right.map { str =>
+        fileExtraction.indexer
+          .find { case (extName, _) => fileName.endsWith(s".${extName}") }
+          .map(_._2)
+          .map(_.apply(file).map { strEither =>
+            /*strEither.right.map { str =>
             IndexInfo(dbId = id, filePath = file.toRealPath().toString, fileName = file.getFileName().toString, content = str)
           }.left.map(_ => id)*/
-          strEither match {
-            case Right(str) =>
+            strEither match {
+              case Right(str) =>
+                val lawBody = str.grouped(32766 / 3 - 200).zipWithIndex.foldLeft(Map.empty[String, String] -> "") {
+                  case ((bodyMap, prefix), (content, index)) =>
+                    val newMap = bodyMap + (("law_body_" + index) -> (prefix + content))
+                    newMap -> content.takeRight(120)
+                }
 
-              val lawBody = str.grouped(32766 / 3 - 200).zipWithIndex.foldLeft(Map.empty[String, String] -> "") {
-                case ((bodyMap, prefix), (content, index)) =>
-                  val newMap = bodyMap + (("law_body_" + index) -> (prefix + content))
-                  newMap -> content.takeRight(120)
-              }
-
-              Right(IndexInfo(
-                dbId = dbId,
-                filePath = file.toRealPath().toString,
-                fileName = file.getFileName().toString,
-                fileContent = str,
-                contentId = contentId,
-                law_body = lawBody._1))
-            case Left(e) =>
-              logger.error(s"索引文件发生错误，路径：${file.toRealPath().toString}", e)
-              Left(dbId)
-            //throw e
+                Right(
+                  IndexInfo(dbId = dbId,
+                            filePath = file.toRealPath().toString,
+                            fileName = file.getFileName().toString,
+                            fileContent = str,
+                            contentId = contentId,
+                            law_body = lawBody._1))
+              case Left(e) =>
+                logger.error(s"索引文件发生错误，路径：${file.toRealPath().toString}", e)
+                Left(dbId)
+              //throw e
+            }
+          })
+          .getOrElse {
+            Future.successful(Left(dbId))
           }
-        }).getOrElse {
-          Future.successful(Left(dbId))
-        }
       } else {
         Future.successful(Left(dbId))
       }
@@ -396,7 +400,8 @@ object IndexInfo {
 
   import io.circe.generic.extras.auto._
 
-  implicit val config = io.circe.generic.extras.Configuration.default.withSnakeCaseMemberNames
+  implicit val config =
+    io.circe.generic.extras.Configuration.default.withSnakeCaseMemberNames
 
   implicit val encoder: Encoder[IndexInfo] = {
     exportEncoder.instance

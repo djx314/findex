@@ -1,17 +1,17 @@
 package org.xarcher.emiya.utils
 
-import com.sksamuel.elastic4s.Index
-import com.sksamuel.elastic4s.embedded.LocalNode
+import com.sksamuel.elastic4s._
+import com.sksamuel.elastic4s.ElasticDsl._
 import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
-import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.index.{ CreateIndexResponse, IndexResponse }
-import com.sksamuel.elastic4s.http.{ ElasticClient, RequestFailure, RequestSuccess, Response }
-import com.sksamuel.elastic4s.mappings.dynamictemplate.DynamicMapping
+import com.sksamuel.elastic4s.http.JavaClient
+import com.sksamuel.elastic4s.requests.indexes.CreateIndexResponse
+import com.sksamuel.elastic4s.requests.mappings.dynamictemplate.DynamicMapping
 import org.slf4j.LoggerFactory
+import pl.allegro.tech.embeddedelasticsearch.{EmbeddedElastic, IndexSettings, PopularProperties}
 
-import scala.concurrent.{ Await, ExecutionContext }
-import scala.util.{ Failure, Success, Try }
+import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
 // we must import the dsl
 
@@ -42,39 +42,37 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
     embbed
   }*/
 
-  val index: Index = "findex0909"
+  val index: Index     = "findex0909"
   val typeName: String = "file_content"
 
   val logger = LoggerFactory.getLogger(getClass)
 
   protected lazy val initEs: Future[ElasticClient] = {
     Future {
-      val localNode = LocalNode("findex0404", "./esTmp/tmpDataPath0303")
-      /*shutdownHook.addHook(new Thread() {
-        override def run(): Unit = {
-          Try {
-            logger.info("开始关闭 elasticSearch 服务端")
-            localNode.close()
-          } match {
-            case Failure(e) => logger.error("关闭 elasticSearch 服务端遇到错误", e)
-            case Success(_) => logger.info("关闭 elasticSearch 服务端成功")
-          }
-        }
-      })*/
-      val client = localNode.client(true)
-      /*shutdownHook.addHook(new Thread() {
-        override def run(): Unit = {
-          Try {
-            logger.info("开始关闭 elasticSearch 客户端")
-            client.client.close()
-            //client.close()
-          } match {
-            case Failure(e) => logger.error("关闭 elasticSearch 客户端遇到错误", e)
-            case Success(_) => logger.info("关闭 elasticSearch 客户端成功")
-          }
-        }
-      })*/
-      client
+      val embeddedElastic = EmbeddedElastic
+        .builder()
+        .withElasticVersion("5.0.0")
+        .withSetting(PopularProperties.TRANSPORT_TCP_PORT, 9350)
+        .withSetting(PopularProperties.CLUSTER_NAME, "my_cluster")
+        .withPlugin("analysis-stempel")
+        .withIndex("cars", IndexSettings.builder().withType("car", java.lang.ClassLoader.getSystemResourceAsStream("car-mapping.json")).build())
+        .withIndex(
+            "books"
+          , IndexSettings
+            .builder()
+            .withType(
+                "paper_book", //pl.allegro.tech.embeddedelasticsearch.SampleIndices.PAPER_BOOK_INDEX_TYPE,
+              java.lang.ClassLoader.getSystemResourceAsStream("paper-book-mapping.json")
+            )
+            .withType("audio_book", java.lang.ClassLoader.getSystemResourceAsStream("audio-book-mapping.json"))
+            .withSettings(java.lang.ClassLoader.getSystemResourceAsStream("elastic-settings.json"))
+            .build()
+        )
+        .build()
+        .start()
+
+      ElasticClient(JavaClient(ElasticProperties(s"http://localhost:9350")))
+
     }.andThen {
       case Failure(e) =>
         logger.error("创建 elasticSearch 实例遇到错误", e)
@@ -84,32 +82,30 @@ class EmbeddedServer(shutdownHook: ShutdownHook)(implicit executionContext: Exec
   }
 
   val esLocalClient: Future[ElasticClient] = {
-    createIndexInitAction.flatMap {
-      _: Response[CreateIndexResponse] =>
-        initEs
+    createIndexInitAction.flatMap { _: Response[CreateIndexResponse] =>
+      initEs
     }
   }
 
   protected lazy val createIndexInitAction = {
-    initEs
-      .flatMap {
-        client =>
-          client.execute {
-            createIndex(index.name).mappings(
-              mapping(typeName)
-                .fields(
-                  intField("db_id"),
-                  keywordField("file_name"),
-                  textField("file_content"),
-                  keywordField("file_path"),
-                  keywordField("law_file_name"),
-                  intField("content_id"),
-                  objectField("law_body").dynamic(true),
-                  keywordField("search_law_body"))
-                .dynamic(DynamicMapping.Strict)
-                .dynamicTemplates(dynamicTemplate("law_body_dyn").mapping(dynamicKeywordField().copyTo("search_law_body")).pathMatch("law_body.law_body_*")))
-          }
+    initEs.flatMap { client =>
+      client.execute {
+        createIndex(index.name).mappings(
+          mapping(typeName)
+            .fields(
+                intField("db_id")
+              , keywordField("file_name")
+              , textField("file_content")
+              , keywordField("file_path")
+              , keywordField("law_file_name")
+              , intField("content_id")
+              , objectField("law_body").dynamic(true)
+              , keywordField("search_law_body")
+            )
+            .dynamic(DynamicMapping.Strict)
+            .dynamicTemplates(dynamicTemplate("law_body_dyn").mapping(dynamicKeywordField().copyTo("search_law_body")).pathMatch("law_body.law_body_*")))
       }
+    }
   }
 
 }

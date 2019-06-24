@@ -9,19 +9,18 @@ import org.xarcher.emiya.utils.EmbeddedServer
 import org.xarcher.xPhoto.FileTables.IndexContentRow
 import scalafx.Includes._
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scalafx.geometry.Insets
 import scalafx.scene.control.Button
 import scalafx.scene.input.MouseEvent
-import scalafx.scene.layout.{ Background, BackgroundFill, CornerRadii, Region }
+import scalafx.scene.layout.{Background, BackgroundFill, CornerRadii, Region}
 import scalafx.scene.paint.Paint
-
 import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
-import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.{ RequestFailure, RequestSuccess }
-import com.sksamuel.elastic4s.http.search.{ SearchBodyBuilderFn, SearchResponse }
-import com.sksamuel.elastic4s.searches.queries.BoolQuery
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.{RequestFailure, RequestSuccess}
+import com.sksamuel.elastic4s.requests.searches.{SearchBodyBuilderFn, SearchResponse}
+import com.sksamuel.elastic4s.requests.searches.queries.BoolQuery
 
 case class OuputWrap(info: List[OutputInfo], nextIndexOpt: Option[Int], countSum: Long)
 
@@ -34,39 +33,49 @@ class FileSearch(embeddedServer: EmbeddedServer) {
 
   def searchFromView(content: IndexContentRow, fuzzyKey: String, exactKey: String, start: Int, rows: Int)(implicit ec: ExecutionContext): Future[OuputWrap] = {
     lazy val exactSplitFronts = exactKey.trim.split(' ').toList.map(_.trim).filterNot(_.isEmpty)
-    lazy val exactFilterString = exactSplitFronts.map { t => s"*$t*" }
+    lazy val exactFilterString = exactSplitFronts.map { t =>
+      s"*$t*"
+    }
 
     val exactEmptyBoolean = List.empty[BoolQuery]
-    val exactBool1 = if (exactFilterString.isEmpty)
-      exactEmptyBoolean
-    else
-      boolQuery().should(exactFilterString.map(s => wildcardQuery("search_law_body", s))) :: exactEmptyBoolean
+    val exactBool1 =
+      if (exactFilterString.isEmpty)
+        exactEmptyBoolean
+      else
+        boolQuery().should(exactFilterString.map(s => wildcardQuery("search_law_body", s))) :: exactEmptyBoolean
 
-    embeddedServer.esLocalClient.flatMap { client =>
-      client.execute {
-        val searchDef = search(embeddedServer.index).query(boolQuery().filter(matchQuery("content_id", content.id)).must(exactBool1))
-          .types(embeddedServer.typeName).start(start).limit(rows)
-        println(SearchBodyBuilderFn(searchDef).string())
-        searchDef
-      }
-    }.map {
-      case s: RequestFailure =>
-        println(s)
-        OuputWrap(List.empty, Option.empty, 0)
-      case result: RequestSuccess[SearchResponse] =>
-        println(result)
-        val infoSize = result.result.size
-        val nextIndexOpt = if (infoSize >= rows)
-          Option(start + infoSize)
-        else Option.empty
-
-        val infos = result.result.to[IndexInfo]
-        val extraInfos = infos.zipWithIndex.map {
-          case (info, index) =>
-            OutputInfo(searchIndex = index, filePath = info.filePath, fileName = info.fileName, content = info.fileContent, contentId = info.contentId)
+    embeddedServer.esLocalClient
+      .flatMap { client =>
+        client.execute {
+          val searchDef = search(embeddedServer.index)
+            .query(boolQuery().filter(matchQuery("content_id", content.id)).must(exactBool1))
+            //TODO
+            /*.types(embeddedServer.typeName)*/
+            .start(start)
+            .limit(rows)
+          println(SearchBodyBuilderFn(searchDef).string())
+          searchDef
         }
-        OuputWrap(extraInfos.toList, Option.empty, 0)
-    }
+      }
+      .map {
+        case s: RequestFailure =>
+          println(s)
+          OuputWrap(List.empty, Option.empty, 0)
+        case result: RequestSuccess[SearchResponse] =>
+          println(result)
+          val infoSize = result.result.size
+          val nextIndexOpt =
+            if (infoSize >= rows)
+              Option(start + infoSize)
+            else Option.empty
+
+          val infos = result.result.to[IndexInfo]
+          val extraInfos = infos.zipWithIndex.map {
+            case (info, index) =>
+              OutputInfo(searchIndex = index, filePath = info.filePath, fileName = info.fileName, content = info.fileContent, contentId = info.contentId)
+          }
+          OuputWrap(extraInfos.toList, Option.empty, 0)
+      }
 
     /*val titleSize = 80
     val textSize = 300
@@ -160,8 +169,8 @@ case class OutputInfo(searchIndex: Int, filePath: String, fileName: String, cont
     val strs = s"$searchIndex - $fileName".split("\\|\\|\\|").toList
     val str2 = strs
 
-    val height = 16
-    val str = str2.mkString("")
+    val height   = 16
+    val str      = str2.mkString("")
     val textArea = new InlineCssTextArea(str)
     textArea.setWrapText(true)
     textArea.setEditable(false)
@@ -182,12 +191,12 @@ case class OutputInfo(searchIndex: Int, filePath: String, fileName: String, cont
 
   def contentFlow: InlineCssTextArea = {
     val fontSize = 14
-    val strs = content.split("\\|\\|\\|").toList
+    val strs     = content.split("\\|\\|\\|").toList
     val textArea = new InlineCssTextArea(strs.mkString(""))
     (textArea: Region).prefHeight = fontSize * 9
     textArea.setWrapText(true)
     textArea.setEditable(false)
-    val strsLength = strs.map(_.length)
+    val strsLength   = strs.map(_.length)
     val toatalLength = strsLength.sum
 
     textArea.setStyle(0, toatalLength, s"-fx-font-size: ${fontSize}px;")
@@ -203,18 +212,16 @@ case class OutputInfo(searchIndex: Int, filePath: String, fileName: String, cont
   }
 
   def fileBtn: Button = new Button("打开文件") {
-    handleEvent(MouseEvent.MouseClicked) {
-      event: MouseEvent =>
-        Desktop.getDesktop.open(new File(filePath))
-        ()
+    handleEvent(MouseEvent.MouseClicked) { event: MouseEvent =>
+      Desktop.getDesktop.open(new File(filePath))
+      ()
     }
   }
 
   def dirBtn: Button = new Button("打开文件夹") {
-    handleEvent(MouseEvent.MouseClicked) {
-      event: MouseEvent =>
-        (Desktop.getDesktop: java.awt.Desktop).browse(new File(filePath).getParentFile.toURI)
-        ()
+    handleEvent(MouseEvent.MouseClicked) { event: MouseEvent =>
+      (Desktop.getDesktop: java.awt.Desktop).browse(new File(filePath).getParentFile.toURI)
+      ()
     }
   }
 
